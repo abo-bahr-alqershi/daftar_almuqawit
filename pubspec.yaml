@@ -3,7 +3,7 @@ description: تطبيق محاسبي للمقاوتة - بائعي القات
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ^3.9.2
 
 dependencies:
   flutter:
@@ -32,10 +32,10 @@ dependencies:
   
   # Charts
   fl_chart: ^0.64.0
-  syncfusion_flutter_charts: ^23.1.44
+  syncfusion_flutter_charts: ^31.2.4
   
   # Utils
-  intl: ^0.18.1
+  intl: ^0.20.2
   shared_preferences: ^2.2.2
   flutter_native_splash: ^2.3.5
   permission_handler: ^11.0.1
@@ -53,6 +53,24 @@ dependencies:
   pdf: ^3.10.7
   printing: ^5.11.1
 
+  # Firebase
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  cloud_firestore: ^4.13.0
+  firebase_storage: ^11.5.0
+  firebase_analytics: ^10.7.0
+
+  # Networking
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.2
+
+  # Storage & Security
+  flutter_secure_storage: ^9.0.0
+
+  # UI Utilities
+  flutter_screenutil: ^5.9.0
+  animations: ^2.0.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -69,10 +87,4 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/sounds/
-    
-  fonts:
-    - family: Cairo
-      fonts:
-        - asset: assets/fonts/Cairo-Regular.ttf
-        - asset: assets/fonts/Cairo-Bold.ttf
-          weight: 700
+    - assets/translations/
