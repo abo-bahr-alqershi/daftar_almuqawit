@@ -17,7 +17,7 @@ class BackupRepositoryImpl implements BackupRepository {
 
   @override
   Future<void> scheduleAutoBackup() async {
-    // TODO: جدولة النسخ الاحتياطي التلقائي
+    await service.scheduleAutoBackup();
   }
 
   @override

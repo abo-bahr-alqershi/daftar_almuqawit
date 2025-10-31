@@ -4,11 +4,13 @@ import 'dart:convert';
 import '../../domain/entities/sync_status.dart';
 import '../../domain/repositories/sync_repository.dart';
 import '../datasources/local/sync_local_datasource.dart';
+import '../datasources/remote/sync_remote_datasource.dart';
 import '../models/sync_record_model.dart';
 
 class SyncRepositoryImpl implements SyncRepository {
   final SyncLocalDataSource local;
-  SyncRepositoryImpl(this.local);
+  final SyncRemoteDataSource remote;
+  SyncRepositoryImpl(this.local, this.remote);
 
   @override
   Future<SyncStatus> checkStatus() async {
@@ -28,7 +30,8 @@ class SyncRepositoryImpl implements SyncRepository {
       for (final SyncRecordModel r in pending) {
         try {
           await local.markProcessing(r.id!);
-          // TODO: إرسال العملية إلى السحابة ثم تعديل قواعد البيانات إذا لزم
+          final Map<String, dynamic> payload = jsonDecode(r.payloadJson) as Map<String, dynamic>;
+          await remote.pushOperation(entity: r.entity, operation: r.operation, payload: payload);
           await local.markDone(r.id!);
         } catch (_) {
           await local.incrementRetry(r.id!);

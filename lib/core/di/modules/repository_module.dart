@@ -40,7 +40,7 @@ class RepositoryModule {
     sl.registerLazySingleton<ExpenseRepository>(() => ExpenseRepositoryImpl(sl()));
     sl.registerLazySingleton<AccountingRepository>(() => AccountingRepositoryImpl(sl()));
     sl.registerLazySingleton<StatisticsRepository>(() => StatisticsRepositoryImpl(sl()));
-    sl.registerLazySingleton<SyncRepository>(() => SyncRepositoryImpl(sl()));
+    sl.registerLazySingleton<SyncRepository>(() => SyncRepositoryImpl(sl(), sl()));
     sl.registerLazySingleton<BackupRepository>(() => BackupRepositoryImpl(sl(), sl()));
   }
 }
