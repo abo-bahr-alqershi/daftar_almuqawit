@@ -1,1 +1,3 @@
-class ConflictResolver {}
+class ConflictResolver {
+  Future<void> resolveAll() async {}
+}

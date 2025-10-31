@@ -2,10 +2,12 @@
 
 import '../../domain/repositories/backup_repository.dart';
 import '../../core/services/backup_service.dart';
+import '../../core/services/export_service.dart';
 
 class BackupRepositoryImpl implements BackupRepository {
   final BackupService service;
-  BackupRepositoryImpl(this.service);
+  final ExportService exportService;
+  BackupRepositoryImpl(this.service, this.exportService);
 
   @override
   Future<String> createBackup() => service.createBackup();
@@ -19,8 +21,5 @@ class BackupRepositoryImpl implements BackupRepository {
   }
 
   @override
-  Future<String> exportToExcel(String dateRange) async {
-    // TODO: تصدير إلى إكسل
-    return 'path/to/export.xlsx';
-  }
+  Future<String> exportToExcel(String dateRange) async => exportService.toExcel(dateRange);
 }

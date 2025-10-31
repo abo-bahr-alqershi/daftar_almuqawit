@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../../domain/entities/sync_status.dart';
 import '../../domain/repositories/sync_repository.dart';
 import '../datasources/local/sync_local_datasource.dart';
+import '../models/sync_record_model.dart';
 
 class SyncRepositoryImpl implements SyncRepository {
   final SyncLocalDataSource local;
@@ -22,7 +23,21 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   Future<SyncStatus> syncAll() async {
-    // لاحقاً: تنفيذ المزامنة مع السحابة
-    return SyncStatus.success;
+    try {
+      final List<SyncRecordModel> pending = await local.getPending(limit: 100);
+      for (final SyncRecordModel r in pending) {
+        try {
+          await local.markProcessing(r.id!);
+          // TODO: إرسال العملية إلى السحابة ثم تعديل قواعد البيانات إذا لزم
+          await local.markDone(r.id!);
+        } catch (_) {
+          await local.incrementRetry(r.id!);
+          await local.markFailed(r.id!);
+        }
+      }
+      return SyncStatus.success;
+    } catch (_) {
+      return SyncStatus.failure;
+    }
   }
 }

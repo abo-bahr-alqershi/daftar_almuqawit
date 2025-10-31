@@ -146,9 +146,17 @@ import '../../domain/usecases/accounting/add_journal_entry.dart';
 import '../../domain/usecases/accounting/add_journal_entry_detail.dart';
 import '../../domain/usecases/accounting/get_journal_entry_details.dart';
 import '../../domain/usecases/accounting/get_cash_balance.dart';
+import '../../domain/usecases/accounting/close_daily_accounts.dart';
+import '../../domain/usecases/accounting/get_trial_balance.dart';
+import '../../domain/usecases/accounting/generate_financial_statements.dart';
 // Statistics
 import '../../domain/usecases/statistics/get_daily_statistics.dart';
 import '../../domain/usecases/statistics/get_monthly_statistics.dart';
+import '../../domain/usecases/statistics/get_weekly_report.dart';
+import '../../domain/usecases/statistics/get_yearly_report.dart';
+import '../../domain/usecases/statistics/get_profit_analysis.dart';
+import '../../domain/usecases/statistics/get_best_sellers.dart';
+import '../../domain/usecases/statistics/get_customer_ranking.dart';
 // Qat types
 import '../../domain/usecases/qat_types/add_qat_type.dart';
 import '../../domain/usecases/qat_types/get_qat_types.dart';
@@ -233,6 +241,7 @@ class ServiceLocator {
     await DatabaseModule.register(sl);
     await FirebaseModule.register(sl);
     await RepositoryModule.register(sl);
+    await BlocModule.register(sl);
 
     // UseCases registrations (Suppliers)
     sl.registerLazySingleton<AddSupplier>(() => AddSupplier(sl()));
@@ -298,10 +307,18 @@ class ServiceLocator {
     sl.registerLazySingleton<AddJournalEntryDetail>(() => AddJournalEntryDetail(sl()));
     sl.registerLazySingleton<GetJournalEntryDetails>(() => GetJournalEntryDetails(sl()));
     sl.registerLazySingleton<GetCashBalance>(() => GetCashBalance(sl()));
+    sl.registerLazySingleton<CloseDailyAccounts>(() => CloseDailyAccounts());
+    sl.registerLazySingleton<GetTrialBalance>(() => GetTrialBalance());
+    sl.registerLazySingleton<GenerateFinancialStatements>(() => GenerateFinancialStatements());
 
     // Statistics
     sl.registerLazySingleton<GetDailyStatistics>(() => GetDailyStatistics(sl()));
     sl.registerLazySingleton<GetMonthlyStatistics>(() => GetMonthlyStatistics(sl()));
+    sl.registerLazySingleton<GetWeeklyReport>(() => GetWeeklyReport(sl()));
+    sl.registerLazySingleton<GetYearlyReport>(() => GetYearlyReport(sl()));
+    sl.registerLazySingleton<GetProfitAnalysis>(() => GetProfitAnalysis(sl()));
+    sl.registerLazySingleton<GetBestSellers>(() => GetBestSellers(sl()));
+    sl.registerLazySingleton<GetCustomerRanking>(() => GetCustomerRanking(sl()));
 
     // Qat types
     sl.registerLazySingleton<AddQatType>(() => AddQatType(sl()));
@@ -314,6 +331,9 @@ class ServiceLocator {
     sl.registerLazySingleton<SyncAll>(() => SyncAll(sl()));
     sl.registerLazySingleton<CheckSyncStatus>(() => CheckSyncStatus(sl()));
     sl.registerLazySingleton<QueueOperation>(() => QueueOperation(sl()));
+    sl.registerLazySingleton<SyncData>(() => SyncData(sl()));
+    sl.registerLazySingleton<ResolveConflicts>(() => ResolveConflicts(sl()));
+    sl.registerLazySingleton<QueueOfflineOperation>(() => QueueOfflineOperation(sl()));
 
     // Backup
     sl.registerLazySingleton<CreateBackup>(() => CreateBackup(sl()));
