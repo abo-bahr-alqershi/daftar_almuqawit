@@ -1,4 +1,6 @@
-// ignore_for_file: public_member_api_docs
+/// جدول قائمة المزامنة
+/// يخزن العمليات المعلقة للمزامنة مع الخادم البعيد
+/// متوافق مع SyncRecordModel
 
 /// تعريف جدول قائمة المزامنة للعمليات غير المتصلة
 class SyncQueueTable {

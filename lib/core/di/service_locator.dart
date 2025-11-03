@@ -33,62 +33,67 @@ import '../services/sync/sync_queue.dart';
 import '../services/sync/offline_queue.dart';
 
 // Local DataSources
-import '../../data/datasources/local/supplier_local_datasource.dart';
-import '../../data/datasources/local/customer_local_datasource.dart';
-import '../../data/datasources/local/qat_type_local_datasource.dart';
-import '../../data/datasources/local/purchase_local_datasource.dart';
-import '../../data/datasources/local/sales_local_datasource.dart';
-import '../../data/datasources/local/debt_local_datasource.dart';
-import '../../data/datasources/local/debt_payment_local_datasource.dart';
-import '../../data/datasources/local/expense_local_datasource.dart';
-import '../../data/datasources/local/accounting_local_datasource.dart';
-import '../../data/datasources/local/statistics_local_datasource.dart';
-import '../../data/datasources/local/sync_local_datasource.dart';
+// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
+// import '../../data/datasources/local/supplier_local_datasource.dart';
+// import '../../data/datasources/local/customer_local_datasource.dart';
+// import '../../data/datasources/local/qat_type_local_datasource.dart';
+// import '../../data/datasources/local/purchase_local_datasource.dart';
+// import '../../data/datasources/local/sales_local_datasource.dart';
+// import '../../data/datasources/local/debt_local_datasource.dart';
+// import '../../data/datasources/local/debt_payment_local_datasource.dart';
+// import '../../data/datasources/local/expense_local_datasource.dart';
+// import '../../data/datasources/local/accounting_local_datasource.dart';
+// import '../../data/datasources/local/statistics_local_datasource.dart';
+// import '../../data/datasources/local/sync_local_datasource.dart';
 
 // Remote DataSources
-import '../../data/datasources/remote/suppliers_remote_datasource.dart';
-import '../../data/datasources/remote/customers_remote_datasource.dart';
-import '../../data/datasources/remote/qat_types_remote_datasource.dart';
-import '../../data/datasources/remote/purchases_remote_datasource.dart';
-import '../../data/datasources/remote/sales_remote_datasource.dart';
-import '../../data/datasources/remote/debts_remote_datasource.dart';
-import '../../data/datasources/remote/debt_payments_remote_datasource.dart';
-import '../../data/datasources/remote/expenses_remote_datasource.dart';
-import '../../data/datasources/remote/accounts_remote_datasource.dart';
-import '../../data/datasources/remote/journal_entries_remote_datasource.dart';
-import '../../data/datasources/remote/journal_entry_details_remote_datasource.dart';
-import '../../data/datasources/remote/daily_stats_remote_datasource.dart';
+// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
+// import '../../data/datasources/remote/suppliers_remote_datasource.dart';
+// import '../../data/datasources/remote/customers_remote_datasource.dart';
+// import '../../data/datasources/remote/qat_types_remote_datasource.dart';
+// import '../../data/datasources/remote/purchases_remote_datasource.dart';
+// import '../../data/datasources/remote/sales_remote_datasource.dart';
+// import '../../data/datasources/remote/debts_remote_datasource.dart';
+// import '../../data/datasources/remote/debt_payments_remote_datasource.dart';
+// import '../../data/datasources/remote/expenses_remote_datasource.dart';
+// import '../../data/datasources/remote/accounts_remote_datasource.dart';
+// import '../../data/datasources/remote/journal_entries_remote_datasource.dart';
+// import '../../data/datasources/remote/journal_entry_details_remote_datasource.dart';
+// import '../../data/datasources/remote/daily_stats_remote_datasource.dart';
 
 // Repositories impl
-import '../../data/repositories/supplier_repository_impl.dart';
-import '../../data/repositories/customer_repository_impl.dart';
-import '../../data/repositories/qat_type_repository_impl.dart';
-import '../../data/repositories/purchase_repository_impl.dart';
-import '../../data/repositories/sale_repository_impl.dart';
-import '../../data/repositories/debt_repository_impl.dart';
-import '../../data/repositories/debt_payment_repository_impl.dart';
-import '../../data/repositories/expense_repository_impl.dart';
-import '../../data/repositories/accounting_repository_impl.dart';
-import '../../data/repositories/statistics_repository_impl.dart';
-import '../../data/repositories/sync_repository_impl.dart';
-import '../../data/repositories/backup_repository_impl.dart';
+// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
+// import '../../data/repositories/supplier_repository_impl.dart';
+// import '../../data/repositories/customer_repository_impl.dart';
+// import '../../data/repositories/qat_type_repository_impl.dart';
+// import '../../data/repositories/purchase_repository_impl.dart';
+// import '../../data/repositories/sale_repository_impl.dart';
+// import '../../data/repositories/debt_repository_impl.dart';
+// import '../../data/repositories/debt_payment_repository_impl.dart';
+// import '../../data/repositories/expense_repository_impl.dart';
+// import '../../data/repositories/accounting_repository_impl.dart';
+// import '../../data/repositories/statistics_repository_impl.dart';
+// import '../../data/repositories/sync_repository_impl.dart';
+// import '../../data/repositories/backup_repository_impl.dart';
 
 // Repositories interfaces
-import '../../domain/repositories/supplier_repository.dart';
-import '../../domain/repositories/customer_repository.dart';
-import '../../domain/repositories/qat_type_repository.dart';
-import '../../domain/repositories/purchase_repository.dart';
-import '../../domain/repositories/sales_repository.dart';
+// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
+// import '../../domain/repositories/supplier_repository.dart';
+// import '../../domain/repositories/customer_repository.dart';
+// import '../../domain/repositories/qat_type_repository.dart';
+// import '../../domain/repositories/purchase_repository.dart';
+// import '../../domain/repositories/sales_repository.dart';
 import '../../domain/repositories/debt_repository.dart';
-import '../../domain/repositories/debt_payment_repository.dart';
-import '../../domain/repositories/expense_repository.dart';
-import '../../domain/repositories/accounting_repository.dart';
-import '../../domain/repositories/statistics_repository.dart';
-import '../../domain/repositories/sync_repository.dart';
-import '../../domain/repositories/backup_repository.dart';
+// import '../../domain/repositories/debt_payment_repository.dart';
+// import '../../domain/repositories/expense_repository.dart';
+// import '../../domain/repositories/accounting_repository.dart';
+// import '../../domain/repositories/statistics_repository.dart';
+// import '../../domain/repositories/sync_repository.dart';
+// import '../../domain/repositories/backup_repository.dart';
 
 // UseCases
-import '../../domain/usecases/base/base_usecase.dart';
+// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
+// import '../../domain/usecases/base/base_usecase.dart';
 // Suppliers
 import '../../domain/usecases/suppliers/add_supplier.dart';
 import '../../domain/usecases/suppliers/get_suppliers.dart';
@@ -349,23 +354,83 @@ class ServiceLocator {
     sl.registerFactory<AuthBloc>(() => AuthBloc());
     sl.registerFactory<SyncBloc>(() => SyncBloc());
     sl.registerFactory<DashboardBloc>(() => DashboardBloc());
-    sl.registerFactory<SuppliersBloc>(() => SuppliersBloc());
+    sl.registerFactory<SuppliersBloc>(() => SuppliersBloc(
+      getSuppliers: sl(),
+      addSupplier: sl(),
+      updateSupplier: sl(),
+      deleteSupplier: sl(),
+      searchSuppliersUseCase: sl(),
+    ));
     sl.registerFactory<SupplierFormBloc>(() => SupplierFormBloc());
-    sl.registerFactory<CustomersBloc>(() => CustomersBloc());
-    sl.registerFactory<CustomerFormBloc>(() => CustomerFormBloc());
+    sl.registerFactory<CustomersBloc>(() => CustomersBloc(
+      getCustomers: sl(),
+      addCustomer: sl(),
+      updateCustomer: sl(),
+      deleteCustomer: sl(),
+      blockCustomer: sl(),
+      searchCustomersUseCase: sl(),
+    ));
+    sl.registerFactory<CustomerFormBloc>(() => CustomerFormBloc(
+      addCustomer: sl(),
+      updateCustomer: sl(),
+      getCustomers: sl(),
+    ));
     sl.registerFactory<CustomerSearchBloc>(() => CustomerSearchBloc());
-    sl.registerFactory<SalesBloc>(() => SalesBloc());
-    sl.registerFactory<QuickSaleBloc>(() => QuickSaleBloc());
+    sl.registerFactory<SalesBloc>(() => SalesBloc(
+      getSales: sl(),
+      getTodaySales: sl(),
+      getSalesByCustomer: sl(),
+      addSale: sl(),
+      updateSale: sl(),
+      deleteSale: sl(),
+      cancelSale: sl(),
+    ));
+    sl.registerFactory<QuickSaleBloc>(() => QuickSaleBloc(
+      quickSaleUseCase: sl(),
+    ));
     sl.registerFactory<SaleFormBloc>(() => SaleFormBloc());
-    sl.registerFactory<PurchasesBloc>(() => PurchasesBloc());
+    sl.registerFactory<PurchasesBloc>(() => PurchasesBloc(
+      getPurchases: sl(),
+      getTodayPurchases: sl(),
+      getPurchasesBySupplier: sl(),
+      addPurchase: sl(),
+      updatePurchase: sl(),
+      deletePurchase: sl(),
+      cancelPurchase: sl(),
+    ));
     sl.registerFactory<PurchaseFormBloc>(() => PurchaseFormBloc());
-    sl.registerFactory<DebtsBloc>(() => DebtsBloc());
+    sl.registerFactory<DebtsBloc>(() => DebtsBloc(
+      getDebts: sl(),
+      getPendingDebts: sl(),
+      getOverdueDebts: sl(),
+      getDebtsByPerson: sl(),
+      addDebt: sl(),
+      updateDebt: sl(),
+      deleteDebt: sl(),
+      partialPayment: sl(),
+    ));
     sl.registerFactory<PaymentBloc>(() => PaymentBloc());
-    sl.registerFactory<ExpensesBloc>(() => ExpensesBloc());
+    sl.registerFactory<ExpensesBloc>(() => ExpensesBloc(
+      repository: sl(),
+      getTodayExpenses: sl(),
+      getExpensesByType: sl(),
+      addExpense: sl(),
+      updateExpense: sl(),
+      deleteExpense: sl(),
+    ));
     sl.registerFactory<ExpenseFormBloc>(() => ExpenseFormBloc());
-    sl.registerFactory<AccountingBloc>(() => AccountingBloc());
+    sl.registerFactory<AccountingBloc>(() => AccountingBloc(
+      salesRepository: sl(),
+      purchaseRepository: sl(),
+      expenseRepository: sl(),
+    ));
     sl.registerFactory<CashManagementBloc>(() => CashManagementBloc());
-    sl.registerFactory<StatisticsBloc>(() => StatisticsBloc());
+    sl.registerFactory<StatisticsBloc>(() => StatisticsBloc(
+      getDailyStats: sl(),
+      repository: sl(),
+      getMonthStats: sl(),
+      getYearStats: sl(),
+    ));
     sl.registerFactory<ReportsBloc>(() => ReportsBloc());
     sl.registerFactory<SettingsBloc>(() => SettingsBloc());
     sl.registerFactory<BackupBloc>(() => BackupBloc());

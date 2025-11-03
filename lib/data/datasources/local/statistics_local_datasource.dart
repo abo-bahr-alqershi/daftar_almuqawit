@@ -3,8 +3,14 @@
 import '../../models/statistics_model.dart';
 import 'base_local_datasource.dart';
 
-class StatisticsLocalDataSource extends BaseLocalDataSource {
+class StatisticsLocalDataSource extends BaseLocalDataSource<DailyStatisticsModel> {
   StatisticsLocalDataSource(super.dbHelper);
+
+  @override
+  String get tableName => 'daily_stats';
+
+  @override
+  DailyStatisticsModel fromMap(Map<String, dynamic> map) => DailyStatisticsModel.fromMap(map);
 
   Future<DailyStatisticsModel?> getDaily(String date) async {
     final database = await db;

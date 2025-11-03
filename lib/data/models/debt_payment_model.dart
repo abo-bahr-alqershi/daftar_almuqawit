@@ -42,4 +42,42 @@ class DebtPaymentModel extends BaseModel {
         DebtPaymentsTable.cPaymentMethod: paymentMethod,
         DebtPaymentsTable.cNotes: notes,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'debtId': debtId,
+        'amount': amount,
+        'paymentDate': paymentDate,
+        'paymentTime': paymentTime,
+        'paymentMethod': paymentMethod,
+        'notes': notes,
+      };
+
+  @override
+  DebtPaymentModel copyWith({
+    int? id,
+    int? debtId,
+    double? amount,
+    String? paymentDate,
+    String? paymentTime,
+    String? paymentMethod,
+    String? notes,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      DebtPaymentModel(
+        id: id ?? this.id,
+        debtId: debtId ?? this.debtId,
+        amount: amount ?? this.amount,
+        paymentDate: paymentDate ?? this.paymentDate,
+        paymentTime: paymentTime ?? this.paymentTime,
+        paymentMethod: paymentMethod ?? this.paymentMethod,
+        notes: notes ?? this.notes,
+      );
+
+  @override
+  List<Object?> get props => [id, debtId, amount, paymentDate, paymentTime, paymentMethod, notes];
 }

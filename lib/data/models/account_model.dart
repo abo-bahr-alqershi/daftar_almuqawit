@@ -38,4 +38,39 @@ class AccountModel extends BaseModel {
         AccountsTable.cIcon: icon,
         AccountsTable.cColor: color,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'type': type,
+        'balance': balance,
+        'icon': icon,
+        'color': color,
+      };
+
+  @override
+  AccountModel copyWith({
+    int? id,
+    String? name,
+    String? type,
+    double? balance,
+    String? icon,
+    String? color,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      AccountModel(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        type: type ?? this.type,
+        balance: balance ?? this.balance,
+        icon: icon ?? this.icon,
+        color: color ?? this.color,
+      );
+
+  @override
+  List<Object?> get props => [id, name, type, balance, icon, color];
 }

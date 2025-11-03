@@ -1,12 +1,15 @@
 // ignore_for_file: public_member_api_docs
 
 import '../../database/tables/sync_queue_table.dart';
-import 'base_local_datasource.dart';
 import '../../models/sync_record_model.dart';
 
 /// مصدر بيانات محلي لقائمة المزامنة
-class SyncLocalDataSource extends BaseLocalDataSource {
-  SyncLocalDataSource(super.dbHelper);
+class SyncLocalDataSource {
+  final dynamic dbHelper;
+  
+  SyncLocalDataSource(this.dbHelper);
+
+  Future<dynamic> get db async => await dbHelper.database;
 
   Future<int> enqueue({
     required String entity,

@@ -42,4 +42,42 @@ class JournalEntryModel extends BaseModel {
         JournalEntriesTable.cReferenceId: referenceId,
         JournalEntriesTable.cTotalAmount: totalAmount,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'date': date,
+        'time': time,
+        'description': description,
+        'referenceType': referenceType,
+        'referenceId': referenceId,
+        'totalAmount': totalAmount,
+      };
+
+  @override
+  JournalEntryModel copyWith({
+    int? id,
+    String? date,
+    String? time,
+    String? description,
+    String? referenceType,
+    int? referenceId,
+    double? totalAmount,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      JournalEntryModel(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        time: time ?? this.time,
+        description: description ?? this.description,
+        referenceType: referenceType ?? this.referenceType,
+        referenceId: referenceId ?? this.referenceId,
+        totalAmount: totalAmount ?? this.totalAmount,
+      );
+
+  @override
+  List<Object?> get props => [id, date, time, description, referenceType, referenceId, totalAmount];
 }

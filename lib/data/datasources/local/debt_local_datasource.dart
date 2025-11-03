@@ -1,71 +1,60 @@
 // ignore_for_file: public_member_api_docs
 
-import 'package:sqflite/sqflite.dart';
 import '../../database/tables/debts_table.dart';
 import '../../models/debt_model.dart';
 import 'base_local_datasource.dart';
 
-class DebtLocalDataSource extends BaseLocalDataSource {
+class DebtLocalDataSource extends BaseLocalDataSource<DebtModel> {
   DebtLocalDataSource(super.dbHelper);
 
-  Future<int> insert(DebtModel model) async {
-    final database = await db;
-    return database.insert(DebtsTable.table, model.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-  }
+  @override
+  String get tableName => DebtsTable.table;
 
-  Future<void> update(DebtModel model) async {
-    final database = await db;
-    await database.update(DebtsTable.table, model.toMap(), where: '${DebtsTable.cId} = ?', whereArgs: [model.id]);
-  }
+  @override
+  DebtModel fromMap(Map<String, dynamic> map) => DebtModel.fromMap(map);
 
-  Future<void> delete(int id) async {
-    final database = await db;
-    await database.delete(DebtsTable.table, where: '${DebtsTable.cId} = ?', whereArgs: [id]);
-  }
-
-  Future<DebtModel?> getById(int id) async {
-    final database = await db;
-    final rows = await database.query(DebtsTable.table, where: '${DebtsTable.cId} = ?', whereArgs: [id], limit: 1);
-    if (rows.isEmpty) return null;
-    return DebtModel.fromMap(rows.first);
-  }
-
-  Future<List<DebtModel>> getAll() async {
-    final database = await db;
-    final rows = await database.query(DebtsTable.table, orderBy: '${DebtsTable.cDate} DESC');
-    return rows.map((e) => DebtModel.fromMap(e)).toList();
-  }
-
-  Future<List<DebtModel>> getPending() async {
-    final database = await db;
-    final rows = await database.query(
-      DebtsTable.table,
-      where: "${DebtsTable.cStatus} != ?",
-      whereArgs: ['مسدد'],
-      orderBy: '${DebtsTable.cDate} DESC',
-    );
-    return rows.map((e) => DebtModel.fromMap(e)).toList();
-  }
-
-  Future<List<DebtModel>> getOverdue(String today) async {
-    final database = await db;
-    final rows = await database.query(
-      DebtsTable.table,
-      where: "${DebtsTable.cDueDate} IS NOT NULL AND ${DebtsTable.cDueDate} < ? AND ${DebtsTable.cStatus} != ?",
-      whereArgs: [today, 'مسدد'],
-      orderBy: '${DebtsTable.cDueDate} ASC',
-    );
-    return rows.map((e) => DebtModel.fromMap(e)).toList();
-  }
-
+  /// جلب الديون حسب الشخص (عميل أو مورد)
   Future<List<DebtModel>> getByPerson(String personType, int personId) async {
-    final database = await db;
-    final rows = await database.query(
-      DebtsTable.table,
+    return await getWhere(
       where: '${DebtsTable.cPersonType} = ? AND ${DebtsTable.cPersonId} = ?',
       whereArgs: [personType, personId],
       orderBy: '${DebtsTable.cDate} DESC',
     );
-    return rows.map((e) => DebtModel.fromMap(e)).toList();
+  }
+
+  /// جلب الديون غير المدفوعة
+  Future<List<DebtModel>> getUnpaid() async {
+    return await getWhere(
+      where: '${DebtsTable.cRemainingAmount} > 0',
+      whereArgs: [],
+      orderBy: '${DebtsTable.cDate} ASC',
+    );
+  }
+
+  /// جلب الديون حسب الحالة
+  Future<List<DebtModel>> getByStatus(String status) async {
+    return await getWhere(
+      where: '${DebtsTable.cStatus} = ?',
+      whereArgs: [status],
+      orderBy: '${DebtsTable.cDate} DESC',
+    );
+  }
+
+  /// جلب الديون المعلقة (غير المسددة)
+  Future<List<DebtModel>> getPending() async {
+    return await getWhere(
+      where: "${DebtsTable.cStatus} != ?",
+      whereArgs: ['مسدد'],
+      orderBy: '${DebtsTable.cDate} DESC',
+    );
+  }
+
+  /// جلب الديون المتأخرة
+  Future<List<DebtModel>> getOverdue(String today) async {
+    return await getWhere(
+      where: "${DebtsTable.cDueDate} IS NOT NULL AND ${DebtsTable.cDueDate} < ? AND ${DebtsTable.cStatus} != ?",
+      whereArgs: [today, 'مسدد'],
+      orderBy: '${DebtsTable.cDueDate} ASC',
+    );
   }
 }

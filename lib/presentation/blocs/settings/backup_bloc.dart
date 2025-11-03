@@ -1,7 +1,9 @@
-// ignore_for_file: public_member_api_docs
+/// Bloc إدارة النسخ الاحتياطي
+/// يدير عمليات النسخ الاحتياطي والاستعادة
 
 import 'package:bloc/bloc.dart';
 
+/// Bloc النسخ الاحتياطي
 class BackupBloc extends Cubit<void> {
   BackupBloc() : super(null);
 }

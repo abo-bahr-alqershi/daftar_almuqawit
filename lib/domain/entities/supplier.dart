@@ -26,4 +26,67 @@ class Supplier extends BaseEntity {
     this.notes,
     this.createdAt,
   });
+
+  /// التحقق من صحة بيانات المورد
+  bool isValid() {
+    return name.trim().isNotEmpty && qualityRating >= 1 && qualityRating <= 5;
+  }
+
+  /// حساب متوسط قيمة المشتريات
+  double get averagePurchaseValue {
+    return totalPurchases;
+  }
+
+  /// التحقق من وجود ديون للمورد
+  bool get hasDebt {
+    return totalDebtToHim > 0;
+  }
+
+  /// تحديد مستوى الثقة بناءً على التقييم
+  String getTrustLevelDescription() {
+    if (qualityRating >= 4) return 'ممتاز';
+    if (qualityRating >= 3) return 'جيد';
+    return 'متوسط';
+  }
+
+  /// نسخ الكيان مع تحديث بعض الخصائص
+  Supplier copyWith({
+    int? id,
+    String? name,
+    String? phone,
+    String? area,
+    int? qualityRating,
+    String? trustLevel,
+    double? totalPurchases,
+    double? totalDebtToHim,
+    String? notes,
+    String? createdAt,
+  }) {
+    return Supplier(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      area: area ?? this.area,
+      qualityRating: qualityRating ?? this.qualityRating,
+      trustLevel: trustLevel ?? this.trustLevel,
+      totalPurchases: totalPurchases ?? this.totalPurchases,
+      totalDebtToHim: totalDebtToHim ?? this.totalDebtToHim,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        name,
+        phone,
+        area,
+        qualityRating,
+        trustLevel,
+        totalPurchases,
+        totalDebtToHim,
+        notes,
+        createdAt,
+      ];
 }

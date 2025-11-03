@@ -1,8 +1,10 @@
-// ignore_for_file: public_member_api_docs
+/// نموذج المصروف
+/// يحتوي على تفاصيل المصروف وتصنيفه والمرفقات
 
 import 'base/base_model.dart';
 import '../database/tables/expenses_table.dart';
 
+/// نموذج بيانات المصروف
 class ExpenseModel extends BaseModel {
   final int? id;
   final String date;
@@ -11,8 +13,9 @@ class ExpenseModel extends BaseModel {
   final double amount;
   final String? description;
   final String paymentMethod;
-  final int recurring;
+  final int recurring; // 0: لا يتكرر، 1: يومي، 2: أسبوعي، 3: شهري
   final String? notes;
+  final String? attachmentPath; // مسار المرفق أو الفاتورة
 
   const ExpenseModel({
     this.id,
@@ -24,6 +27,7 @@ class ExpenseModel extends BaseModel {
     this.paymentMethod = 'نقد',
     this.recurring = 0,
     this.notes,
+    this.attachmentPath,
   });
 
   factory ExpenseModel.fromMap(Map<String, Object?> map) => ExpenseModel(
@@ -50,4 +54,85 @@ class ExpenseModel extends BaseModel {
         ExpensesTable.cRecurring: recurring,
         ExpensesTable.cNotes: notes,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'date': date,
+        'time': time,
+        'category': category,
+        'amount': amount,
+        'description': description,
+        'paymentMethod': paymentMethod,
+        'recurring': recurring,
+        'notes': notes,
+      };
+
+  @override
+  ExpenseModel copyWith({
+    int? id,
+    String? date,
+    String? time,
+    String? category,
+    double? amount,
+    String? description,
+    String? paymentMethod,
+    int? recurring,
+    String? notes,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      ExpenseModel(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        time: time ?? this.time,
+        category: category ?? this.category,
+        amount: amount ?? this.amount,
+        description: description ?? this.description,
+        paymentMethod: paymentMethod ?? this.paymentMethod,
+        recurring: recurring ?? this.recurring,
+        notes: notes ?? this.notes,
+      );
+
+  /// التحقق من أن المصروف متكرر
+  bool get isRecurring => recurring > 0;
+
+  /// الحصول على نوع التكرار
+  String get recurringType {
+    switch (recurring) {
+      case 1:
+        return 'يومي';
+      case 2:
+        return 'أسبوعي';
+      case 3:
+        return 'شهري';
+      default:
+        return 'لا يتكرر';
+    }
+  }
+
+  /// التحقق من وجود مرفق
+  bool get hasAttachment => attachmentPath != null && attachmentPath!.isNotEmpty;
+
+  /// الحصول على تصنيفات المصاريف الشائعة
+  static List<String> get commonCategories => [
+        'رواتب',
+        'إيجار',
+        'كهرباء',
+        'ماء',
+        'صيانة',
+        'نقل',
+        'اتصالات',
+        'تسويق',
+        'مواد خام',
+        'أخرى',
+      ];
+
+  @override
+  List<Object?> get props => [
+    id, date, time, category, amount, description,
+    paymentMethod, recurring, notes, attachmentPath
+  ];
 }

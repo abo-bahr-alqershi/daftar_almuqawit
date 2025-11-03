@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/navigation/app_router.dart';
 import 'presentation/navigation/route_names.dart';
-import 'presentation/screens/splash/splash_screen.dart';
+// import 'presentation/screens/splash/splash_screen.dart'; // TODO: سيتم استخدامها لاحقاً
 import 'presentation/navigation/route_observers.dart';
 import 'core/di/service_locator.dart';
 import 'presentation/blocs/app/app_bloc.dart';

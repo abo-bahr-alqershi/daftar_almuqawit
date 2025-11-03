@@ -1,7 +1,7 @@
 // ignore_for_file: public_member_api_docs
 
 import '../../../core/constants/firebase_constants.dart';
-import '../../../core/services/firebase/firestore_service.dart';
+// import '../../../core/services/firebase/firestore_service.dart'; // مستورد في base_remote_datasource
 import '../../models/supplier_model.dart';
 import 'base_remote_datasource.dart';
 

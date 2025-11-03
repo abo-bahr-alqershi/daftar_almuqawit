@@ -20,7 +20,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         currentDebt: m.currentDebt,
         isBlocked: m.isBlocked == 1,
         notes: m.notes,
-        createdAt: m.createdAt,
+        createdAt: m.createdAt?.toIso8601String(),
       );
 
   CustomerModel _toModel(Customer e) => CustomerModel(
@@ -34,7 +34,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         currentDebt: e.currentDebt,
         isBlocked: e.isBlocked ? 1 : 0,
         notes: e.notes,
-        createdAt: e.createdAt,
+        createdAt: e.createdAt != null ? DateTime.tryParse(e.createdAt!) : null,
       );
 
   @override

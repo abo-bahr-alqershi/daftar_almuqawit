@@ -20,7 +20,7 @@ class SupplierRepositoryImpl implements SupplierRepository {
         totalPurchases: m.totalPurchases,
         totalDebtToHim: m.totalDebtToHim,
         notes: m.notes,
-        createdAt: m.createdAt,
+        createdAt: m.createdAt?.toIso8601String(),
       );
 
   SupplierModel _toModel(Supplier e) => SupplierModel(
@@ -33,7 +33,7 @@ class SupplierRepositoryImpl implements SupplierRepository {
         totalPurchases: e.totalPurchases,
         totalDebtToHim: e.totalDebtToHim,
         notes: e.notes,
-        createdAt: e.createdAt,
+        createdAt: e.createdAt != null ? DateTime.tryParse(e.createdAt!) : null,
       );
 
   @override
@@ -62,4 +62,68 @@ class SupplierRepositoryImpl implements SupplierRepository {
 
   @override
   Future<void> update(Supplier entity) => local.update(_toModel(entity));
+
+  @override
+  Future<List<Supplier>> searchByPhone(String phone) async {
+    final list = await local.searchByPhone(phone);
+    return list.map(_fromModel).toList();
+  }
+
+  @override
+  Future<List<Supplier>> searchByArea(String area) async {
+    final list = await local.searchByArea(area);
+    return list.map(_fromModel).toList();
+  }
+
+  @override
+  Future<List<Supplier>> filterByRating(int minRating) async {
+    final allSuppliers = await getAll();
+    return allSuppliers.where((s) => s.qualityRating >= minRating).toList();
+  }
+
+  @override
+  Future<List<Supplier>> getSuppliersWithDebts() async {
+    final allSuppliers = await getAll();
+    return allSuppliers.where((s) => s.hasDebt).toList();
+  }
+
+  @override
+  Future<List<Supplier>> getTopSuppliers({int limit = 10}) async {
+    final allSuppliers = await getAll();
+    allSuppliers.sort((a, b) {
+      final ratingCompare = b.qualityRating.compareTo(a.qualityRating);
+      if (ratingCompare != 0) return ratingCompare;
+      return b.totalPurchases.compareTo(a.totalPurchases);
+    });
+    return allSuppliers.take(limit).toList();
+  }
+
+  @override
+  Future<void> syncSupplier(Supplier supplier) async {
+    // TODO: تنفيذ المزامنة مع السحابة
+    // سيتم تنفيذها لاحقاً عند إضافة remote datasource
+  }
+
+  @override
+  Future<void> syncAll() async {
+    // TODO: تنفيذ مزامنة جميع الموردين
+    // سيتم تنفيذها لاحقاً عند إضافة remote datasource
+  }
+
+  @override
+  Future<Map<String, dynamic>> getStatistics() async {
+    final allSuppliers = await getAll();
+    return {
+      'total': allSuppliers.length,
+      'withDebts': allSuppliers.where((s) => s.hasDebt).length,
+      'averageRating': allSuppliers.isEmpty
+          ? 0.0
+          : allSuppliers.map((s) => s.qualityRating).reduce((a, b) => a + b) /
+              allSuppliers.length,
+      'totalPurchases': allSuppliers.fold<double>(
+          0, (sum, s) => sum + s.totalPurchases),
+      'totalDebts':
+          allSuppliers.fold<double>(0, (sum, s) => sum + s.totalDebtToHim),
+    };
+  }
 }

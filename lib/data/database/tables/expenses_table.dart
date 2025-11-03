@@ -1,4 +1,6 @@
-// ignore_for_file: public_member_api_docs
+/// جدول المصروفات
+/// يخزن جميع المصروفات مع التصنيف والتكرار
+/// متوافق مع ExpenseModel
 
 /// تعريف جدول المصروفات expenses
 class ExpensesTable {
@@ -12,7 +14,8 @@ class ExpensesTable {
   static const String cAmount = 'amount';
   static const String cDescription = 'description';
   static const String cPaymentMethod = 'payment_method';
-  static const String cRecurring = 'recurring';
+  static const String cRecurring = 'recurring'; // 0: لا يتكرر، 1: يومي، 2: أسبوعي، 3: شهري
+  static const String cAttachmentPath = 'attachment_path'; // مسار المرفق
   static const String cNotes = 'notes';
 
   static const String create = '''
@@ -25,6 +28,7 @@ CREATE TABLE $table (
   $cDescription TEXT,
   $cPaymentMethod TEXT DEFAULT 'نقد',
   $cRecurring INTEGER DEFAULT 0,
+  $cAttachmentPath TEXT,
   $cNotes TEXT
 );
 ''';

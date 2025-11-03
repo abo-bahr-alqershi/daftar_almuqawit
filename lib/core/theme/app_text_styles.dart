@@ -327,6 +327,9 @@ class AppTextStyles {
   /// عنوان (للتوافق مع الكود القديم)
   static TextStyle get title => titleLarge;
 
+  /// عنوان فرعي (للتوافق مع الكود القديم)
+  static TextStyle get subtitle => titleMedium;
+
   /// نص عادي (للتوافق مع الكود القديم)
   static TextStyle get body => bodyMedium;
 }

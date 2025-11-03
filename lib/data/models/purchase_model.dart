@@ -66,4 +66,60 @@ class PurchaseModel extends BaseModel {
         PurchasesTable.cRemainingAmount: remainingAmount,
         PurchasesTable.cNotes: notes,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'date': date,
+        'time': time,
+        'supplierId': supplierId,
+        'qatTypeId': qatTypeId,
+        'quantity': quantity,
+        'unit': unit,
+        'unitPrice': unitPrice,
+        'totalAmount': totalAmount,
+        'paymentStatus': paymentStatus,
+        'paidAmount': paidAmount,
+        'remainingAmount': remainingAmount,
+        'notes': notes,
+      };
+
+  @override
+  PurchaseModel copyWith({
+    int? id,
+    String? date,
+    String? time,
+    int? supplierId,
+    int? qatTypeId,
+    double? quantity,
+    String? unit,
+    double? unitPrice,
+    double? totalAmount,
+    String? paymentStatus,
+    double? paidAmount,
+    double? remainingAmount,
+    String? notes,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      PurchaseModel(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        time: time ?? this.time,
+        supplierId: supplierId ?? this.supplierId,
+        qatTypeId: qatTypeId ?? this.qatTypeId,
+        quantity: quantity ?? this.quantity,
+        unit: unit ?? this.unit,
+        unitPrice: unitPrice ?? this.unitPrice,
+        totalAmount: totalAmount ?? this.totalAmount,
+        paymentStatus: paymentStatus ?? this.paymentStatus,
+        paidAmount: paidAmount ?? this.paidAmount,
+        remainingAmount: remainingAmount ?? this.remainingAmount,
+        notes: notes ?? this.notes,
+      );
+
+  @override
+  List<Object?> get props => [id, date, time, supplierId, qatTypeId, quantity, unit, unitPrice, totalAmount, paymentStatus, paidAmount, remainingAmount, notes];
 }

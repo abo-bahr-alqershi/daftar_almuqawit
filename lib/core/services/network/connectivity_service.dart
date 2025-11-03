@@ -73,9 +73,62 @@ class ConnectivityService {
     return type == ConnectivityResult.mobile;
   }
 
+  /// فحص جودة الاتصال
+  Future<ConnectionQuality> checkQuality() async {
+    final isConnected = await isOnline;
+    if (!isConnected) return ConnectionQuality.none;
+    
+    final type = await connectionType;
+    if (type == ConnectivityResult.wifi) {
+      return ConnectionQuality.excellent;
+    } else if (type == ConnectivityResult.mobile) {
+      return ConnectionQuality.good;
+    }
+    
+    return ConnectionQuality.poor;
+  }
+
+  /// الانتظار حتى يتوفر الاتصال
+  Future<void> waitForConnection({Duration? timeout}) async {
+    if (await isOnline) return;
+    
+    final completer = Completer<void>();
+    StreamSubscription? subscription;
+    Timer? timer;
+    
+    subscription = onStatusChange.listen((isConnected) {
+      if (isConnected) {
+        subscription?.cancel();
+        timer?.cancel();
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+      }
+    });
+    
+    if (timeout != null) {
+      timer = Timer(timeout, () {
+        subscription?.cancel();
+        if (!completer.isCompleted) {
+          completer.completeError(TimeoutException('انتهت مهلة الانتظار للاتصال'));
+        }
+      });
+    }
+    
+    return completer.future;
+  }
+
   /// إغلاق الخدمة
   Future<void> dispose() async {
     await _subscription?.cancel();
     await _connectionController.close();
   }
+}
+
+/// جودة الاتصال
+enum ConnectionQuality {
+  none,
+  poor,
+  good,
+  excellent,
 }

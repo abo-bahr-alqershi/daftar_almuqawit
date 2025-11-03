@@ -1,9 +1,9 @@
-// ignore_for_file: public_member_api_docs
+/// Bloc إدارة إعدادات التطبيق
+/// يدير الإعدادات العامة للتطبيق
 
 import 'package:bloc/bloc.dart';
 
-class AppSettingsBloc extends Bloc<Object, Object> {
-  AppSettingsBloc() : super(Object()) {
-    on<Object>((event, emit) => emit(Object()));
-  }
+/// Bloc إعدادات التطبيق
+class AppSettingsBloc extends Cubit<void> {
+  AppSettingsBloc() : super(null);
 }

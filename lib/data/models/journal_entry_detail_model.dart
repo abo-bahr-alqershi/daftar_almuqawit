@@ -34,4 +34,36 @@ class JournalEntryDetailModel extends BaseModel {
         JournalEntryDetailsTable.cDebit: debit,
         JournalEntryDetailsTable.cCredit: credit,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'entryId': entryId,
+        'accountId': accountId,
+        'debit': debit,
+        'credit': credit,
+      };
+
+  @override
+  JournalEntryDetailModel copyWith({
+    int? id,
+    int? entryId,
+    int? accountId,
+    double? debit,
+    double? credit,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      JournalEntryDetailModel(
+        id: id ?? this.id,
+        entryId: entryId ?? this.entryId,
+        accountId: accountId ?? this.accountId,
+        debit: debit ?? this.debit,
+        credit: credit ?? this.credit,
+      );
+
+  @override
+  List<Object?> get props => [id, entryId, accountId, debit, credit];
 }

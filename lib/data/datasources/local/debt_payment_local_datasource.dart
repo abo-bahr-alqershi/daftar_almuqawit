@@ -4,13 +4,14 @@ import '../../database/tables/debt_payments_table.dart';
 import '../../models/debt_payment_model.dart';
 import 'base_local_datasource.dart';
 
-class DebtPaymentLocalDataSource extends BaseLocalDataSource {
+class DebtPaymentLocalDataSource extends BaseLocalDataSource<DebtPaymentModel> {
   DebtPaymentLocalDataSource(super.dbHelper);
 
-  Future<int> insert(DebtPaymentModel model) async {
-    final database = await db;
-    return database.insert(DebtPaymentsTable.table, model.toMap());
-  }
+  @override
+  String get tableName => DebtPaymentsTable.table;
+
+  @override
+  DebtPaymentModel fromMap(Map<String, dynamic> map) => DebtPaymentModel.fromMap(map);
 
   Future<List<DebtPaymentModel>> getByDebt(int debtId) async {
     final database = await db;

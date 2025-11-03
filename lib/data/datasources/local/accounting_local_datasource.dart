@@ -7,8 +7,14 @@ import '../../models/journal_entry_detail_model.dart';
 import 'base_local_datasource.dart';
 
 /// مصدر بيانات محلي للمحاسبة (قيود اليومية وتفاصيلها)
-class AccountingLocalDataSource extends BaseLocalDataSource {
+class AccountingLocalDataSource extends BaseLocalDataSource<JournalEntryModel> {
   AccountingLocalDataSource(super.dbHelper);
+
+  @override
+  String get tableName => JournalEntriesTable.table;
+
+  @override
+  JournalEntryModel fromMap(Map<String, dynamic> map) => JournalEntryModel.fromMap(map);
 
   Future<int> insertEntry(JournalEntryModel model) async {
     final database = await db;

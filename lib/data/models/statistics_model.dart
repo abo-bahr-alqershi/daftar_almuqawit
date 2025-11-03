@@ -1,8 +1,10 @@
-// ignore_for_file: public_member_api_docs
+/// نموذج الإحصائيات اليومية
+/// يحتوي على إحصائيات المبيعات والمشتريات والأرباح والمقارنات
 
 import 'base/base_model.dart';
 import '../database/tables/daily_stats_table.dart';
 
+/// نموذج بيانات الإحصائيات اليومية
 class DailyStatisticsModel extends BaseModel {
   final int? id;
   final String date;
@@ -62,4 +64,108 @@ class DailyStatisticsModel extends BaseModel {
         DailyStatsTable.cCollectedDebts: collectedDebts,
         DailyStatsTable.cCashBalance: cashBalance,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'date': date,
+        'totalPurchases': totalPurchases,
+        'totalSales': totalSales,
+        'totalExpenses': totalExpenses,
+        'cashSales': cashSales,
+        'creditSales': creditSales,
+        'grossProfit': grossProfit,
+        'netProfit': netProfit,
+        'newDebts': newDebts,
+        'collectedDebts': collectedDebts,
+        'cashBalance': cashBalance,
+      };
+
+  @override
+  DailyStatisticsModel copyWith({
+    int? id,
+    String? date,
+    double? totalPurchases,
+    double? totalSales,
+    double? totalExpenses,
+    double? cashSales,
+    double? creditSales,
+    double? grossProfit,
+    double? netProfit,
+    double? newDebts,
+    double? collectedDebts,
+    double? cashBalance,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      DailyStatisticsModel(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        totalPurchases: totalPurchases ?? this.totalPurchases,
+        totalSales: totalSales ?? this.totalSales,
+        totalExpenses: totalExpenses ?? this.totalExpenses,
+        cashSales: cashSales ?? this.cashSales,
+        creditSales: creditSales ?? this.creditSales,
+        grossProfit: grossProfit ?? this.grossProfit,
+        netProfit: netProfit ?? this.netProfit,
+        newDebts: newDebts ?? this.newDebts,
+        collectedDebts: collectedDebts ?? this.collectedDebts,
+        cashBalance: cashBalance ?? this.cashBalance,
+      );
+
+  /// حساب نسبة الربح الإجمالي
+  double get grossProfitMargin {
+    if (totalSales == 0) return 0;
+    return (grossProfit / totalSales) * 100;
+  }
+
+  /// حساب نسبة الربح الصافي
+  double get netProfitMargin {
+    if (totalSales == 0) return 0;
+    return (netProfit / totalSales) * 100;
+  }
+
+  /// حساب نسبة المبيعات النقدية
+  double get cashSalesPercentage {
+    if (totalSales == 0) return 0;
+    return (cashSales / totalSales) * 100;
+  }
+
+  /// حساب نسبة المبيعات الآجلة
+  double get creditSalesPercentage {
+    if (totalSales == 0) return 0;
+    return (creditSales / totalSales) * 100;
+  }
+
+  /// المقارنة مع يوم آخر
+  Map<String, double> compareWith(DailyStatisticsModel other) {
+    return {
+      'salesGrowth': _calculateGrowth(other.totalSales, totalSales),
+      'purchasesGrowth': _calculateGrowth(other.totalPurchases, totalPurchases),
+      'profitGrowth': _calculateGrowth(other.netProfit, netProfit),
+      'expensesGrowth': _calculateGrowth(other.totalExpenses, totalExpenses),
+    };
+  }
+
+  /// حساب نسبة النمو
+  double _calculateGrowth(double oldValue, double newValue) {
+    if (oldValue == 0) return newValue > 0 ? 100 : 0;
+    return ((newValue - oldValue) / oldValue) * 100;
+  }
+
+  /// التنبؤ بالمبيعات بناءً على المتوسط
+  static double predictSales(List<DailyStatisticsModel> history) {
+    if (history.isEmpty) return 0;
+    final total = history.fold<double>(0, (sum, stat) => sum + stat.totalSales);
+    return total / history.length;
+  }
+
+  @override
+  List<Object?> get props => [
+    id, date, totalPurchases, totalSales, totalExpenses,
+    cashSales, creditSales, grossProfit, netProfit,
+    newDebts, collectedDebts, cashBalance
+  ];
 }

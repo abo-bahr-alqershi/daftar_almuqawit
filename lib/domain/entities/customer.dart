@@ -28,4 +28,84 @@ class Customer extends BaseEntity {
     this.notes,
     this.createdAt,
   });
+
+  /// التحقق من صحة بيانات العميل
+  bool isValid() {
+    return name.trim().isNotEmpty;
+  }
+
+  /// حساب الرصيد المستحق (الدين الحالي)
+  double get outstandingBalance {
+    return currentDebt;
+  }
+
+  /// التحقق من تجاوز حد الائتمان
+  bool get hasExceededCreditLimit {
+    return currentDebt > creditLimit;
+  }
+
+  /// التحقق من إمكانية البيع للعميل
+  bool canPurchase(double amount) {
+    if (isBlocked) return false;
+    if (creditLimit == 0) return true; // لا يوجد حد ائتماني
+    return (currentDebt + amount) <= creditLimit;
+  }
+
+  /// حساب نسبة استخدام الائتمان
+  double get creditUtilizationPercentage {
+    if (creditLimit == 0) return 0;
+    return (currentDebt / creditLimit) * 100;
+  }
+
+  /// تحديد حالة العميل
+  String getCustomerStatus() {
+    if (isBlocked) return 'محظور';
+    if (hasExceededCreditLimit) return 'تجاوز الحد';
+    if (currentDebt > 0) return 'عليه دين';
+    return 'نشط';
+  }
+
+  /// نسخ الكيان مع تحديث بعض الخصائص
+  Customer copyWith({
+    int? id,
+    String? name,
+    String? phone,
+    String? nickname,
+    String? customerType,
+    double? creditLimit,
+    double? totalPurchases,
+    double? currentDebt,
+    bool? isBlocked,
+    String? notes,
+    String? createdAt,
+  }) {
+    return Customer(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      nickname: nickname ?? this.nickname,
+      customerType: customerType ?? this.customerType,
+      creditLimit: creditLimit ?? this.creditLimit,
+      totalPurchases: totalPurchases ?? this.totalPurchases,
+      currentDebt: currentDebt ?? this.currentDebt,
+      isBlocked: isBlocked ?? this.isBlocked,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        name,
+        phone,
+        nickname,
+        customerType,
+        creditLimit,
+        totalPurchases,
+        currentDebt,
+        isBlocked,
+        notes,
+        createdAt,
+      ];
 }

@@ -42,4 +42,42 @@ class QatTypeModel extends BaseModel {
         QatTypesTable.cColor: color,
         QatTypesTable.cIcon: icon,
       };
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'qualityGrade': qualityGrade,
+        'defaultBuyPrice': defaultBuyPrice,
+        'defaultSellPrice': defaultSellPrice,
+        'color': color,
+        'icon': icon,
+      };
+
+  @override
+  QatTypeModel copyWith({
+    int? id,
+    String? name,
+    String? qualityGrade,
+    double? defaultBuyPrice,
+    double? defaultSellPrice,
+    String? color,
+    String? icon,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firebaseId,
+    String? syncStatus,
+  }) =>
+      QatTypeModel(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        qualityGrade: qualityGrade ?? this.qualityGrade,
+        defaultBuyPrice: defaultBuyPrice ?? this.defaultBuyPrice,
+        defaultSellPrice: defaultSellPrice ?? this.defaultSellPrice,
+        color: color ?? this.color,
+        icon: icon ?? this.icon,
+      );
+
+  @override
+  List<Object?> get props => [id, name, qualityGrade, defaultBuyPrice, defaultSellPrice, color, icon];
 }

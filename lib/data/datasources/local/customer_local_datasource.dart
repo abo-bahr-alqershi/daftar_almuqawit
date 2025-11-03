@@ -1,65 +1,101 @@
 // ignore_for_file: public_member_api_docs
 
-import 'package:sqflite/sqflite.dart';
 import '../../database/tables/customers_table.dart';
 import '../../models/customer_model.dart';
 import 'base_local_datasource.dart';
 
 /// مصدر بيانات محلي للعملاء
-class CustomerLocalDataSource extends BaseLocalDataSource {
+class CustomerLocalDataSource extends BaseLocalDataSource<CustomerModel> {
   CustomerLocalDataSource(super.dbHelper);
 
-  Future<int> insert(CustomerModel model) async {
-    final database = await db;
-    return database.insert(CustomersTable.table, model.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-  }
+  @override
+  String get tableName => CustomersTable.table;
 
-  Future<void> update(CustomerModel model) async {
-    final database = await db;
-    await database.update(
-      CustomersTable.table,
-      model.toMap(),
-      where: '${CustomersTable.cId} = ?',
-      whereArgs: [model.id],
-    );
-  }
+  @override
+  CustomerModel fromMap(Map<String, dynamic> map) => CustomerModel.fromMap(map);
 
-  Future<void> delete(int id) async {
-    final database = await db;
-    await database.delete(CustomersTable.table, where: '${CustomersTable.cId} = ?', whereArgs: [id]);
-  }
-
-  Future<CustomerModel?> getById(int id) async {
-    final database = await db;
-    final rows = await database.query(CustomersTable.table, where: '${CustomersTable.cId} = ?', whereArgs: [id], limit: 1);
-    if (rows.isEmpty) return null;
-    return CustomerModel.fromMap(rows.first);
-  }
-
-  Future<List<CustomerModel>> getAll() async {
-    final database = await db;
-    final rows = await database.query(CustomersTable.table, orderBy: '${CustomersTable.cName} COLLATE NOCASE');
-    return rows.map((e) => CustomerModel.fromMap(e)).toList();
-  }
-
+  /// البحث في العملاء بالاسم
   Future<List<CustomerModel>> searchByName(String query) async {
-    final database = await db;
-    final rows = await database.query(
-      CustomersTable.table,
-      where: '${CustomersTable.cName} LIKE ?',
-      whereArgs: ['%$query%'],
+    return await search(
+      column: CustomersTable.cName,
+      query: query,
       orderBy: '${CustomersTable.cName} COLLATE NOCASE',
     );
-    return rows.map((e) => CustomerModel.fromMap(e)).toList();
   }
 
+  /// جلب العملاء المحظورين
   Future<List<CustomerModel>> getBlocked() async {
-    final database = await db;
-    final rows = await database.query(
-      CustomersTable.table,
+    return await getWhere(
       where: '${CustomersTable.cIsBlocked} = 1',
+      whereArgs: [],
       orderBy: '${CustomersTable.cName} COLLATE NOCASE',
     );
-    return rows.map((e) => CustomerModel.fromMap(e)).toList();
+  }
+
+  /// جلب العملاء غير المحظورين
+  Future<List<CustomerModel>> getActive() async {
+    return await getWhere(
+      where: '${CustomersTable.cIsBlocked} = 0',
+      whereArgs: [],
+      orderBy: '${CustomersTable.cName} COLLATE NOCASE',
+    );
+  }
+
+  /// جلب العملاء الذين لديهم ديون
+  Future<List<CustomerModel>> getCustomersWithDebts() async {
+    return await getWhere(
+      where: '${CustomersTable.cCurrentDebt} > ?',
+      whereArgs: [0],
+      orderBy: '${CustomersTable.cCurrentDebt} DESC',
+    );
+  }
+
+  /// جلب العملاء حسب نوع العميل
+  Future<List<CustomerModel>> getByType(String type) async {
+    return await getWhere(
+      where: '${CustomersTable.cCustomerType} = ?',
+      whereArgs: [type],
+      orderBy: '${CustomersTable.cName} COLLATE NOCASE',
+    );
+  }
+
+  /// حظر عميل
+  Future<int> blockCustomer(int id) async {
+    final database = await db;
+    return await database.update(
+      CustomersTable.table,
+      {CustomersTable.cIsBlocked: 1},
+      where: '${CustomersTable.cId} = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// إلغاء حظر عميل
+  Future<int> unblockCustomer(int id) async {
+    final database = await db;
+    return await database.update(
+      CustomersTable.table,
+      {CustomersTable.cIsBlocked: 0},
+      where: '${CustomersTable.cId} = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// تحديث دين العميل
+  Future<int> updateDebt(int id, double amount) async {
+    final database = await db;
+    return await database.rawUpdate(
+      'UPDATE ${CustomersTable.table} SET ${CustomersTable.cCurrentDebt} = ${CustomersTable.cCurrentDebt} + ? WHERE ${CustomersTable.cId} = ?',
+      [amount, id],
+    );
+  }
+
+  /// تحديث إجمالي المشتريات
+  Future<int> updateTotalPurchases(int id, double amount) async {
+    final database = await db;
+    return await database.rawUpdate(
+      'UPDATE ${CustomersTable.table} SET ${CustomersTable.cTotalPurchases} = ${CustomersTable.cTotalPurchases} + ? WHERE ${CustomersTable.cId} = ?',
+      [amount, id],
+    );
   }
 }
