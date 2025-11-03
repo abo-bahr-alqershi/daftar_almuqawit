@@ -13,7 +13,7 @@ class SyncManager {
 
   Future<void> syncNow() => _service.syncOnce();
   void startAuto() => _service.startAutoSync();
-  Future<void> stopAuto() => _service.disposeAutoSync();
+  Future<void> stopAuto() => _service.stopAutoSync();
   Future<void> resolveConflicts() => _resolver.resolveAll();
 
   Future<void> enqueue(String entity, String operation, Map<String, Object?> payload) =>

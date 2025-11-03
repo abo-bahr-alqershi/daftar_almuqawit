@@ -8,7 +8,7 @@ abstract class BaseRemoteDataSource {
   final FirestoreService fs;
   const BaseRemoteDataSource(this.fs);
 
-  FirebaseFirestore get _db => fs.instance;
+  FirebaseFirestore get _db => fs.firestore;
 
   CollectionReference<Map<String, dynamic>> col(String name) => _db.collection(name);
 }

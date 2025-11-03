@@ -218,22 +218,22 @@ class ServiceLocator {
 
     // Core Services
     sl.registerLazySingleton<ApiClient>(() => ApiClient());
-    sl.registerLazySingleton<ConnectivityService>(() => ConnectivityService());
-    sl.registerLazySingleton<NetworkService>(() => NetworkService(sl<ConnectivityService>(), sl<ApiClient>()));
-    sl.registerLazySingleton<SharedPreferencesService>(() => SharedPreferencesService());
-    sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
+    sl.registerLazySingleton<ConnectivityService>(() => ConnectivityService.instance);
+    sl.registerLazySingleton<NetworkService>(() => NetworkService.instance);
+    sl.registerLazySingleton<SharedPreferencesService>(() => SharedPreferencesService.instance);
+    sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService.instance);
     sl.registerLazySingleton<BackupService>(() => BackupService());
-    sl.registerLazySingleton<FirestoreService>(() => const FirestoreService());
-    sl.registerLazySingleton<FirebaseService>(() => FirebaseService());
+    sl.registerLazySingleton<FirestoreService>(() => FirestoreService.instance);
+    sl.registerLazySingleton<FirebaseService>(() => FirebaseService.instance);
     sl.registerLazySingleton<ExportService>(() => ExportService());
     sl.registerLazySingleton<NotificationService>(() => NotificationService());
-    sl.registerLazySingleton<FirebaseAuthService>(() => FirebaseAuthService());
+    sl.registerLazySingleton<FirebaseAuthService>(() => FirebaseAuthService.instance);
     sl.registerLazySingleton<FirebaseStorageService>(() => FirebaseStorageService());
     sl.registerLazySingleton<FirebaseAnalyticsService>(() => FirebaseAnalyticsService());
     sl.registerLazySingleton<ShareService>(() => ShareService());
     sl.registerLazySingleton<PrintService>(() => PrintService());
     sl.registerLazySingleton<LoggerService>(() => LoggerService());
-    sl.registerLazySingleton<SyncService>(() => SyncService());
+    sl.registerLazySingleton<SyncService>(() => SyncService.instance);
     sl.registerLazySingleton<SyncManager>(() => SyncManager());
     sl.registerLazySingleton<ConflictResolver>(() => ConflictResolver());
     sl.registerLazySingleton<SyncQueue>(() => SyncQueue());

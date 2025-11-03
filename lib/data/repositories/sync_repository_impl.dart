@@ -40,7 +40,7 @@ class SyncRepositoryImpl implements SyncRepository {
       }
       return SyncStatus.success;
     } catch (_) {
-      return SyncStatus.failure;
+      return SyncStatus.failed;
     }
   }
 }

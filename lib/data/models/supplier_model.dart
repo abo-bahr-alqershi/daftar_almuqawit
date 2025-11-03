@@ -1,8 +1,10 @@
-// ignore_for_file: public_member_api_docs
-
 import 'base/base_model.dart';
 import '../database/tables/suppliers_table.dart';
+import '../../domain/entities/supplier.dart';
 
+/// نموذج المورد
+/// 
+/// يمثل بيانات المورد في قاعدة البيانات
 class SupplierModel extends BaseModel {
   final int? id;
   final String name;
@@ -54,4 +56,69 @@ class SupplierModel extends BaseModel {
         SuppliersTable.cNotes: notes,
         SuppliersTable.cCreatedAt: createdAt,
       };
+
+  /// تحويل إلى كيان
+  Supplier toEntity() => Supplier(
+        id: id,
+        name: name,
+        phone: phone,
+        area: area,
+        qualityRating: qualityRating,
+        trustLevel: trustLevel,
+        totalPurchases: totalPurchases,
+        totalDebtToHim: totalDebtToHim,
+        notes: notes,
+        createdAt: createdAt,
+      );
+
+  /// إنشاء نسخة من الكيان
+  static SupplierModel fromEntity(Supplier entity) => SupplierModel(
+        id: entity.id,
+        name: entity.name,
+        phone: entity.phone,
+        area: entity.area,
+        qualityRating: entity.qualityRating,
+        trustLevel: entity.trustLevel,
+        totalPurchases: entity.totalPurchases,
+        totalDebtToHim: entity.totalDebtToHim,
+        notes: entity.notes,
+        createdAt: entity.createdAt,
+      );
+
+  /// نسخ مع تعديلات
+  SupplierModel copyWith({
+    int? id,
+    String? name,
+    String? phone,
+    String? area,
+    int? qualityRating,
+    String? trustLevel,
+    double? totalPurchases,
+    double? totalDebtToHim,
+    String? notes,
+    String? createdAt,
+  }) =>
+      SupplierModel(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        phone: phone ?? this.phone,
+        area: area ?? this.area,
+        qualityRating: qualityRating ?? this.qualityRating,
+        trustLevel: trustLevel ?? this.trustLevel,
+        totalPurchases: totalPurchases ?? this.totalPurchases,
+        totalDebtToHim: totalDebtToHim ?? this.totalDebtToHim,
+        notes: notes ?? this.notes,
+        createdAt: createdAt ?? this.createdAt,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SupplierModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name;
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode;
 }

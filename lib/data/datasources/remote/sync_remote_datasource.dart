@@ -12,7 +12,7 @@ class SyncRemoteDataSource extends BaseRemoteDataSource {
     required String operation,
     required Map<String, dynamic> payload,
   }) async {
-    await fs.col('sync_operations').add({
+    await fs.collection('sync_operations').add({
       'entity': entity,
       'operation': operation,
       'payload': payload,
