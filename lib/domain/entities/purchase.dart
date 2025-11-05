@@ -32,4 +32,23 @@ class Purchase extends BaseEntity {
     this.remainingAmount = 0,
     this.notes,
   });
+  
+  /// تحويل الشراء إلى JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date,
+      'time': time,
+      'supplier_id': supplierId,
+      'qat_type_id': qatTypeId,
+      'quantity': quantity,
+      'unit': unit,
+      'unit_price': unitPrice,
+      'total_amount': totalAmount,
+      'payment_status': paymentStatus,
+      'paid_amount': paidAmount,
+      'remaining_amount': remainingAmount,
+      'notes': notes,
+    };
+  }
 }

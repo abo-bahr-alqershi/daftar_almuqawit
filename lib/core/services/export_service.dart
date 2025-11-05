@@ -11,27 +11,35 @@ import 'package:pdf/widgets.dart' as pw;
 
 /// خدمة تصدير البيانات
 class ExportService {
-  /// تصدير إلى Excel
-  Future<String> exportToExcel({
-    required String title,
-    required List<String> headers,
-    required List<List<dynamic>> data,
+  ExportService();
+  
+  /// تصدير البيانات إلى Excel
+  Future<String> toExcel(String dateRange, {
+    String? title,
+    List<String>? headers,
+    List<List<dynamic>>? data,
     String? fileName,
   }) async {
     final excel = Excel.createExcel();
     final sheet = excel['Sheet1'];
 
     // إضافة العنوان
-    sheet.appendRow([title]);
-    sheet.appendRow(['تاريخ التصدير: ${DateTime.now().toString().split('.')[0]}']);
-    sheet.appendRow([]);
+    if (title != null) {
+      sheet.appendRow([title]);
+      sheet.appendRow(['تاريخ التصدير: ${DateTime.now().toString().split('.')[0]}']);
+      sheet.appendRow([]);
+    }
 
     // إضافة الرؤوس
-    sheet.appendRow(headers);
+    if (headers != null) {
+      sheet.appendRow(headers);
+    }
 
     // إضافة البيانات
-    for (final row in data) {
-      sheet.appendRow(row);
+    if (data != null) {
+      for (final row in data) {
+        sheet.appendRow(row);
+      }
     }
 
     // حفظ الملف

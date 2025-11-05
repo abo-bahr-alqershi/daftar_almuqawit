@@ -40,6 +40,21 @@ class ExpenseModel extends BaseModel {
         paymentMethod: (map[ExpensesTable.cPaymentMethod] as String?) ?? 'نقد',
         recurring: (map[ExpensesTable.cRecurring] as int?) ?? 0,
         notes: map[ExpensesTable.cNotes] as String?,
+        attachmentPath: map[ExpensesTable.cAttachmentPath] as String?,
+      );
+
+  /// إنشاء نموذج من JSON
+  factory ExpenseModel.fromJson(Map<String, dynamic> json) => ExpenseModel(
+        id: json['id'] as int?,
+        date: json['date'] as String,
+        time: json['time'] as String,
+        category: json['category'] as String,
+        amount: (json['amount'] as num).toDouble(),
+        description: json['description'] as String?,
+        paymentMethod: (json['paymentMethod'] as String?) ?? 'نقد',
+        recurring: (json['recurring'] as int?) ?? 0,
+        notes: json['notes'] as String?,
+        attachmentPath: json['attachmentPath'] as String?,
       );
 
   @override
@@ -53,6 +68,7 @@ class ExpenseModel extends BaseModel {
         ExpensesTable.cPaymentMethod: paymentMethod,
         ExpensesTable.cRecurring: recurring,
         ExpensesTable.cNotes: notes,
+        ExpensesTable.cAttachmentPath: attachmentPath,
       };
 
   @override

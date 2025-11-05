@@ -55,6 +55,24 @@ class DebtModel extends BaseModel {
         notes: map[DebtsTable.cNotes] as String?,
       );
 
+  /// إنشاء نموذج من JSON
+  factory DebtModel.fromJson(Map<String, dynamic> json) => DebtModel(
+        id: json['id'] as int?,
+        personType: json['personType'] as String,
+        personId: json['personId'] as int,
+        personName: json['personName'] as String,
+        transactionType: json['transactionType'] as String?,
+        transactionId: json['transactionId'] as int?,
+        originalAmount: (json['originalAmount'] as num).toDouble(),
+        paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0,
+        remainingAmount: (json['remainingAmount'] as num).toDouble(),
+        date: json['date'] as String,
+        dueDate: json['dueDate'] as String?,
+        status: (json['status'] as String?) ?? 'غير مسدد',
+        lastPaymentDate: json['lastPaymentDate'] as String?,
+        notes: json['notes'] as String?,
+      );
+
   @override
   Map<String, Object?> toMap() => {
         DebtsTable.cId: id,

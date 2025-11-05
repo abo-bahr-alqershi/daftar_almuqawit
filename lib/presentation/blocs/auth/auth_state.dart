@@ -31,6 +31,9 @@ class AuthAuthenticated extends AuthState {
     this.photoUrl,
   });
   
+  /// للتوافق مع الكود القديم
+  String get userEmail => email;
+  
   @override
   List<Object?> get props => [userId, userName, email, phone, photoUrl];
 }

@@ -4,9 +4,14 @@
 import 'package:bloc/bloc.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import 'auth_validator.dart';
+import '../../../core/services/firebase/firebase_auth_service.dart';
+import '../../../core/services/local/shared_preferences_service.dart';
 
 /// Bloc المصادقة
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final FirebaseAuthService _authService = FirebaseAuthService.instance;
+  final SharedPreferencesService _prefsService = SharedPreferencesService.instance;
 
   AuthBloc() : super(AuthInitial()) {
     on<LoginEvent>(_onLogin);
@@ -22,22 +27,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthLoading());
       
-      // TODO: استدعاء Firebase Auth Service
       // التحقق من صحة البيانات
       if (event.email.isEmpty || event.password.isEmpty) {
         emit(AuthError('الرجاء إدخال البريد الإلكتروني وكلمة المرور'));
         return;
       }
       
-      // محاكاة تسجيل الدخول
-      await Future.delayed(const Duration(seconds: 1));
+      // استدعاء Firebase Auth Service
+      final user = await _authService.signInWithEmailAndPassword(
+        email: event.email,
+        password: event.password,
+      );
       
-      // حفظ حالة "تذكرني" إذا كانت مفعلة
-      if (event.rememberMe) {
-        // TODO: حفظ في SharedPreferences
+      if (user != null) {
+        // حفظ حالة "تذكرني" إذا كانت مفعلة
+        if (event.rememberMe) {
+          await _prefsService.setBool('rememberMe', true);
+          await _prefsService.setString('userEmail', event.email);
+        }
+        
+        emit(AuthAuthenticated(
+          user.uid,
+          user.displayName ?? 'المستخدم',
+          user.email ?? event.email,
+        ));
+      } else {
+        emit(AuthError('فشل تسجيل الدخول. تحقق من البيانات المدخلة'));
       }
-      
-      emit(AuthAuthenticated('user_123', 'المستخدم', event.email));
     } catch (e) {
       emit(AuthError('فشل تسجيل الدخول: ${e.toString()}'));
     }
@@ -48,21 +64,42 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthLoading());
       
-      // TODO: استدعاء Firebase Auth Service
       // التحقق من صحة البيانات
       if (event.email.isEmpty || event.password.isEmpty || event.name.isEmpty) {
         emit(AuthError('الرجاء إدخال جميع البيانات المطلوبة'));
         return;
       }
       
-      // التحقق من قوة كلمة المرور
-      if (event.password.length < 6) {
-        emit(AuthError('كلمة المرور يجب أن تكون 6 أحرف على الأقل'));
+      // التحقق من صحة البريد الإلكتروني
+      if (!AuthValidator.isValidEmail(event.email)) {
+        emit(AuthError('البريد الإلكتروني غير صالح'));
         return;
       }
       
-      await Future.delayed(const Duration(seconds: 1));
-      emit(AuthAuthenticated('user_new', event.name, event.email));
+      // التحقق من قوة كلمة المرور
+      if (!AuthValidator.isStrongPassword(event.password)) {
+        emit(AuthError('كلمة المرور ضعيفة. يجب أن تحتوي على 6 أحرف على الأقل'));
+        return;
+      }
+      
+      // استدعاء Firebase Auth Service
+      final user = await _authService.createUserWithEmailAndPassword(
+        email: event.email,
+        password: event.password,
+      );
+      
+      if (user != null) {
+        // تحديث اسم المستخدم
+        await _authService.updateDisplayName(event.name);
+        
+        emit(AuthAuthenticated(
+          user.uid,
+          event.name,
+          user.email ?? event.email,
+        ));
+      } else {
+        emit(AuthError('فشل إنشاء الحساب. حاول مرة أخرى'));
+      }
     } catch (e) {
       emit(AuthError('فشل التسجيل: ${e.toString()}'));
     }
@@ -73,9 +110,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthLoading());
       
-      // TODO: استدعاء Firebase Auth Service للخروج
+      // استدعاء Firebase Auth Service للخروج
+      await _authService.signOut();
+      
       // مسح البيانات المحفوظة
-      await Future.delayed(const Duration(milliseconds: 500));
+      await _prefsService.remove('rememberMe');
+      await _prefsService.remove('userEmail');
       
       emit(AuthUnauthenticated());
     } catch (e) {
@@ -91,14 +131,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthLoading());
       
-      // TODO: التحقق من Firebase Auth
-      // التحقق من وجود مستخدم مسجل في SharedPreferences
-      await Future.delayed(const Duration(milliseconds: 500));
+      // التحقق من Firebase Auth
+      final currentUser = _authService.currentUser;
       
-      // إذا كان هناك مستخدم محفوظ
-      // emit(AuthAuthenticated(userId, userName, email));
-      
-      emit(AuthUnauthenticated());
+      if (currentUser != null) {
+        emit(AuthAuthenticated(
+          currentUser.uid,
+          currentUser.displayName ?? 'المستخدم',
+          currentUser.email ?? '',
+        ));
+      } else {
+        // التحقق من وجود "تذكرني"
+        final rememberMe = await _prefsService.getBool('rememberMe') ?? false;
+        if (rememberMe) {
+          final savedEmail = await _prefsService.getString('userEmail');
+          if (savedEmail != null) {
+            // يمكن محاولة تسجيل الدخول التلقائي هنا إذا كانت كلمة المرور محفوظة بشكل آمن
+            emit(AuthUnauthenticated());
+          } else {
+            emit(AuthUnauthenticated());
+          }
+        } else {
+          emit(AuthUnauthenticated());
+        }
+      }
     } catch (e) {
       emit(AuthError('فشل التحقق: ${e.toString()}'));
     }
@@ -112,14 +168,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthLoading());
       
-      // TODO: استدعاء Firebase Auth لإرسال رابط إعادة تعيين كلمة المرور
+      // التحقق من البريد الإلكتروني
       if (event.email.isEmpty) {
         emit(AuthError('الرجاء إدخال البريد الإلكتروني'));
         return;
       }
       
-      await Future.delayed(const Duration(seconds: 1));
-      emit(AuthPasswordResetSent(event.email));
+      if (!AuthValidator.isValidEmail(event.email)) {
+        emit(AuthError('البريد الإلكتروني غير صالح'));
+        return;
+      }
+      
+      // استدعاء Firebase Auth لإرسال رابط إعادة تعيين كلمة المرور
+      final result = await _authService.sendPasswordResetEmail(event.email);
+      
+      if (result) {
+        emit(AuthPasswordResetSent(event.email));
+      } else {
+        emit(AuthError('فشل إرسال رابط إعادة تعيين كلمة المرور'));
+      }
     } catch (e) {
       emit(AuthError('فشل إرسال رابط إعادة التعيين: ${e.toString()}'));
     }
@@ -139,17 +206,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       emit(AuthLoading());
       
-      // TODO: تحديث معلومات المستخدم في Firebase
-      await Future.delayed(const Duration(milliseconds: 500));
+      // تحديث معلومات المستخدم في Firebase
+      if (event.name != null) {
+        await _authService.updateDisplayName(event.name!);
+      }
+      
+      if (event.email != null) {
+        await _authService.updateEmail(event.email!);
+      }
       
       // تحديث الحالة بالمعلومات الجديدة
-      emit(AuthAuthenticated(
-        currentState.userId,
-        event.name ?? currentState.userName,
-        currentState.email,
-        phone: event.phone ?? currentState.phone,
-        photoUrl: event.photoUrl ?? currentState.photoUrl,
-      ));
+      final currentUser = _authService.currentUser;
+      if (currentUser != null && currentState is AuthAuthenticated) {
+        emit(AuthAuthenticated(
+          currentUser.uid,
+          currentUser.displayName ?? currentState.userName,
+          currentUser.email ?? currentState.userEmail,
+        ));
+      }
     } catch (e) {
       emit(AuthError('فشل تحديث المعلومات: ${e.toString()}'));
     }

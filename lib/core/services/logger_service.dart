@@ -22,6 +22,9 @@ class LoggerService {
       developer.log('Data: $data', name: 'DEBUG', level: 500);
     }
   }
+  
+  /// تسجيل رسالة Debug (اسم بديل)
+  void debug(String message, {Map<String, dynamic>? data}) => d(message, data: data);
 
   /// تسجيل رسالة Info
   void i(String message, {Map<String, dynamic>? data}) {

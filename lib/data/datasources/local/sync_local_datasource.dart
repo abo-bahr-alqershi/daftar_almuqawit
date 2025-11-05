@@ -73,4 +73,23 @@ class SyncLocalDataSource {
       [id],
     );
   }
+  
+  /// إدراج سجل مزامنة جديد
+  Future<int> insert(SyncRecordModel record) async {
+    final database = await db;
+    return await database.insert(
+      SyncQueueTable.table,
+      record.toMap(),
+    );
+  }
+  
+  /// حذف سجل مزامنة
+  Future<int> delete(int id) async {
+    final database = await db;
+    return await database.delete(
+      SyncQueueTable.table,
+      where: '${SyncQueueTable.cId} = ?',
+      whereArgs: [id],
+    );
+  }
 }

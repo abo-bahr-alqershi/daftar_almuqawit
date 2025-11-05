@@ -5,12 +5,41 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'sync_event.dart';
 import 'sync_state.dart';
+import '../../../core/services/sync/sync_manager.dart';
+import '../../../core/services/network/connectivity_service.dart';
+import '../../../domain/usecases/sync/sync_all.dart';
+import '../../../domain/usecases/sync/check_sync_status.dart';
+import '../../../domain/usecases/sync/queue_offline_operation.dart';
+import '../../../domain/usecases/sync/resolve_conflicts.dart';
+import '../../../domain/entities/sync_status.dart';
+import '../../../domain/usecases/base/base_usecase.dart';
 
 /// Bloc المزامنة
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
+  final SyncManager _syncManager;
+  final SyncAll _syncAll;
+  final CheckSyncStatus _checkSyncStatus;
+  final QueueOfflineOperation _queueOfflineOperation;
+  final ResolveConflicts _resolveConflicts;
+  final ConnectivityService _connectivityService;
+  
   Timer? _autoSyncTimer;
+  StreamSubscription<bool>? _connectivitySubscription;
 
-  SyncBloc() : super(SyncInitial()) {
+  SyncBloc({
+    required SyncManager syncManager,
+    required SyncAll syncAll,
+    required CheckSyncStatus checkSyncStatus,
+    required QueueOfflineOperation queueOfflineOperation,
+    required ResolveConflicts resolveConflicts,
+    required ConnectivityService connectivityService,
+  }) : _syncManager = syncManager,
+       _syncAll = syncAll,
+       _checkSyncStatus = checkSyncStatus,
+       _queueOfflineOperation = queueOfflineOperation,
+       _resolveConflicts = resolveConflicts,
+       _connectivityService = connectivityService,
+       super(SyncInitial()) {
     on<StartSync>(_onStartSync);
     on<SyncSales>(_onSyncSales);
     on<SyncPurchases>(_onSyncPurchases);
@@ -24,9 +53,33 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   Future<void> _onStartSync(StartSync event, Emitter<SyncState> emit) async {
     try {
       emit(SyncInProgress('جاري بدء المزامنة...', 0.0));
+      
+      // التحقق من الاتصال
+      final isOnline = await _connectivityService.isOnline;
+      if (!isOnline) {
+        emit(SyncFailure('لا يوجد اتصال بالإنترنت'));
+        return;
+      }
+      
       // تنفيذ المزامنة
-      await Future.delayed(const Duration(seconds: 2));
-      emit(SyncSuccess('تمت المزامنة بنجاح'));
+      emit(SyncInProgress('جاري مزامنة البيانات...', 0.3));
+      await _syncManager.syncNow();
+      
+      // حل التعارضات إن وجدت
+      emit(SyncInProgress('جاري حل التعارضات...', 0.6));
+      await _syncManager.resolveConflicts();
+      
+      // مزامنة العمليات غير المتصلة
+      emit(SyncInProgress('جاري مزامنة العمليات المعلقة...', 0.8));
+      await _syncManager.syncOfflineOperations();
+      
+      // التحقق من الحالة النهائية
+      final status = await _syncManager.getStatus();
+      if (status.pendingOperations == 0) {
+        emit(SyncSuccess('تمت المزامنة بنجاح'));
+      } else {
+        emit(SyncPartial('تمت المزامنة جزئياً - ${status.pendingOperations} عملية معلقة'));
+      }
     } catch (e) {
       emit(SyncFailure('فشلت المزامنة: ${e.toString()}'));
     }

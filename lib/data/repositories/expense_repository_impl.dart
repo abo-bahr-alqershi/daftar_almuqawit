@@ -46,10 +46,22 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<Expense?> getById(int id) async => null;
 
   @override
-  Future<List<Expense>> getByCategory(String category) async => (await local.getByCategory(category)).map(_fromModel).toList();
+  Future<List<Expense>> getByCategory(String category) async {
+    final models = await local.getByCategory(category);
+    return models.map(_fromModel).toList();
+  }
+  
+  @override
+  Future<List<Expense>> getByDate(String date) async {
+    final models = await local.getByDate(date);
+    return models.map(_fromModel).toList();
+  }
 
   @override
-  Future<List<Expense>> getDaily(String date) async => (await local.getDaily(date)).map(_fromModel).toList();
+  Future<List<Expense>> getDaily(String date) async {
+    final models = await local.getDaily(date);
+    return models.map(_fromModel).toList();
+  }
 
   @override
   Future<void> update(Expense entity) => local.update(_toModel(entity));

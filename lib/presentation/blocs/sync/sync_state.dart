@@ -42,6 +42,16 @@ class SyncFailure extends SyncState {
   List<Object?> get props => [error];
 }
 
+/// حالة مزامنة جزئية
+class SyncPartial extends SyncState {
+  final String message;
+  
+  SyncPartial(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
 /// حالة جدولة المزامنة التلقائية
 class SyncAutoScheduled extends SyncState {
   final Duration interval;

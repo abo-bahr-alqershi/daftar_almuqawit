@@ -13,6 +13,7 @@ class Supplier extends BaseEntity {
   final double totalDebtToHim;
   final String? notes;
   final String? createdAt;
+  final String? updatedAt;
 
   const Supplier({
     super.id,
@@ -25,6 +26,7 @@ class Supplier extends BaseEntity {
     this.totalDebtToHim = 0,
     this.notes,
     this.createdAt,
+    this.updatedAt,
   });
 
   /// التحقق من صحة بيانات المورد
@@ -61,6 +63,7 @@ class Supplier extends BaseEntity {
     double? totalDebtToHim,
     String? notes,
     String? createdAt,
+    String? updatedAt,
   }) {
     return Supplier(
       id: id ?? this.id,
@@ -73,6 +76,7 @@ class Supplier extends BaseEntity {
       totalDebtToHim: totalDebtToHim ?? this.totalDebtToHim,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -88,5 +92,23 @@ class Supplier extends BaseEntity {
         totalDebtToHim,
         notes,
         createdAt,
+        updatedAt,
       ];
+
+  /// تحويل المورد إلى JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'area': area,
+      'quality_rating': qualityRating,
+      'trust_level': trustLevel,
+      'total_purchases': totalPurchases,
+      'total_debt_to_him': totalDebtToHim,
+      'notes': notes,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+    };
+  }
 }

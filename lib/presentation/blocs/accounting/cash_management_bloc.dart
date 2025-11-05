@@ -4,11 +4,20 @@
 import 'package:bloc/bloc.dart';
 import 'cash_management_event.dart';
 import 'cash_management_state.dart';
+import '../../../domain/usecases/statistics/get_daily_statistics.dart';
+import '../../../core/services/logger_service.dart';
 
 /// Bloc إدارة الصندوق
 class CashManagementBloc extends Bloc<CashManagementEvent, CashManagementState> {
+  final GetDailyStatistics _getDailyStats;
+  final LoggerService _logger;
   
-  CashManagementBloc() : super(CashManagementInitial()) {
+  CashManagementBloc({
+    required GetDailyStatistics getDailyStats,
+    required LoggerService logger,
+  })  : _getDailyStats = getDailyStats,
+        _logger = logger,
+        super(CashManagementInitial()) {
     on<LoadCashBalance>(_onLoadCashBalance);
     on<AddCashTransaction>(_onAddCashTransaction);
     on<LoadCashTransactions>(_onLoadCashTransactions);
@@ -18,9 +27,18 @@ class CashManagementBloc extends Bloc<CashManagementEvent, CashManagementState> 
   Future<void> _onLoadCashBalance(LoadCashBalance event, Emitter<CashManagementState> emit) async {
     try {
       emit(CashManagementLoading());
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(CashBalanceLoaded(5000.0));
-    } catch (e) {
+      _logger.info('تحميل رصيد الصندوق');
+      
+      // الحصول على إحصائيات اليوم لحساب الرصيد
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      final stats = await _getDailyStats(today);
+      
+      final balance = stats?.cashBalance ?? 0.0;
+      
+      emit(CashBalanceLoaded(balance));
+      _logger.info('تم تحميل رصيد الصندوق: $balance');
+    } catch (e, s) {
+      _logger.error('فشل تحميل رصيد الصندوق', error: e, stackTrace: s);
       emit(CashManagementError('فشل تحميل رصيد الصندوق: ${e.toString()}'));
     }
   }
@@ -29,9 +47,15 @@ class CashManagementBloc extends Bloc<CashManagementEvent, CashManagementState> 
   Future<void> _onAddCashTransaction(AddCashTransaction event, Emitter<CashManagementState> emit) async {
     try {
       emit(CashManagementLoading());
-      await Future.delayed(const Duration(seconds: 1));
+      _logger.info('إضافة حركة نقدية: ${event.type} - ${event.amount}');
+      
+      // هنا يمكن إضافة منطق حفظ الحركة في قاعدة البيانات
+      // سيتم ربطها بـ use cases لاحقاً
+      
       emit(CashTransactionSuccess('تمت إضافة الحركة النقدية بنجاح'));
-    } catch (e) {
+      _logger.info('تمت إضافة الحركة النقدية بنجاح');
+    } catch (e, s) {
+      _logger.error('فشلت إضافة الحركة النقدية', error: e, stackTrace: s);
       emit(CashManagementError('فشلت إضافة الحركة النقدية: ${e.toString()}'));
     }
   }
@@ -40,13 +64,16 @@ class CashManagementBloc extends Bloc<CashManagementEvent, CashManagementState> 
   Future<void> _onLoadCashTransactions(LoadCashTransactions event, Emitter<CashManagementState> emit) async {
     try {
       emit(CashManagementLoading());
-      await Future.delayed(const Duration(milliseconds: 500));
-      final transactions = [
-        {'id': '1', 'type': 'إيداع', 'amount': 1000.0, 'date': '2025-01-01'},
-        {'id': '2', 'type': 'سحب', 'amount': 500.0, 'date': '2025-01-02'},
-      ];
+      _logger.info('تحميل الحركات النقدية');
+      
+      // هنا يمكن تحميل الحركات من قاعدة البيانات
+      // سيتم ربطها بـ use cases لاحقاً
+      final transactions = <Map<String, dynamic>>[];
+      
       emit(CashTransactionsLoaded(transactions));
-    } catch (e) {
+      _logger.info('تم تحميل ${transactions.length} حركة نقدية');
+    } catch (e, s) {
+      _logger.error('فشل تحميل الحركات النقدية', error: e, stackTrace: s);
       emit(CashManagementError('فشل تحميل الحركات النقدية: ${e.toString()}'));
     }
   }

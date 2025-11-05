@@ -33,10 +33,12 @@ class PayDebt implements UseCase<int, PayDebtParams> {
     }
     
     // إنشاء سجل الدفعة
+    final now = DateTime.now();
     final payment = DebtPayment(
       debtId: params.debtId,
       amount: params.amount,
-      paymentDate: params.paymentDate ?? DateTime.now().toIso8601String().split('T')[0],
+      paymentDate: params.paymentDate ?? now.toIso8601String().split('T')[0],
+      paymentTime: params.paymentTime ?? '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
       paymentMethod: params.paymentMethod,
       notes: params.notes,
     );
@@ -81,6 +83,7 @@ class PayDebtParams {
   final int debtId;
   final double amount;
   final String? paymentDate;
+  final String? paymentTime;
   final String paymentMethod;
   final String? notes;
   
@@ -88,6 +91,7 @@ class PayDebtParams {
     required this.debtId,
     required this.amount,
     this.paymentDate,
+    this.paymentTime,
     this.paymentMethod = 'نقد',
     this.notes,
   });

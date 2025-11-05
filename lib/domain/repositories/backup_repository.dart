@@ -5,4 +5,5 @@ abstract class BackupRepository {
   Future<void> restoreBackup(String path);
   Future<void> scheduleAutoBackup();
   Future<String> exportToExcel(String dateRange);
+  Future<String> uploadToCloud(String filePath);
 }

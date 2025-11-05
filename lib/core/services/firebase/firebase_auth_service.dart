@@ -33,15 +33,16 @@ class FirebaseAuthService {
   // ========== تسجيل الدخول ==========
 
   /// تسجيل الدخول بالبريد الإلكتروني وكلمة المرور
-  Future<UserCredential> signInWithEmailAndPassword({
+  Future<User?> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      return credential.user;
     } on FirebaseAuthException catch (e) {
       throw AuthException(_getAuthErrorMessage(e.code), code: e.code);
     } catch (e) {
@@ -63,15 +64,16 @@ class FirebaseAuthService {
   // ========== إنشاء الحساب ==========
 
   /// إنشاء حساب جديد
-  Future<UserCredential> createUserWithEmailAndPassword({
+  Future<User?> createUserWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
     try {
-      return await _auth.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      return credential.user;
     } on FirebaseAuthException catch (e) {
       throw AuthException(_getAuthErrorMessage(e.code), code: e.code);
     } catch (e) {
@@ -95,9 +97,10 @@ class FirebaseAuthService {
   // ========== إدارة كلمة المرور ==========
 
   /// إرسال رابط إعادة تعيين كلمة المرور
-  Future<void> sendPasswordResetEmail(String email) async {
+  Future<bool> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
+      return true;
     } on FirebaseAuthException catch (e) {
       throw AuthException(_getAuthErrorMessage(e.code), code: e.code);
     } catch (e) {
@@ -118,14 +121,40 @@ class FirebaseAuthService {
 
   // ========== إدارة الملف الشخصي ==========
 
+  /// تحديث اسم العرض
+  Future<void> updateDisplayName(String displayName) async {
+    try {
+      await _auth.currentUser?.updateDisplayName(displayName);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_getAuthErrorMessage(e.code), code: e.code);
+    } catch (e) {
+      throw AuthException('فشل تحديث الاسم: $e');
+    }
+  }
+
+  /// تحديث البريد الإلكتروني
+  Future<void> updateEmail(String email) async {
+    try {
+      await _auth.currentUser?.updateEmail(email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_getAuthErrorMessage(e.code), code: e.code);
+    } catch (e) {
+      throw AuthException('فشل تحديث البريد الإلكتروني: $e');
+    }
+  }
+
   /// تحديث الملف الشخصي
   Future<void> updateProfile({
     String? displayName,
     String? photoURL,
   }) async {
     try {
-      await _auth.currentUser?.updateDisplayName(displayName);
-      await _auth.currentUser?.updatePhotoURL(photoURL);
+      if (displayName != null) {
+        await _auth.currentUser?.updateDisplayName(displayName);
+      }
+      if (photoURL != null) {
+        await _auth.currentUser?.updatePhotoURL(photoURL);
+      }
     } on FirebaseAuthException catch (e) {
       throw AuthException(_getAuthErrorMessage(e.code), code: e.code);
     } catch (e) {

@@ -48,11 +48,13 @@ class ForgotPasswordEvent extends AuthEvent {
 /// حدث تحديث معلومات المستخدم
 class UpdateUserInfoEvent extends AuthEvent {
   final String? name;
+  final String? email;
   final String? phone;
   final String? photoUrl;
   
   UpdateUserInfoEvent({
     this.name,
+    this.email,
     this.phone,
     this.photoUrl,
   });

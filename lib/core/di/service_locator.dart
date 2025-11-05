@@ -15,6 +15,7 @@ import '../services/network/connectivity_service.dart';
 import '../services/network/network_service.dart';
 import '../services/local/shared_preferences_service.dart';
 import '../services/local/secure_storage_service.dart';
+import '../services/local/cache_service.dart';
 import '../services/backup_service.dart';
 import '../services/firebase/firestore_service.dart';
 import '../services/firebase/firebase_service.dart';
@@ -81,15 +82,17 @@ import '../services/sync/offline_queue.dart';
 // import '../../domain/repositories/supplier_repository.dart';
 // import '../../domain/repositories/customer_repository.dart';
 // import '../../domain/repositories/qat_type_repository.dart';
-// import '../../domain/repositories/purchase_repository.dart';
-// import '../../domain/repositories/sales_repository.dart';
+import '../../domain/repositories/purchase_repository.dart';
+import '../../domain/repositories/sales_repository.dart';
 import '../../domain/repositories/debt_repository.dart';
-// import '../../domain/repositories/debt_payment_repository.dart';
-// import '../../domain/repositories/expense_repository.dart';
-// import '../../domain/repositories/accounting_repository.dart';
-// import '../../domain/repositories/statistics_repository.dart';
-// import '../../domain/repositories/sync_repository.dart';
-// import '../../domain/repositories/backup_repository.dart';
+import '../../domain/repositories/debt_payment_repository.dart';
+import '../../domain/repositories/expense_repository.dart';
+import '../../domain/repositories/accounting_repository.dart';
+import '../../domain/repositories/statistics_repository.dart';
+import '../../domain/repositories/sync_repository.dart';
+import '../../domain/repositories/backup_repository.dart';
+import '../../domain/repositories/customer_repository.dart';
+import '../../domain/repositories/supplier_repository.dart';
 
 // UseCases
 // TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
@@ -177,9 +180,11 @@ import '../../domain/usecases/sync/resolve_conflicts.dart';
 import '../../domain/usecases/sync/queue_offline_operation.dart';
 // Backup
 import '../../domain/usecases/backup/create_backup.dart';
-import '../../domain/usecases/backup/restore_backup.dart';
 import '../../domain/usecases/backup/export_to_excel.dart';
+import '../../domain/usecases/backup/restore_backup.dart';
 import '../../domain/usecases/backup/schedule_auto_backup.dart';
+import '../../domain/usecases/reports/print_report.dart';
+import '../../domain/usecases/reports/share_report.dart';
 
 // Blocs
 import '../../presentation/blocs/app/app_bloc.dart';
@@ -227,6 +232,7 @@ class ServiceLocator {
     sl.registerLazySingleton<NetworkService>(() => NetworkService.instance);
     sl.registerLazySingleton<SharedPreferencesService>(() => SharedPreferencesService.instance);
     sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService.instance);
+    sl.registerLazySingleton<CacheService>(() => CacheService.instance);
     sl.registerLazySingleton<BackupService>(() => BackupService());
     sl.registerLazySingleton<FirestoreService>(() => FirestoreService.instance);
     sl.registerLazySingleton<FirebaseService>(() => FirebaseService.instance);
@@ -285,14 +291,14 @@ class ServiceLocator {
     sl.registerLazySingleton<CancelSale>(() => CancelSale(sl()));
 
     // Debts
-    sl.registerLazySingleton<AddDebt>(() => AddDebt(sl()));
+    sl.registerLazySingleton<AddDebt>(() => AddDebt(sl<DebtRepository>(), sl<CustomerRepository>()));
     sl.registerLazySingleton<GetDebts>(() => GetDebts(sl()));
     sl.registerLazySingleton<GetPendingDebts>(() => GetPendingDebts(sl()));
     sl.registerLazySingleton<GetOverdueDebts>(() => GetOverdueDebts(sl()));
     sl.registerLazySingleton<GetDebtsByPerson>(() => GetDebtsByPerson(sl()));
     sl.registerLazySingleton<UpdateDebt>(() => UpdateDebt(sl()));
     sl.registerLazySingleton<DeleteDebt>(() => DeleteDebt(sl()));
-    sl.registerLazySingleton<PayDebt>(() => PayDebt(sl()));
+    sl.registerLazySingleton<PayDebt>(() => PayDebt(sl<DebtRepository>(), sl<DebtPaymentRepository>()));
     sl.registerLazySingleton<PartialPayment>(() => PartialPayment(sl()));
     sl.registerLazySingleton<SendReminder>(() => SendReminder(sl<NotificationService>(), sl<DebtRepository>()));
 
@@ -317,7 +323,12 @@ class ServiceLocator {
     sl.registerLazySingleton<GenerateFinancialStatements>(() => GenerateFinancialStatements());
 
     // Statistics
-    sl.registerLazySingleton<GetDailyStatistics>(() => GetDailyStatistics(sl()));
+    sl.registerLazySingleton<GetDailyStatistics>(() => GetDailyStatistics(
+      statsRepo: sl<StatisticsRepository>(),
+      salesRepo: sl<SalesRepository>(),
+      purchaseRepo: sl<PurchaseRepository>(),
+      expenseRepo: sl<ExpenseRepository>(),
+    ));
     sl.registerLazySingleton<GetMonthlyStatistics>(() => GetMonthlyStatistics(sl()));
     sl.registerLazySingleton<GetWeeklyReport>(() => GetWeeklyReport(sl()));
     sl.registerLazySingleton<GetYearlyReport>(() => GetYearlyReport(sl()));
@@ -341,19 +352,56 @@ class ServiceLocator {
     sl.registerLazySingleton<QueueOfflineOperation>(() => QueueOfflineOperation(sl()));
 
     // Backup
-    sl.registerLazySingleton<CreateBackup>(() => CreateBackup(sl()));
+    sl.registerLazySingleton<CreateBackup>(() => CreateBackup(
+      sl<BackupRepository>(),
+      sl<SalesRepository>(),
+      sl<PurchaseRepository>(),
+      sl<CustomerRepository>(),
+      sl<SupplierRepository>(),
+      sl<DebtRepository>(),
+      sl<ExpenseRepository>(),
+    ));
     sl.registerLazySingleton<RestoreBackup>(() => RestoreBackup(sl()));
     sl.registerLazySingleton<ExportToExcel>(() => ExportToExcel(sl()));
     sl.registerLazySingleton<ScheduleAutoBackup>(() => ScheduleAutoBackup(sl()));
+    
+    // Reports
+    sl.registerLazySingleton<PrintReport>(() => PrintReport(
+      statsRepo: sl<StatisticsRepository>(),
+      printService: sl<PrintService>(),
+      exportService: sl<ExportService>(),
+    ));
+    sl.registerLazySingleton<ShareReport>(() => ShareReport(
+      statsRepo: sl<StatisticsRepository>(),
+      shareService: sl<ShareService>(),
+      exportService: sl<ExportService>(),
+    ));
 
     // Blocs (factories)
     sl.registerFactory<AppBloc>(() => AppBloc());
     sl.registerFactory<SplashBloc>(() => SplashBloc());
-    sl.registerFactory<HomeBloc>(() => HomeBloc());
+    sl.registerFactory<HomeBloc>(() => HomeBloc(
+      prefs: sl<SharedPreferencesService>(),
+      logger: sl<LoggerService>(),
+    ));
     sl.registerFactory<AppSettingsBloc>(() => AppSettingsBloc());
     sl.registerFactory<AuthBloc>(() => AuthBloc());
-    sl.registerFactory<SyncBloc>(() => SyncBloc());
-    sl.registerFactory<DashboardBloc>(() => DashboardBloc());
+    sl.registerFactory<SyncBloc>(() => SyncBloc(
+      syncManager: sl<SyncManager>(),
+      syncAll: sl<SyncAll>(),
+      checkSyncStatus: sl<CheckSyncStatus>(),
+      queueOfflineOperation: sl<QueueOfflineOperation>(),
+      resolveConflicts: sl<ResolveConflicts>(),
+      connectivityService: sl<ConnectivityService>(),
+    ));
+    sl.registerFactory<DashboardBloc>(() => DashboardBloc(
+      getDailyStatistics: sl<GetDailyStatistics>(),
+      getMonthlyStatistics: sl<GetMonthlyStatistics>(),
+      getTodaySales: sl<GetTodaySales>(),
+      getTodayPurchases: sl<GetTodayPurchases>(),
+      getPendingDebts: sl<GetPendingDebts>(),
+      getOverdueDebts: sl<GetOverdueDebts>(),
+    ));
     sl.registerFactory<SuppliersBloc>(() => SuppliersBloc(
       getSuppliers: sl(),
       addSupplier: sl(),
@@ -411,28 +459,46 @@ class ServiceLocator {
     ));
     sl.registerFactory<PaymentBloc>(() => PaymentBloc());
     sl.registerFactory<ExpensesBloc>(() => ExpensesBloc(
-      repository: sl(),
-      getTodayExpenses: sl(),
-      getExpensesByType: sl(),
-      addExpense: sl(),
-      updateExpense: sl(),
-      deleteExpense: sl(),
+      repository: sl<ExpenseRepository>(),
+      getTodayExpenses: sl<GetDailyExpenses>(),
+      getExpensesByType: sl<GetExpensesByCategory>(),
+      addExpense: sl<AddExpense>(),
+      updateExpense: sl<UpdateExpense>(),
+      deleteExpense: sl<DeleteExpense>(),
     ));
     sl.registerFactory<ExpenseFormBloc>(() => ExpenseFormBloc());
     sl.registerFactory<AccountingBloc>(() => AccountingBloc(
-      salesRepository: sl(),
-      purchaseRepository: sl(),
-      expenseRepository: sl(),
+      salesRepository: sl<SalesRepository>(),
+      purchaseRepository: sl<PurchaseRepository>(),
+      expenseRepository: sl<ExpenseRepository>(),
     ));
-    sl.registerFactory<CashManagementBloc>(() => CashManagementBloc());
+    sl.registerFactory<CashManagementBloc>(() => CashManagementBloc(
+      getDailyStats: sl<GetDailyStatistics>(),
+      logger: sl<LoggerService>(),
+    ));
     sl.registerFactory<StatisticsBloc>(() => StatisticsBloc(
-      getDailyStats: sl(),
-      repository: sl(),
-      getMonthStats: sl(),
-      getYearStats: sl(),
+      getDailyStats: sl<GetDailyStatistics>(),
+      repository: sl<StatisticsRepository>(),
+      getMonthStats: sl<GetMonthlyStatistics>(),
+      getYearStats: sl<GetYearlyReport>(),
     ));
-    sl.registerFactory<ReportsBloc>(() => ReportsBloc());
-    sl.registerFactory<SettingsBloc>(() => SettingsBloc());
-    sl.registerFactory<BackupBloc>(() => BackupBloc());
+    sl.registerFactory<ReportsBloc>(() => ReportsBloc(
+      printReport: sl<PrintReport>(),
+      shareReport: sl<ShareReport>(),
+      getDailyStats: sl<GetDailyStatistics>(),
+      getMonthlyStats: sl<GetMonthlyStatistics>(),
+      logger: sl<LoggerService>(),
+    ));
+    sl.registerFactory<SettingsBloc>(() => SettingsBloc(
+      prefs: sl<SharedPreferencesService>(),
+      logger: sl<LoggerService>(),
+    ));
+    sl.registerFactory<BackupBloc>(() => BackupBloc(
+      createBackup: sl<CreateBackup>(),
+      restoreBackup: sl<RestoreBackup>(),
+      exportToExcel: sl<ExportToExcel>(),
+      scheduleAutoBackup: sl<ScheduleAutoBackup>(),
+      logger: sl<LoggerService>(),
+    ));
   }
 }

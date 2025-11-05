@@ -58,6 +58,25 @@ class SupplierModel extends BaseModel {
       syncStatus: null,
     );
   }
+  
+  /// إنشاء نموذج من JSON
+  factory SupplierModel.fromJson(Map<String, dynamic> json) {
+    return SupplierModel(
+      id: json['id'] as int?,
+      name: json['name'] as String,
+      phone: json['phone'] as String?,
+      area: json['area'] as String?,
+      qualityRating: (json['qualityRating'] as int?) ?? 3,
+      trustLevel: (json['trustLevel'] as String?) ?? 'جديد',
+      totalPurchases: (json['totalPurchases'] as num?)?.toDouble() ?? 0,
+      totalDebtToHim: (json['totalDebtToHim'] as num?)?.toDouble() ?? 0,
+      notes: json['notes'] as String?,
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
+      firebaseId: json['firebaseId'] as String?,
+      syncStatus: json['syncStatus'] as String?,
+    );
+  }
 
   @override
   Map<String, Object?> toMap() => {

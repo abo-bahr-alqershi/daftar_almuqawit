@@ -4,9 +4,12 @@ import '../../domain/entities/daily_statistics.dart';
 import '../../domain/repositories/statistics_repository.dart';
 import '../datasources/local/statistics_local_datasource.dart';
 import '../models/statistics_model.dart';
+import '../../core/services/local/cache_service.dart';
 
 class StatisticsRepositoryImpl implements StatisticsRepository {
   final StatisticsLocalDataSource local;
+  final CacheService _cache = CacheService.instance;
+  
   StatisticsRepositoryImpl(this.local);
 
   DailyStatistics _fromModel(DailyStatisticsModel m) => DailyStatistics(
@@ -25,12 +28,45 @@ class StatisticsRepositoryImpl implements StatisticsRepository {
       );
 
   @override
-  Future<DailyStatistics> getDaily(String date) async {
+  Future<DailyStatistics?> getDaily(String date) async {
+    // التحقق من الذاكرة المؤقتة أولاً
+    final cacheKey = 'daily_stats_$date';
+    final cached = _cache.get<DailyStatistics>(cacheKey);
+    if (cached != null) return cached;
+    
+    // جلب من قاعدة البيانات
     final v = await local.getDaily(date);
-    return v == null ? DailyStatistics(date: date) : _fromModel(v);
+    final result = v == null ? null : _fromModel(v);
+    
+    // حفظ في الذاكرة المؤقتة لمدة 5 دقائق
+    if (result != null) {
+      _cache.set(cacheKey, result, ttl: const Duration(minutes: 5));
+    }
+    
+    return result;
   }
 
   @override
-  Future<List<DailyStatistics>> getMonthly(int year, int month) async =>
-      (await local.getMonthly(year, month)).map(_fromModel).toList();
+  Future<List<DailyStatistics>> getMonthly(int year, int month) async {
+    final models = await local.getMonthly(year, month);
+    return models.map(_fromModel).toList();
+  }
+
+  @override
+  Future<void> saveDaily(DailyStatistics statistics) => local.saveDaily(statistics);
+  
+  @override
+  Future<int> add(DailyStatistics entity) async => 0;
+  
+  @override
+  Future<void> delete(int id) async {}
+  
+  @override
+  Future<List<DailyStatistics>> getAll() async => [];
+  
+  @override
+  Future<DailyStatistics?> getById(int id) async => null;
+  
+  @override
+  Future<void> update(DailyStatistics entity) async {}
 }

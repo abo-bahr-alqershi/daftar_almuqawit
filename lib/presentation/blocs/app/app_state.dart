@@ -25,6 +25,30 @@ class AppInitial extends AppState {
   const AppInitial() : super();
 }
 
+/// حالة المستخدم مصادق عليه
+class AppAuthenticated extends AppState {
+  const AppAuthenticated({
+    super.languageCode,
+    super.isDarkMode,
+    super.isConnected,
+    super.settings,
+  });
+  
+  AppAuthenticated copyWith({
+    String? languageCode,
+    bool? isDarkMode,
+    bool? isConnected,
+    Map<String, dynamic>? settings,
+  }) {
+    return AppAuthenticated(
+      languageCode: languageCode ?? this.languageCode,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
+      isConnected: isConnected ?? this.isConnected,
+      settings: settings ?? this.settings,
+    );
+  }
+}
+
 /// حالة التطبيق جاهز
 class AppReady extends AppState {
   const AppReady({

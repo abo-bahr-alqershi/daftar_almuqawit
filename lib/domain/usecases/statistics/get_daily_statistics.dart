@@ -24,7 +24,8 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
   
   @override
   Future<DailyStatistics> call(GetDailyStatisticsParams params) async {
-    final date = params.date ?? DateTime.now().toIso8601String().split('T')[0];
+    // التأريخ المطلوب
+    final date = params.date;
     
     // محاولة جلب الإحصائيات المحفوظة
     final existing = await statsRepo.getDaily(date);
@@ -96,12 +97,12 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
 
 /// معاملات الإحصائيات اليومية
 class GetDailyStatisticsParams {
-  final String? date;
+  final String date;
   final bool forceRefresh;
   final bool includeComparison;
   
   const GetDailyStatisticsParams({
-    this.date,
+    required this.date,
     this.forceRefresh = false,
     this.includeComparison = false,
   });

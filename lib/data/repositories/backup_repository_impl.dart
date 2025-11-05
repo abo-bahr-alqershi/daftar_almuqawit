@@ -21,5 +21,20 @@ class BackupRepositoryImpl implements BackupRepository {
   }
 
   @override
-  Future<String> exportToExcel(String dateRange) async => exportService.toExcel(dateRange);
+  Future<String> exportToExcel(String dateRange) async {
+    // تحضير البيانات للتصدير
+    return await exportService.toExcel(
+      dateRange,
+      title: 'تقرير دفتر المقاوت',
+      headers: ['التاريخ', 'النوع', 'المبلغ', 'التفاصيل'],
+      data: [], // سيتم ملؤها لاحقاً
+    );
+  }
+  
+  @override
+  Future<String> uploadToCloud(String filePath) async {
+    // TODO: تنفيذ رفع إلى السحابة
+    // يمكن استخدام Firebase Storage أو أي خدمة سحابية
+    return filePath; // حالياً نعيد المسار المحلي
+  }
 }

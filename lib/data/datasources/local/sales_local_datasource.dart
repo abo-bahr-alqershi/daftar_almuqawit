@@ -48,6 +48,15 @@ class SalesLocalDataSource extends BaseLocalDataSource<SaleModel> {
       orderBy: '${SalesTable.cDate} DESC',
     );
   }
+  
+  /// جلب المبيعات حسب التاريخ
+  Future<List<SaleModel>> getByDate(String date) async {
+    return await getWhere(
+      where: '${SalesTable.cDate} = ?',
+      whereArgs: [date],
+      orderBy: '${SalesTable.cTime} DESC',
+    );
+  }
 
   /// جلب المبيعات حسب فترة زمنية
   Future<List<SaleModel>> getByDateRange(String startDate, String endDate) async {

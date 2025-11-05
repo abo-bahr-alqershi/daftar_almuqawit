@@ -30,4 +30,13 @@ class ExpenseLocalDataSource extends BaseLocalDataSource<ExpenseModel> {
       orderBy: '${ExpensesTable.cDate} DESC',
     );
   }
+  
+  /// جلب المصروفات حسب التاريخ
+  Future<List<ExpenseModel>> getByDate(String date) async {
+    return await getWhere(
+      where: '${ExpensesTable.cDate} = ?',
+      whereArgs: [date],
+      orderBy: '${ExpensesTable.cTime} DESC',
+    );
+  }
 }

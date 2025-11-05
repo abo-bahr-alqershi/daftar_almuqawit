@@ -34,4 +34,24 @@ class Sale extends BaseEntity {
     this.profit,
     this.notes,
   });
+  
+  /// تحويل البيع إلى JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date,
+      'time': time,
+      'customer_id': customerId,
+      'qat_type_id': qatTypeId,
+      'quantity': quantity,
+      'unit': unit,
+      'unit_price': unitPrice,
+      'total_amount': totalAmount,
+      'payment_status': paymentStatus,
+      'paid_amount': paidAmount,
+      'remaining_amount': remainingAmount,
+      'profit': profit,
+      'notes': notes,
+    };
+  }
 }

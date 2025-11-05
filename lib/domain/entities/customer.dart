@@ -108,4 +108,21 @@ class Customer extends BaseEntity {
         notes,
         createdAt,
       ];
+
+  /// تحويل العميل إلى JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'nickname': nickname,
+      'customer_type': customerType,
+      'credit_limit': creditLimit,
+      'total_purchases': totalPurchases,
+      'current_debt': currentDebt,
+      'is_blocked': isBlocked,
+      'notes': notes,
+      'created_at': createdAt,
+    };
+  }
 }

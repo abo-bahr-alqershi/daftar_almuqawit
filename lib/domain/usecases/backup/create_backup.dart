@@ -24,15 +24,15 @@ class CreateBackup implements UseCase<String, CreateBackupParams> {
   final DebtRepository debtRepo;
   final ExpenseRepository expenseRepo;
   
-  CreateBackup({
-    required this.backupRepo,
-    required this.salesRepo,
-    required this.purchaseRepo,
-    required this.customerRepo,
-    required this.supplierRepo,
-    required this.debtRepo,
-    required this.expenseRepo,
-  });
+  CreateBackup(
+    this.backupRepo,
+    this.salesRepo,
+    this.purchaseRepo,
+    this.customerRepo,
+    this.supplierRepo,
+    this.debtRepo,
+    this.expenseRepo,
+  );
   
   @override
   Future<String> call(CreateBackupParams params) async {

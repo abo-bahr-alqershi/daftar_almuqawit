@@ -9,15 +9,18 @@ class GetWeeklyReport implements UseCase<List<DailyStatistics>, String> {
   final StatisticsRepository repo;
   GetWeeklyReport(this.repo);
   @override
-  Future<List<DailyStatistics>> call(String startDate) async {
-    // startDate بصيغة YYYY-MM-DD
-    final List<DailyStatistics> result = [];
-    final df = DateFormat('yyyy-MM-dd');
-    DateTime start = df.parse(startDate);
+  Future<List<DailyStatistics>> call(String weekStart) async {
+    final List<DailyStatistics> weekStats = [];
+    
     for (int i = 0; i < 7; i++) {
-      final day = df.format(start.add(Duration(days: i)));
-      result.add(await repo.getDaily(day));
+      final date = DateTime.parse(weekStart).add(Duration(days: i));
+      final dateStr = date.toIso8601String().split('T')[0];
+      final dailyStats = await repo.getDaily(dateStr);
+      if (dailyStats != null) {
+        weekStats.add(dailyStats);
+      }
     }
-    return result;
+    
+    return weekStats;
   }
 }

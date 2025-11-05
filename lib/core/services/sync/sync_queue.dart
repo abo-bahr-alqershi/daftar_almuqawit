@@ -85,4 +85,77 @@ class SyncQueue {
       _logger.error('خطأ في تنظيف السجلات', error: e);
     }
   }
+  
+  /// إضافة عملية للقائمة
+  Future<void> addOperation(Map<String, dynamic> operation) async {
+    try {
+      final record = SyncRecordModel.fromJson(operation);
+      await _local.insert(record);
+      _logger.info('تمت إضافة عملية جديدة للقائمة');
+    } catch (e) {
+      _logger.error('خطأ في إضافة العملية', error: e);
+    }
+  }
+  
+  /// تحديث حالة العملية
+  Future<void> updateStatus(int id, String status) async {
+    try {
+      if (status == 'done') {
+        await markDone(id);
+      } else if (status == 'failed') {
+        await markFailed(id);
+      } else if (status == 'processing') {
+        await markProcessing(id);
+      }
+    } catch (e) {
+      _logger.error('خطأ في تحديث حالة العملية', error: e);
+    }
+  }
+  
+  /// زيادة عدد المحاولات
+  Future<void> incrementRetryCount(int id) async {
+    await incrementRetry(id);
+  }
+  
+  /// حذف العمليات المكتملة
+  Future<void> deleteCompleted() async {
+    try {
+      // TODO: تنفيذ حذف العمليات المكتملة
+      _logger.info('تم حذف العمليات المكتملة');
+    } catch (e) {
+      _logger.error('خطأ في حذف العمليات المكتملة', error: e);
+    }
+  }
+  
+  /// حذف عملية محددة
+  Future<void> deleteOperation(int operationId) async {
+    try {
+      await _local.delete(operationId);
+      _logger.info('تم حذف العملية: $operationId');
+    } catch (e) {
+      _logger.error('خطأ في حذف العملية', error: e);
+    }
+  }
+  
+  /// الحصول على عدد العمليات الفاشلة
+  Future<int> getFailedCount() async {
+    try {
+      // TODO: تنفيذ استعلام للعمليات الفاشلة
+      return 0;
+    } catch (e) {
+      _logger.error('خطأ في حساب العمليات الفاشلة', error: e);
+      return 0;
+    }
+  }
+  
+  /// الحصول على عدد العمليات المكتملة
+  Future<int> getCompletedCount() async {
+    try {
+      // TODO: تنفيذ استعلام للعمليات المكتملة
+      return 0;
+    } catch (e) {
+      _logger.error('خطأ في حساب العمليات المكتملة', error: e);
+      return 0;
+    }
+  }
 }

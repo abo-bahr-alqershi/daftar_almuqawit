@@ -60,6 +60,26 @@ class CustomerModel extends BaseModel {
       syncStatus: null,
     );
   }
+  
+  /// إنشاء نموذج من JSON
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    return CustomerModel(
+      id: json['id'] as int?,
+      name: json['name'] as String,
+      phone: json['phone'] as String?,
+      nickname: json['nickname'] as String?,
+      customerType: (json['customerType'] as String?) ?? 'عادي',
+      creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0,
+      totalPurchases: (json['totalPurchases'] as num?)?.toDouble() ?? 0,
+      currentDebt: (json['currentDebt'] as num?)?.toDouble() ?? 0,
+      isBlocked: (json['isBlocked'] as int?) ?? 0,
+      notes: json['notes'] as String?,
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
+      firebaseId: json['firebaseId'] as String?,
+      syncStatus: json['syncStatus'] as String?,
+    );
+  }
 
   @override
   Map<String, Object?> toMap() => {

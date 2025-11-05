@@ -94,7 +94,16 @@ class DebtsBloc extends Bloc<DebtsEvent, DebtsState> {
   /// معالج إضافة دين جديد
   Future<void> _onAddDebt(AddDebtEvent event, Emitter<DebtsState> emit) async {
     try {
-      await addDebt(event.debt);
+      final debt = event.debt;
+      final params = AddDebtParams(
+        customerId: debt.personId,
+        amount: debt.originalAmount,
+        transactionType: debt.transactionType,
+        transactionId: debt.transactionId,
+        dueDate: debt.dueDate != null ? DateTime.parse(debt.dueDate!) : null,
+        notes: debt.notes,
+      );
+      await addDebt(params);
       emit(DebtOperationSuccess('تم إضافة الدين بنجاح'));
       add(LoadDebts());
     } catch (e) {

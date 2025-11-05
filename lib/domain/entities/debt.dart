@@ -34,4 +34,39 @@ class Debt extends BaseEntity {
     this.lastPaymentDate,
     this.notes,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    personId,
+    originalAmount,
+    paidAmount,
+    remainingAmount,
+    personName,
+    dueDate,
+    status,
+    personName,
+    date,
+    date,
+  ];
+
+  /// تحويل الدين إلى JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'person_type': personType,
+      'person_id': personId,
+      'person_name': personName,
+      'transaction_type': transactionType,
+      'transaction_id': transactionId,
+      'original_amount': originalAmount,
+      'paid_amount': paidAmount,
+      'remaining_amount': remainingAmount,
+      'date': date,
+      'due_date': dueDate,
+      'status': status,
+      'last_payment_date': lastPaymentDate,
+      'notes': notes,
+    };
+  }
 }

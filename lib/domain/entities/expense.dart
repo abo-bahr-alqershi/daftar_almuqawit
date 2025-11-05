@@ -24,4 +24,32 @@ class Expense extends BaseEntity {
     this.recurring = false,
     this.notes,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    date,
+    time,
+    category,
+    amount,
+    description,
+    paymentMethod,
+    recurring,
+    notes,
+  ];
+
+  /// تحويل المصروف إلى JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date,
+      'time': time,
+      'category': category,
+      'amount': amount,
+      'description': description,
+      'payment_method': paymentMethod,
+      'recurring': recurring ? 1 : 0,
+      'notes': notes,
+    };
+  }
 }

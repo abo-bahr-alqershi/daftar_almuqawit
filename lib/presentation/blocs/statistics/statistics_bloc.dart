@@ -1,7 +1,7 @@
 /// Bloc إدارة الإحصائيات
 /// يدير جميع العمليات المتعلقة بالإحصائيات والتقارير
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/repositories/statistics_repository.dart';
 import '../../../domain/usecases/statistics/get_daily_statistics.dart';
 import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
@@ -33,7 +33,8 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
   Future<void> _onLoadTodayStatistics(LoadTodayStatistics event, Emitter<StatisticsState> emit) async {
     try {
       emit(StatisticsLoading());
-      final stats = await getDailyStats(event.date);
+      final params = GetDailyStatisticsParams(date: event.date);
+      final stats = await getDailyStats(params);
       emit(StatisticsLoaded([stats]));
     } catch (e) {
       emit(StatisticsError('فشل تحميل إحصائيات اليوم: ${e.toString()}'));
@@ -45,7 +46,8 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     try {
       emit(StatisticsLoading());
       // استخدام repository مباشرة للحصول على إحصائيات الفترة
-      final stats = await getDailyStats(event.startDate);
+      final params = GetDailyStatisticsParams(date: event.startDate);
+      final stats = await getDailyStats(params);
       emit(StatisticsLoaded([stats]));
     } catch (e) {
       emit(StatisticsError('فشل تحميل إحصائيات الفترة: ${e.toString()}'));
@@ -79,7 +81,8 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     try {
       emit(StatisticsLoading());
       final today = DateTime.now().toString().split(' ')[0];
-      final stats = await getDailyStats(today);
+      final params = GetDailyStatisticsParams(date: today);
+      final stats = await getDailyStats(params);
       emit(StatisticsLoaded([stats]));
     } catch (e) {
       emit(StatisticsError('فشل تحديث الإحصائيات: ${e.toString()}'));

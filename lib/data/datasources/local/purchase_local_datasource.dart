@@ -48,4 +48,13 @@ class PurchaseLocalDataSource extends BaseLocalDataSource<PurchaseModel> {
       orderBy: '${PurchasesTable.cDate} DESC',
     );
   }
+  
+  /// جلب المشتريات حسب التاريخ
+  Future<List<PurchaseModel>> getByDate(String date) async {
+    return await getWhere(
+      where: '${PurchasesTable.cDate} = ?',
+      whereArgs: [date],
+      orderBy: '${PurchasesTable.cTime} DESC',
+    );
+  }
 }

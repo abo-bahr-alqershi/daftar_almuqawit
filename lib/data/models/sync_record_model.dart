@@ -46,6 +46,16 @@ class SyncRecordModel {
         status: map['status'] as String? ?? 'pending',
         retryCount: (map['retry_count'] as num?)?.toInt() ?? 0,
       );
+  
+  factory SyncRecordModel.fromJson(Map<String, dynamic> json) => SyncRecordModel(
+        id: json['id'] as int?,
+        entity: json['entity'] as String,
+        operation: json['operation'] as String,
+        payloadJson: json['payloadJson'] as String,
+        createdAt: json['createdAt'] as String?,
+        status: json['status'] as String? ?? 'pending',
+        retryCount: json['retryCount'] as int? ?? 0,
+      );
 
   Map<String, Object?> toMap() => {
         'id': id,

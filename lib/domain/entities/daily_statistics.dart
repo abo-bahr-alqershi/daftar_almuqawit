@@ -30,4 +30,20 @@ class DailyStatistics extends BaseEntity {
     this.collectedDebts = 0,
     this.cashBalance = 0,
   });
+  
+  /// تحويل إلى JSON
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'date': date,
+    'totalPurchases': totalPurchases,
+    'totalSales': totalSales,
+    'totalExpenses': totalExpenses,
+    'cashSales': cashSales,
+    'creditSales': creditSales,
+    'grossProfit': grossProfit,
+    'netProfit': netProfit,
+    'newDebts': newDebts,
+    'collectedDebts': collectedDebts,
+    'cashBalance': cashBalance,
+  };
 }

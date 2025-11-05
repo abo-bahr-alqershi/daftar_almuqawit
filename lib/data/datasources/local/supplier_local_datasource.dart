@@ -41,6 +41,31 @@ class SupplierLocalDataSource extends BaseLocalDataSource<SupplierModel> {
     );
   }
 
+  /// البحث بـــــــ للتجريبة
+  Future<List<SupplierModel>> filterByRating(double minRating) async {
+    return await getWhere(
+      where: '${SuppliersTable.cQualityRating} >= ?',
+      whereArgs: [minRating],
+      orderBy: '${SuppliersTable.cQualityRating} DESC',
+    );
+  }
+  
+  /// البحث برقم الهاتف
+  Future<List<SupplierModel>> searchByPhone(String phone) async {
+    return await search(
+      column: SuppliersTable.cPhone,
+      query: phone,
+    );
+  }
+  
+  /// البحث بالمنطقة
+  Future<List<SupplierModel>> searchByArea(String area) async {
+    return await search(
+      column: SuppliersTable.cArea,
+      query: area,
+    );
+  }
+
   /// جلب الموردين الذين لديهم ديون
   Future<List<SupplierModel>> getSuppliersWithDebts() async {
     return await getWhere(
