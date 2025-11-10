@@ -376,11 +376,21 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> with SingleTicker
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateStr;
+    }
   }
 
-  bool _isOverdue(DateTime dueDate) {
-    return dueDate.isBefore(DateTime.now());
+  bool _isOverdue(String dueDateStr) {
+    try {
+      final dueDate = DateTime.parse(dueDateStr);
+      return dueDate.isBefore(DateTime.now());
+    } catch (e) {
+      return false;
+    }
   }
 }

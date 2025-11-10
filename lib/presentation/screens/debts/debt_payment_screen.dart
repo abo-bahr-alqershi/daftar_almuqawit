@@ -91,12 +91,9 @@ class _DebtPaymentScreenState extends State<DebtPaymentScreen> {
     if (confirm != true || !mounted) return;
 
     context.read<DebtsBloc>().add(
-      PayDebt(
-        debtId: widget.debtId,
-        amount: amount,
-        paymentMethod: _paymentMethod,
-        paymentDate: _paymentDate ?? DateTime.now(),
-        notes: _notesController.text,
+      PayDebtEvent(
+        int.tryParse(widget.debtId) ?? 0,
+        amount,
       ),
     );
   }
@@ -199,7 +196,7 @@ class _DebtPaymentScreenState extends State<DebtPaymentScreen> {
                   controller: _amountController,
                   label: 'المبلغ',
                   hint: 'أدخل المبلغ المدفوع',
-                  enabled: !_isFullPayment,
+                  readOnly: _isFullPayment,
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
                       return 'يرجى إدخال المبلغ';

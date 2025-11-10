@@ -59,7 +59,7 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
     _priceController.text = purchase.pricePerUnit.toString();
     _notesController.text = purchase.notes ?? '';
     _invoiceNumberController.text = purchase.invoiceNumber ?? '';
-    _selectedDate = purchase.date;
+    _selectedDate = DateTime.tryParse(purchase.date);
     _selectedSupplier = purchase.supplierId;
     _selectedQatType = purchase.qatTypeId;
     _paymentMethod = purchase.paymentMethod;
@@ -96,17 +96,19 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
     final price = double.parse(_priceController.text);
 
     context.read<PurchasesBloc>().add(
-      UpdatePurchase(
-        purchaseId: widget.purchaseId,
-        supplierId: _selectedSupplier!,
-        qatTypeId: _selectedQatType!,
-        quantity: quantity,
-        pricePerUnit: price,
-        paymentMethod: _paymentMethod,
-        isPaid: _isPaid,
-        date: _selectedDate ?? DateTime.now(),
-        invoiceNumber: _invoiceNumberController.text,
-        notes: _notesController.text,
+      UpdatePurchaseEvent(
+        _originalPurchase!.copyWith(
+          quantity: quantity,
+          unitPrice: price,
+          totalAmount: quantity * price,
+          paymentMethod: _paymentMethod,
+          paymentStatus: _isPaid ? 'مدفوع' : 'غير مدفوع',
+          paidAmount: _isPaid ? quantity * price : 0,
+          remainingAmount: _isPaid ? 0 : quantity * price,
+          invoiceNumber: _invoiceNumberController.text,
+          notes: _notesController.text,
+          date: (_selectedDate ?? DateTime.now()).toString().split(' ')[0],
+        ),
       ),
     );
   }

@@ -76,7 +76,7 @@ class PaymentHistory extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'دفعة #${payment.id.substring(0, 8)}',
+                      'دفعة #${payment.id?.toString().substring(0, payment.id.toString().length > 8 ? 8 : payment.id.toString().length) ?? "N/A"}',
                       style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -102,7 +102,7 @@ class PaymentHistory extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _formatDate(payment.paymentDate),
+                  _formatDate(payment.paymentDate ?? ''),
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -155,7 +155,12 @@ class PaymentHistory extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    } catch (e) {
+      return dateStr;
+    }
   }
 }

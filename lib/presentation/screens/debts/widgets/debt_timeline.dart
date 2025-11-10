@@ -54,7 +54,7 @@ class DebtTimeline extends StatelessWidget {
       TimelineEvent(
         title: 'إنشاء الدين',
         description: 'تم إنشاء الدين بمبلغ ${debt.totalAmount.toStringAsFixed(0)} ريال',
-        date: debt.createdAt,
+        date: DateTime.tryParse(debt.createdAt) ?? DateTime.now(),
         icon: Icons.add_circle,
         color: AppColors.primary,
       ),
@@ -88,7 +88,7 @@ class DebtTimeline extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }
 

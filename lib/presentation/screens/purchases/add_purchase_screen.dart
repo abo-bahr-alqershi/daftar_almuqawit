@@ -77,16 +77,22 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
     final price = double.parse(_priceController.text);
 
     context.read<PurchasesBloc>().add(
-      AddPurchase(
-        supplierId: _selectedSupplier!,
-        qatTypeId: _selectedQatType!,
-        quantity: quantity,
-        pricePerUnit: price,
-        paymentMethod: _paymentMethod,
-        isPaid: _isPaid,
-        date: _selectedDate ?? DateTime.now(),
-        invoiceNumber: _invoiceNumberController.text,
-        notes: _notesController.text,
+      AddPurchaseEvent(
+        Purchase(
+          date: (_selectedDate ?? DateTime.now()).toString().split(' ')[0],
+          time: TimeOfDay.now().format(context),
+          supplierId: int.tryParse(_selectedSupplier ?? '0'),
+          qatTypeId: int.tryParse(_selectedQatType ?? '0'),
+          quantity: quantity,
+          unitPrice: price,
+          totalAmount: quantity * price,
+          paymentMethod: _paymentMethod,
+          paymentStatus: _isPaid ? 'مدفوع' : 'غير مدفوع',
+          paidAmount: _isPaid ? quantity * price : 0,
+          remainingAmount: _isPaid ? 0 : quantity * price,
+          invoiceNumber: _invoiceNumberController.text,
+          notes: _notesController.text,
+        ),
       ),
     );
   }
