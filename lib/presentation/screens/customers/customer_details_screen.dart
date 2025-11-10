@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_dimensions.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
 import '../../widgets/common/app_button.dart';
+import '../../widgets/common/confirm_dialog.dart';
+import 'widgets/customer_debt_card.dart';
+import 'widgets/customer_history_tab.dart';
+import 'widgets/customer_rating_widget.dart';
 import 'edit_customer_screen.dart';
 
-/// شاشة تفاصيل العميل
-class CustomerDetailsScreen extends StatelessWidget {
+/// شاشة تفاصيل العميل الكاملة
+class CustomerDetailsScreen extends StatefulWidget {
   final Customer customer;
 
   const CustomerDetailsScreen({
@@ -18,216 +23,270 @@ class CustomerDetailsScreen extends StatelessWidget {
   });
 
   @override
+  State<CustomerDetailsScreen> createState() => _CustomerDetailsScreenState();
+}
+
+class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          customer.name,
-          style: AppTextStyles.h2.copyWith(color: AppColors.textOnDark),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: Text(
+            widget.customer.name,
+            style: AppTextStyles.headlineMedium,
+          ),
+          backgroundColor: AppColors.primary,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => EditCustomerScreen(customer: widget.customer),
+                  ),
+                );
+              },
+              tooltip: 'تعديل',
+            ),
+            IconButton(
+              icon: Icon(widget.customer.isBlocked ? Icons.lock_open : Icons.lock),
+              onPressed: () => _toggleBlockStatus(context),
+              tooltip: widget.customer.isBlocked ? 'إلغاء الحظر' : 'حظر العميل',
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'التفاصيل', icon: Icon(Icons.info_outline, size: 20)),
+              Tab(text: 'الديون', icon: Icon(Icons.account_balance_wallet, size: 20)),
+              Tab(text: 'السجل', icon: Icon(Icons.history, size: 20)),
+            ],
+          ),
         ),
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textOnDark),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => EditCustomerScreen(customer: customer),
-                ),
-              );
-            },
-            tooltip: 'تعديل',
-          ),
-          IconButton(
-            icon: Icon(customer.isBlocked ? Icons.lock_open : Icons.lock),
-            onPressed: () => _toggleBlockStatus(context),
-            tooltip: customer.isBlocked ? 'إلغاء الحظر' : 'حظر العميل',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        body: TabBarView(
+          controller: _tabController,
           children: [
-            // معلومات العميل الأساسية
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
-                          child: Text(
-                            customer.name.isNotEmpty
-                                ? customer.name[0].toUpperCase()
-                                : '؟',
-                            style: AppTextStyles.h1.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                customer.name,
-                                style: AppTextStyles.h2,
-                              ),
-                              const SizedBox(height: 4),
-                              _buildStatusChip(customer),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 24),
-                    _buildInfoRow(
-                      Icons.phone,
-                      'رقم الهاتف',
-                      customer.phone ?? 'غير محدد',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                      Icons.category,
-                      'نوع العميل',
-                      customer.customerType,
-                    ),
-                    if (customer.notes != null &&
-                        customer.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        Icons.notes,
-                        'ملاحظات',
-                        customer.notes!,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // الإحصائيات المالية
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'الإحصائيات المالية',
-                      style: AppTextStyles.h3,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatCard(
-                            'إجمالي المشتريات',
-                            '${customer.totalPurchases.toStringAsFixed(2)} ريال',
-                            Icons.shopping_cart,
-                            AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildStatCard(
-                            'الدين الحالي',
-                            '${customer.currentDebt.toStringAsFixed(2)} ريال',
-                            Icons.account_balance_wallet,
-                            customer.currentDebt > 0
-                                ? AppColors.danger
-                                : AppColors.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildStatCard(
-                      'حد الائتمان',
-                      '${customer.creditLimit.toStringAsFixed(2)} ريال',
-                      Icons.credit_card,
-                      AppColors.info,
-                    ),
-                    if (customer.creditLimit > 0) ...[
-                      const SizedBox(height: 12),
-                      _buildCreditUtilization(customer),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // الإجراءات السريعة
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'إجراءات سريعة',
-                      style: AppTextStyles.h3,
-                    ),
-                    const SizedBox(height: 16),
-                    AppButton.secondary(
-                      text: 'إضافة عملية بيع',
-                      icon: Icons.add_shopping_cart,
-                      onPressed: () {
-                        // TODO: Navigate to add sale screen
-                      },
-                      fullWidth: true,
-                    ),
-                    const SizedBox(height: 12),
-                    AppButton.secondary(
-                      text: 'سداد دين',
-                      icon: Icons.payment,
-                      onPressed: () {
-                        // TODO: Navigate to payment screen
-                      },
-                      fullWidth: true,
-                    ),
-                    const SizedBox(height: 12),
-                    AppButton.secondary(
-                      text: 'عرض سجل المعاملات',
-                      icon: Icons.history,
-                      onPressed: () {
-                        // TODO: Navigate to transactions history
-                      },
-                      fullWidth: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildDetailsTab(),
+            _buildDebtsTab(),
+            _buildHistoryTab(),
           ],
         ),
       ),
     );
+  }
+
+  /// تبويب التفاصيل الأساسية
+  Widget _buildDetailsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.paddingM),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 35,
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        child: Text(
+                          widget.customer.name.isNotEmpty
+                              ? widget.customer.name[0].toUpperCase()
+                              : '؟',
+                          style: AppTextStyles.headlineLarge.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.spaceM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.customer.name,
+                              style: AppTextStyles.headlineMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            _buildStatusChip(widget.customer),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  _buildInfoRow(
+                    Icons.phone,
+                    'رقم الهاتف',
+                    widget.customer.phone ?? 'غير محدد',
+                  ),
+                  const SizedBox(height: 12),
+                  if (widget.customer.nickname != null && widget.customer.nickname!.isNotEmpty)
+                    _buildInfoRow(
+                      Icons.badge,
+                      'الكنية',
+                      widget.customer.nickname!,
+                    ),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(
+                    Icons.category,
+                    'نوع العميل',
+                    widget.customer.customerType,
+                  ),
+                  if (widget.customer.notes != null &&
+                      widget.customer.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      Icons.notes,
+                      'ملاحظات',
+                      widget.customer.notes!,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppDimensions.spaceM),
+
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'الإحصائيات المالية',
+                    style: AppTextStyles.headlineSmall,
+                  ),
+                  const SizedBox(height: AppDimensions.spaceM),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'إجمالي المشتريات',
+                          '${widget.customer.totalPurchases.toStringAsFixed(2)} ريال',
+                          Icons.shopping_cart,
+                          AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          'الدين الحالي',
+                          '${widget.customer.currentDebt.toStringAsFixed(2)} ريال',
+                          Icons.account_balance_wallet,
+                          widget.customer.currentDebt > 0
+                              ? AppColors.danger
+                              : AppColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStatCard(
+                    'حد الائتمان',
+                    '${widget.customer.creditLimit.toStringAsFixed(2)} ريال',
+                    Icons.credit_card,
+                    AppColors.info,
+                  ),
+                  if (widget.customer.creditLimit > 0) ...[
+                    const SizedBox(height: 12),
+                    _buildCreditUtilization(widget.customer),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppDimensions.spaceM),
+
+          CustomerRatingWidget(customer: widget.customer),
+
+          const SizedBox(height: AppDimensions.spaceM),
+
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'إجراءات سريعة',
+                    style: AppTextStyles.headlineSmall,
+                  ),
+                  const SizedBox(height: AppDimensions.spaceM),
+                  AppButton.secondary(
+                    text: 'إضافة عملية بيع',
+                    icon: Icons.add_shopping_cart,
+                    onPressed: () {
+                      // TODO: Navigate to add sale screen with selected customer
+                    },
+                    fullWidth: true,
+                  ),
+                  const SizedBox(height: 12),
+                  AppButton.secondary(
+                    text: 'سداد دين',
+                    icon: Icons.payment,
+                    onPressed: widget.customer.currentDebt > 0
+                        ? () {
+                            // TODO: Navigate to payment screen
+                          }
+                        : null,
+                    fullWidth: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// تبويب الديون
+  Widget _buildDebtsTab() {
+    return CustomerDebtCard(customer: widget.customer);
+  }
+
+  /// تبويب السجل
+  Widget _buildHistoryTab() {
+    return CustomerHistoryTab(customerId: widget.customer.id!);
   }
 
   Widget _buildStatusChip(Customer customer) {
@@ -372,37 +431,27 @@ class CustomerDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _toggleBlockStatus(BuildContext context) {
-    final action = customer.isBlocked ? 'إلغاء حظر' : 'حظر';
-    showDialog(
+  void _toggleBlockStatus(BuildContext context) async {
+    final action = widget.customer.isBlocked ? 'إلغاء حظر' : 'حظر';
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('تأكيد $action العميل'),
-        content: Text('هل أنت متأكد من $action هذا العميل؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.read<CustomersBloc>().add(
-                    BlockCustomerEvent(
-                      customer.id!,
-                      !customer.isBlocked,
-                    ),
-                  );
-              Navigator.of(context).pop();
-            },
-            style: TextButton.styleFrom(
-              foregroundColor:
-                  customer.isBlocked ? AppColors.success : AppColors.danger,
-            ),
-            child: Text(action),
-          ),
-        ],
-      ),
+      title: '$action العميل',
+      message: 'هل أنت متأكد من $action العميل "${widget.customer.name}"؟',
+      confirmText: action,
+      cancelText: 'إلغاء',
+      isDangerous: !widget.customer.isBlocked,
     );
+
+    if (confirmed == true && widget.customer.id != null) {
+      if (context.mounted) {
+        context.read<CustomersBloc>().add(
+          BlockCustomerEvent(
+            widget.customer.id!,
+            !widget.customer.isBlocked,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    }
   }
 }

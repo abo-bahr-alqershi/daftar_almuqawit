@@ -15,17 +15,16 @@ import 'widgets/customer_card.dart';
 import 'widgets/customer_search.dart';
 import 'add_customer_screen.dart';
 import 'customer_details_screen.dart';
-import 'blocked_customers_screen.dart';
 
-/// الشاشة الرئيسية لإدارة العملاء
-class CustomersScreen extends StatefulWidget {
-  const CustomersScreen({super.key});
+/// شاشة قائمة العملاء
+class CustomersListScreen extends StatefulWidget {
+  const CustomersListScreen({super.key});
 
   @override
-  State<CustomersScreen> createState() => _CustomersScreenState();
+  State<CustomersListScreen> createState() => _CustomersListScreenState();
 }
 
-class _CustomersScreenState extends State<CustomersScreen> {
+class _CustomersListScreenState extends State<CustomersListScreen> {
   String _searchQuery = '';
   String _filterType = 'الكل';
   
@@ -35,7 +34,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
     'محظور',
     'VIP',
     'عليه دين',
-    'تجاوز الحد',
   ];
 
   @override
@@ -66,20 +64,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
     ).then((_) => _loadCustomers());
   }
 
-  void _showBlockedCustomers() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const BlockedCustomersScreen(),
-      ),
-    ).then((_) => _loadCustomers());
-  }
-
   Future<void> _deleteCustomer(Customer customer) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'حذف العميل',
-      message: 'هل أنت متأكد من حذف العميل "${customer.name}"؟\nسيتم حذف جميع البيانات المرتبطة به.',
+      message: 'هل أنت متأكد من حذف العميل "${customer.name}"؟',
       confirmText: 'حذف',
       cancelText: 'إلغاء',
       isDangerous: true,
@@ -110,6 +99,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   List<Customer> _filterCustomers(List<Customer> customers) {
     var filtered = customers;
 
+    // تطبيق البحث
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((customer) {
         final query = _searchQuery.toLowerCase();
@@ -119,6 +109,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       }).toList();
     }
 
+    // تطبيق الفلتر
     if (_filterType != 'الكل') {
       filtered = filtered.where((customer) {
         switch (_filterType) {
@@ -130,15 +121,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
             return customer.customerType == 'VIP';
           case 'عليه دين':
             return customer.currentDebt > 0;
-          case 'تجاوز الحد':
-            return customer.hasExceededCreditLimit;
           default:
             return true;
         }
       }).toList();
     }
-
-    filtered.sort((a, b) => b.totalPurchases.compareTo(a.totalPurchases));
 
     return filtered;
   }
@@ -155,11 +142,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(Icons.block),
-              onPressed: _showBlockedCustomers,
-              tooltip: 'العملاء المحظورين',
-            ),
-            IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _loadCustomers,
               tooltip: 'تحديث',
@@ -168,6 +150,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
         ),
         body: Column(
           children: [
+            // شريط البحث
             Container(
               color: AppColors.surface,
               padding: const EdgeInsets.all(AppDimensions.paddingM),
@@ -178,6 +161,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
             ),
 
+            // فلاتر
             Container(
               height: 50,
               color: AppColors.surface,
@@ -215,6 +199,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
             const Divider(height: 1),
 
+            // قائمة العملاء
             Expanded(
               child: BlocConsumer<CustomersBloc, CustomersState>(
                 listener: (context, state) {
