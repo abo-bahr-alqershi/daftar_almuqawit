@@ -53,7 +53,7 @@ class _CustomerSelectorState extends State<CustomerSelector> {
       } else {
         _filteredCustomers = widget.customers.where((customer) {
           return customer.name.toLowerCase().contains(query.toLowerCase()) ||
-              customer.phone.contains(query);
+              (customer.phone?.contains(query) ?? false);
         }).toList();
       }
     });

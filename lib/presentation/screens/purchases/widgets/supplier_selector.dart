@@ -49,7 +49,7 @@ class _SupplierSelectorState extends State<SupplierSelector> {
       } else {
         _filteredSuppliers = widget.suppliers.where((supplier) {
           return supplier.name.toLowerCase().contains(query.toLowerCase()) ||
-              supplier.phone.contains(query);
+              (supplier.phone?.contains(query) ?? false);
         }).toList();
       }
     });
@@ -116,10 +116,10 @@ class _SupplierSelectorState extends State<SupplierSelector> {
                             child: Icon(Icons.person, color: isSelected ? Colors.white : AppColors.primary),
                           ),
                           title: Text(supplier.name),
-                          subtitle: Text(supplier.phone),
+                          subtitle: Text(supplier.phone ?? ''),
                           trailing: isSelected ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
                           onTap: () {
-                            widget.onChanged(supplier.id);
+                            widget.onChanged(supplier.id?.toString());
                             Navigator.pop(context);
                           },
                         );

@@ -192,7 +192,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
               label: 'تاريخ الشراء',
               selectedDate: _selectedDate,
               onDateSelected: (date) {
-                setState(() => _selectedDate = date);
+                setState(() => _selectedDate = date ?? DateTime.now());
               },
             ),
             const SizedBox(height: AppDimensions.spaceM),

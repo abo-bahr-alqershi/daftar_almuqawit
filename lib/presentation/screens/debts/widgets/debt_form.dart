@@ -49,7 +49,7 @@ class DebtFormState extends State<DebtForm> {
       _amountController.text = widget.debt!.originalAmount.toString();
       _notesController.text = widget.debt!.notes ?? '';
       _descriptionController.text = widget.debt!.description ?? '';
-      _debtType = widget.debt!.transactionType;
+      _debtType = widget.debt!.transactionType ?? 'دين علي';
       _selectedDate = DateTime.tryParse(widget.debt!.date);
       _dueDate = widget.debt!.dueDate != null 
           ? DateTime.tryParse(widget.debt!.dueDate!)

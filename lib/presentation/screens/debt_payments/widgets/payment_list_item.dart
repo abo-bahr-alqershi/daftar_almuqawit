@@ -136,7 +136,7 @@ class PaymentListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    Formatters.formatDate(payment.paymentDate),
+                    payment.paymentDate,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                     ),
