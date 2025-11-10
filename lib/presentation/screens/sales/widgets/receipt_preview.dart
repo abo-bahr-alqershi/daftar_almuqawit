@@ -35,7 +35,7 @@ class ReceiptPreview extends StatelessWidget {
           if (storeAddress != null) Text(storeAddress!, style: AppTextStyles.bodySmall),
           if (storePhone != null) Text(storePhone!, style: AppTextStyles.bodySmall),
           const Divider(height: 24),
-          _buildRow('رقم الفاتورة:', '#${sale.id?.substring(0, 8) ?? 'N/A'}'),
+          _buildRow('رقم الفاتورة:', '#${sale.id?.toString().padLeft(8, '0') ?? 'N/A'}'),
           _buildRow('التاريخ:', sale.date),
           if (sale.customerName != null) _buildRow('العميل:', sale.customerName!),
           const Divider(height: 24),

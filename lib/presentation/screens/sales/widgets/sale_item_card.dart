@@ -55,7 +55,7 @@ class SaleItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '#${sale.id?.substring(0, 8) ?? 'N/A'}',
+                          '#${sale.id?.toString().padLeft(8, '0') ?? 'N/A'}',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,

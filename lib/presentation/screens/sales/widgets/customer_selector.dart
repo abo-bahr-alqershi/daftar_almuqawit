@@ -150,9 +150,9 @@ class _CustomerSelectorState extends State<CustomerSelector> {
                       itemBuilder: (context, index) {
                         final customer = _filteredCustomers[index];
                         return _buildCustomerTile(
-                          customer.id,
+                          customer.id?.toString(),
                           customer.name,
-                          customer.phone,
+                          customer.phone ?? '',
                           Icons.person,
                           debt: customer.totalDebt,
                         );

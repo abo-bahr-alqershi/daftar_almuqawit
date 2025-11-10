@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
@@ -473,11 +474,19 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   /// تجهيز بيانات الرسم البياني
-  Map<String, List<double>> _prepareChartData(List<DailyStatistics> stats) {
-    return {
-      'المبيعات': stats.map((s) => s.totalSales).toList(),
-      'المشتريات': stats.map((s) => s.totalPurchases).toList(),
-    };
+  List<LineChartDataSet> _prepareChartData(List<DailyStatistics> stats) {
+    return [
+      LineChartDataSet(
+        label: 'المبيعات',
+        data: stats.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.totalSales)).toList(),
+        color: AppColors.primary,
+      ),
+      LineChartDataSet(
+        label: 'المشتريات',
+        data: stats.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.totalPurchases)).toList(),
+        color: AppColors.info,
+      ),
+    ];
   }
 
   /// الحصول على تسميات المحور X
