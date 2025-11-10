@@ -108,7 +108,7 @@ class CostCalculator extends StatelessWidget {
                       Text(
                         '${paymentPercentage.toStringAsFixed(1)}%',
                         style: AppTextStyles.titleMedium.copyWith(
-                          color: _getProgressColor(paymentPercentage),
+                          color: _getProgressColor(paymentPercentage.toDouble()),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -121,7 +121,7 @@ class CostCalculator extends StatelessWidget {
                       value: paymentPercentage / 100,
                       backgroundColor: AppColors.disabled.withOpacity(0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        _getProgressColor(paymentPercentage),
+                        _getProgressColor(paymentPercentage.toDouble()),
                       ),
                       minHeight: 8,
                     ),
