@@ -152,10 +152,10 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
                 selectedTrustLevel: _selectedTrustLevel,
                 selectedQualityRating: _selectedQualityRating,
                 onTrustLevelChanged: (trustLevel) {
-                  setState(() => _selectedTrustLevel = trustLevel);
+                  setState(() => _selectedTrustLevel = trustLevel ?? '');
                 },
                 onQualityRatingChanged: (rating) {
-                  setState(() => _selectedQualityRating = rating);
+                  setState(() => _selectedQualityRating = rating ?? 0);
                 },
               ),
             ),
