@@ -75,6 +75,30 @@ class MenuGrid extends StatelessWidget {
           color: const Color(0xFFFF6584),
           onTap: () => Navigator.pushNamed(context, RouteNames.statistics),
         ),
+        MenuCard(
+          title: 'التقارير',
+          icon: Icons.assessment_rounded,
+          color: const Color(0xFF9C27B0),
+          onTap: () => Navigator.pushNamed(context, RouteNames.reports),
+        ),
+        MenuCard(
+          title: 'أنواع القات',
+          icon: Icons.category_rounded,
+          color: const Color(0xFF00BCD4),
+          onTap: () => Navigator.pushNamed(context, RouteNames.qatTypes),
+        ),
+        MenuCard(
+          title: 'الإعدادات',
+          icon: Icons.settings_rounded,
+          color: const Color(0xFF607D8B),
+          onTap: () => Navigator.pushNamed(context, RouteNames.settings),
+        ),
+        MenuCard(
+          title: 'دفعات الديون',
+          icon: Icons.payment_rounded,
+          color: const Color(0xFF795548),
+          onTap: () => Navigator.pushNamed(context, RouteNames.debtPayments),
+        ),
       ],
     );
   }
