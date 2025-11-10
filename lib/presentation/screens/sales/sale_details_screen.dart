@@ -23,7 +23,7 @@ class SaleDetailsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildInfoCard('رقم العملية', sale.id),
+          _buildInfoCard('رقم العملية', sale.id?.toString() ?? 'غير متوفر'),
           _buildInfoCard('التاريخ', sale.date.toString().split(' ')[0]),
           _buildInfoCard('الكمية', '${sale.quantity} كيس'),
           _buildInfoCard('السعر', '${sale.price} ريال'),

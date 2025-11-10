@@ -28,7 +28,10 @@ class TodaySalesScreen extends StatelessWidget {
           }
 
           if (state is SalesError) {
-            return ErrorWidget(message: state.message);
+            return AppErrorWidget(
+              title: 'حدث خطأ',
+              message: state.message,
+            );
           }
 
           if (state is SalesLoaded) {

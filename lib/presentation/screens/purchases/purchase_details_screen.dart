@@ -32,7 +32,7 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditPurchaseScreen(purchase: widget.purchase),
+        builder: (context) => EditPurchaseScreen(purchaseId: widget.purchase.id?.toString() ?? '0'),
       ),
     );
 
@@ -43,7 +43,7 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
 
   Future<void> _deletePurchase() async {
     final confirmed = await ConfirmDialog.show(
-      context: context,
+      context,
       title: 'حذف المشترى',
       message: 'هل أنت متأكد من حذف هذا المشترى؟\nلن يمكن التراجع عن هذا الإجراء.',
       confirmText: 'حذف',
@@ -63,7 +63,7 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
 
   Future<void> _cancelPurchase() async {
     final confirmed = await ConfirmDialog.show(
-      context: context,
+      context,
       title: 'إلغاء المشترى',
       message: 'هل أنت متأكد من إلغاء هذا المشترى؟',
       confirmText: 'إلغاء المشترى',

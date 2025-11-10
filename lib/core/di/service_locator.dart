@@ -149,6 +149,8 @@ import '../../domain/usecases/expenses/delete_expense.dart';
 // Debt payments
 import '../../domain/usecases/debt_payments/add_debt_payment.dart';
 import '../../domain/usecases/debt_payments/get_debt_payments_by_debt.dart';
+import '../../domain/usecases/debt_payments/update_debt_payment.dart';
+import '../../domain/usecases/debt_payments/delete_debt_payment.dart';
 // Accounting
 import '../../domain/usecases/accounting/add_journal_entry.dart';
 import '../../domain/usecases/accounting/add_journal_entry_detail.dart';
@@ -312,6 +314,8 @@ class ServiceLocator {
     // Debt payments
     sl.registerLazySingleton<AddDebtPayment>(() => AddDebtPayment(sl()));
     sl.registerLazySingleton<GetDebtPaymentsByDebt>(() => GetDebtPaymentsByDebt(sl()));
+    sl.registerLazySingleton<UpdateDebtPayment>(() => UpdateDebtPayment(sl()));
+    sl.registerLazySingleton<DeleteDebtPayment>(() => DeleteDebtPayment(sl()));
 
     // Accounting
     sl.registerLazySingleton<AddJournalEntry>(() => AddJournalEntry(sl()));
@@ -457,7 +461,12 @@ class ServiceLocator {
       deleteDebt: sl(),
       partialPayment: sl(),
     ));
-    sl.registerFactory<PaymentBloc>(() => PaymentBloc());
+    sl.registerFactory<PaymentBloc>(() => PaymentBloc(
+      addDebtPayment: sl<AddDebtPayment>(),
+      updateDebtPayment: sl<UpdateDebtPayment>(),
+      deleteDebtPayment: sl<DeleteDebtPayment>(),
+      getDebtPaymentsByDebt: sl<GetDebtPaymentsByDebt>(),
+    ));
     sl.registerFactory<ExpensesBloc>(() => ExpensesBloc(
       repository: sl<ExpenseRepository>(),
       getTodayExpenses: sl<GetDailyExpenses>(),

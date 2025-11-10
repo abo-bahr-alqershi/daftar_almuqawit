@@ -75,11 +75,21 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                   isLoading: state is SalesLoading,
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      context.read<SalesBloc>().add(AddSale(
-                        quantity: double.parse(_quantityController.text),
-                        price: double.parse(_priceController.text),
-                        notes: _notesController.text,
-                        date: _selectedDate ?? DateTime.now(),
+                      final quantity = double.parse(_quantityController.text);
+                      final price = double.parse(_priceController.text);
+                      
+                      context.read<SalesBloc>().add(AddSaleEvent(
+                        Sale(
+                          date: (_selectedDate ?? DateTime.now()).toString().split(' ')[0],
+                          time: TimeOfDay.now().format(context),
+                          customerId: _selectedCustomer != null ? int.tryParse(_selectedCustomer!) : null,
+                          qatTypeId: _selectedQatType != null ? int.tryParse(_selectedQatType!) : null,
+                          quantity: quantity,
+                          unitPrice: price,
+                          totalAmount: quantity * price,
+                          paymentMethod: _paymentMethod,
+                          notes: _notesController.text,
+                        ),
                       ));
                     }
                   },

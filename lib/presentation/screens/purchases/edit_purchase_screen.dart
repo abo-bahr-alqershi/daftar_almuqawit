@@ -60,8 +60,8 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
     _notesController.text = purchase.notes ?? '';
     _invoiceNumberController.text = purchase.invoiceNumber ?? '';
     _selectedDate = DateTime.tryParse(purchase.date);
-    _selectedSupplier = purchase.supplierId;
-    _selectedQatType = purchase.qatTypeId;
+    _selectedSupplier = purchase.supplierId?.toString();
+    _selectedQatType = purchase.qatTypeId?.toString();
     _paymentMethod = purchase.paymentMethod;
     _isPaid = purchase.isPaid;
   }
@@ -134,7 +134,7 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
               );
               
               if (confirm == true && context.mounted) {
-                context.read<PurchasesBloc>().add(DeletePurchase(widget.purchaseId));
+                context.read<PurchasesBloc>().add(DeletePurchaseEvent(int.tryParse(widget.purchaseId) ?? 0));
               }
             },
           ),

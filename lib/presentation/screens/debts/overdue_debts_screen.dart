@@ -27,7 +27,7 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen> {
   }
 
   void _loadOverdueDebts() {
-    context.read<DebtsBloc>().add(const LoadOverdueDebts());
+    context.read<DebtsBloc>().add(LoadOverdueDebts());
   }
 
   @override
@@ -136,7 +136,9 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen> {
                     itemCount: state.overdueDebts.length,
                     itemBuilder: (context, index) {
                       final debt = state.overdueDebts[index];
-                      final daysOverdue = DateTime.now().difference(debt.dueDate!).inDays;
+                      final daysOverdue = debt.dueDate != null 
+                          ? DateTime.now().difference(DateTime.parse(debt.dueDate!)).inDays 
+                          : 0;
                       
                       return DebtCard(
                         debt: debt,
@@ -160,7 +162,7 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen> {
                           );
                         },
                         onReminder: () {
-                          _sendReminder(debt.id);
+                          _sendReminder(debt.id?.toString() ?? '0');
                         },
                       );
                     },
