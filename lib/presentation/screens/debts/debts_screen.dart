@@ -40,6 +40,13 @@ class _DebtsScreenState extends State<DebtsScreen> {
     context.read<DebtsBloc>().add(event);
   }
 
+  void _showSearch(List debts) {
+    showSearch(
+      context: context,
+      delegate: DebtSearchDelegate(debts),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -53,7 +60,10 @@ class _DebtsScreenState extends State<DebtsScreen> {
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                // TODO: Implement search
+                final state = context.read<DebtsBloc>().state;
+                if (state is DebtsLoaded) {
+                  _showSearch(state.debts);
+                }
               },
             ),
             IconButton(
@@ -306,5 +316,115 @@ class _DebtsScreenState extends State<DebtsScreen> {
       default:
         return 'لم يتم تسجيل أي ديون بعد';
     }
+  }
+}
+
+/// مندوب البحث عن الديون
+class DebtSearchDelegate extends SearchDelegate<dynamic> {
+  final List debts;
+
+  DebtSearchDelegate(this.debts);
+
+  @override
+  String get searchFieldLabel => 'ابحث عن دين...';
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_forward),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = debts.where((debt) {
+      final personName = debt.personName?.toLowerCase() ?? '';
+      final amount = debt.remainingAmount?.toString() ?? '';
+      final status = debt.status?.toLowerCase() ?? '';
+      final searchLower = query.toLowerCase();
+      
+      return personName.contains(searchLower) ||
+          amount.contains(searchLower) ||
+          status.contains(searchLower);
+    }).toList();
+
+    if (results.isEmpty) {
+      return const Center(
+        child: Text('لا توجد نتائج'),
+      );
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: results.length,
+        itemBuilder: (context, index) {
+          final debt = results[index];
+          final isOverdue = debt.dueDate != null &&
+              DateTime.parse(debt.dueDate!)
+                  .isBefore(DateTime.now()) &&
+              debt.remainingAmount > 0;
+          final daysOverdue = isOverdue
+              ? DateTime.now()
+                  .difference(DateTime.parse(debt.dueDate!))
+                  .inDays
+              : 0;
+
+          return DebtCard(
+            debt: debt,
+            isOverdue: isOverdue,
+            daysOverdue: daysOverdue,
+            onTap: () {
+              close(context, debt);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestions = debts.where((debt) {
+      final personName = debt.personName?.toLowerCase() ?? '';
+      final searchLower = query.toLowerCase();
+      
+      return personName.contains(searchLower);
+    }).toList();
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.builder(
+        itemCount: suggestions.length > 5 ? 5 : suggestions.length,
+        itemBuilder: (context, index) {
+          final debt = suggestions[index];
+          return ListTile(
+            leading: const Icon(Icons.account_balance_wallet, color: AppColors.danger),
+            title: Text(debt.personName ?? 'عميل'),
+            subtitle: Text('${debt.remainingAmount ?? 0} ريال - ${debt.status ?? "غير محدد"}'),
+            onTap: () {
+              query = debt.personName ?? '';
+              showResults(context);
+            },
+          );
+        },
+      ),
+    );
   }
 }

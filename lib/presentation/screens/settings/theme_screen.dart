@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../widgets/common/loading_widget.dart';
+import '../../blocs/app/app_settings_bloc.dart';
 
 /// شاشة اختيار المظهر
 /// 
@@ -16,11 +17,7 @@ class ThemeScreen extends StatefulWidget {
 }
 
 class _ThemeScreenState extends State<ThemeScreen> {
-  static const String _themeModeKey = 'theme_mode';
-  
-  bool _isLoading = true;
   ThemeMode _selectedThemeMode = ThemeMode.system;
-  bool _isSaving = false;
 
   final List<ThemeOption> _themeOptions = [
     ThemeOption(
@@ -61,122 +58,50 @@ class _ThemeScreenState extends State<ThemeScreen> {
     ),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentTheme();
-  }
-
-  /// تحميل الوضع المحفوظ
-  Future<void> _loadCurrentTheme() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedTheme = prefs.getString(_themeModeKey);
-      
-      setState(() {
-        _selectedThemeMode = _parseThemeMode(savedTheme);
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل تحميل إعدادات المظهر: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
   /// تحويل النص إلى ThemeMode
-  ThemeMode _parseThemeMode(String? value) {
-    switch (value) {
-      case 'light':
-        return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
-      case 'system':
-      default:
-        return ThemeMode.system;
-    }
-  }
-
-  /// تحويل ThemeMode إلى نص
-  String _themeModeToString(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'light';
-      case ThemeMode.dark:
-        return 'dark';
-      case ThemeMode.system:
-        return 'system';
-    }
+  ThemeMode _parseThemeMode(bool isDarkMode) {
+    return isDarkMode ? ThemeMode.dark : ThemeMode.light;
   }
 
   /// تغيير المظهر
-  Future<void> _changeTheme(ThemeMode themeMode) async {
-    if (_selectedThemeMode == themeMode) return;
+  void _changeTheme(ThemeMode themeMode) {
+    final settingsBloc = context.read<AppSettingsBloc>();
+    final currentIsDarkMode = settingsBloc.state.isDarkMode;
+    final currentThemeMode = _parseThemeMode(currentIsDarkMode);
 
-    setState(() {
-      _isSaving = true;
-      _selectedThemeMode = themeMode;
-    });
+    if (currentThemeMode == themeMode && themeMode != ThemeMode.system) return;
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_themeModeKey, _themeModeToString(themeMode));
-      
-      setState(() => _isSaving = false);
-
-      if (!mounted) return;
-
-      // إظهار رسالة نجاح
-      String message;
-      switch (themeMode) {
-        case ThemeMode.light:
-          message = 'تم التبديل إلى الوضع الفاتح';
-          break;
-        case ThemeMode.dark:
-          message = 'تم التبديل إلى الوضع الداكن';
-          break;
-        case ThemeMode.system:
-          message = 'تم التبديل إلى الوضع التلقائي';
-          break;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // TODO: تطبيق المظهر الجديد على التطبيق
-      // يمكن استخدام Provider أو Riverpod لإدارة حالة المظهر
-      
-    } catch (e) {
-      setState(() {
-        _isSaving = false;
-        // إرجاع المظهر السابق في حالة الفشل
-        _selectedThemeMode = _selectedThemeMode;
-      });
-      
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل حفظ المظهر: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    bool? newIsDarkMode;
+    if (themeMode == ThemeMode.dark) {
+      newIsDarkMode = true;
+    } else if (themeMode == ThemeMode.light) {
+      newIsDarkMode = false;
+    } else {
+      newIsDarkMode = false;
     }
+
+    settingsBloc.add(ToggleThemeMode(isDarkMode: newIsDarkMode));
+
+    String message;
+    switch (themeMode) {
+      case ThemeMode.light:
+        message = 'تم التبديل إلى الوضع الفاتح';
+        break;
+      case ThemeMode.dark:
+        message = 'تم التبديل إلى الوضع الداكن';
+        break;
+      case ThemeMode.system:
+        message = 'تم التبديل إلى الوضع التلقائي';
+        break;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -195,14 +120,21 @@ class _ThemeScreenState extends State<ThemeScreen> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: _isLoading
-            ? const LoadingWidget.large(message: 'جارِ التحميل...')
-            : _buildThemeOptions(),
+        body: BlocBuilder<AppSettingsBloc, AppSettingsState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const LoadingWidget.large(message: 'جارِ التحميل...');
+            }
+            
+            final currentThemeMode = _parseThemeMode(state.isDarkMode);
+            return _buildThemeOptions(currentThemeMode);
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildThemeOptions() {
+  Widget _buildThemeOptions(ThemeMode currentThemeMode) {
     return Column(
       children: [
         // معلومات توضيحية
@@ -240,39 +172,16 @@ class _ThemeScreenState extends State<ThemeScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: AppDimensions.spaceM),
             itemBuilder: (context, index) {
               final option = _themeOptions[index];
-              final isSelected = _selectedThemeMode == option.mode;
+              final isSelected = currentThemeMode == option.mode;
 
               return _ThemeOptionTile(
                 option: option,
                 isSelected: isSelected,
-                onTap: _isSaving ? null : () => _changeTheme(option.mode),
+                onTap: () => _changeTheme(option.mode),
               );
             },
           ),
         ),
-
-        // مؤشر الحفظ
-        if (_isSaving)
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingL),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                const SizedBox(width: AppDimensions.spaceM),
-                Text(
-                  'جارِ التطبيق...',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }

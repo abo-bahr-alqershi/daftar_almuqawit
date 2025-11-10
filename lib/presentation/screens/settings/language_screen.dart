@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../widgets/common/loading_widget.dart';
+import '../../blocs/app/app_settings_bloc.dart';
 
 /// شاشة اختيار اللغة
 /// 
@@ -16,12 +17,6 @@ class LanguageScreen extends StatefulWidget {
 }
 
 class _LanguageScreenState extends State<LanguageScreen> {
-  static const String _languageKey = 'app_language';
-  
-  bool _isLoading = true;
-  String _selectedLanguage = 'ar'; // ar = Arabic, en = English
-  bool _isSaving = false;
-
   final List<LanguageItem> _languages = [
     LanguageItem(
       code: 'ar',
@@ -37,95 +32,31 @@ class _LanguageScreenState extends State<LanguageScreen> {
     ),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentLanguage();
-  }
-
-  /// تحميل اللغة المحفوظة
-  Future<void> _loadCurrentLanguage() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedLanguage = prefs.getString(_languageKey);
-      
-      setState(() {
-        _selectedLanguage = savedLanguage ?? 'ar';
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل تحميل إعدادات اللغة: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
   /// تغيير اللغة
-  Future<void> _changeLanguage(String languageCode) async {
-    if (_selectedLanguage == languageCode) return;
+  void _changeLanguage(String languageCode) {
+    final settingsBloc = context.read<AppSettingsBloc>();
+    final currentLanguage = settingsBloc.state.languageCode;
 
-    setState(() {
-      _isSaving = true;
-      _selectedLanguage = languageCode;
-    });
+    if (currentLanguage == languageCode) return;
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_languageKey, languageCode);
-      
-      setState(() => _isSaving = false);
+    settingsBloc.add(ChangeLanguage(languageCode));
 
-      if (!mounted) return;
-
-      // إظهار رسالة نجاح
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            languageCode == 'ar'
-                ? 'تم تغيير اللغة إلى العربية'
-                : 'Language changed to English',
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          languageCode == 'ar'
+              ? 'تم تغيير اللغة إلى العربية'
+              : 'Language changed to English',
         ),
-      );
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
 
-      // TODO: تطبيق تغيير اللغة على التطبيق
-      // يمكن استخدام package مثل easy_localization أو flutter_localizations
-      
-      // إعادة بناء التطبيق بعد تأخير قصير
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
-      
-      // عرض dialog للإعلام بضرورة إعادة تشغيل التطبيق
       _showRestartDialog();
-    } catch (e) {
-      setState(() {
-        _isSaving = false;
-        // إرجاع اللغة السابقة في حالة الفشل
-        _selectedLanguage = _selectedLanguage == 'ar' ? 'en' : 'ar';
-      });
-      
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل حفظ اللغة: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    });
   }
 
   /// عرض dialog لإعادة التشغيل
@@ -187,14 +118,19 @@ class _LanguageScreenState extends State<LanguageScreen> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: _isLoading
-            ? const LoadingWidget.large(message: 'جارِ التحميل...')
-            : _buildLanguageList(),
+        body: BlocBuilder<AppSettingsBloc, AppSettingsState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const LoadingWidget.large(message: 'جارِ التحميل...');
+            }
+            return _buildLanguageList(state.languageCode);
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildLanguageList() {
+  Widget _buildLanguageList(String selectedLanguage) {
     return Column(
       children: [
         // معلومات توضيحية
@@ -232,39 +168,16 @@ class _LanguageScreenState extends State<LanguageScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: AppDimensions.spaceM),
             itemBuilder: (context, index) {
               final language = _languages[index];
-              final isSelected = _selectedLanguage == language.code;
+              final isSelected = selectedLanguage == language.code;
 
               return _LanguageTile(
                 language: language,
                 isSelected: isSelected,
-                onTap: _isSaving ? null : () => _changeLanguage(language.code),
+                onTap: () => _changeLanguage(language.code),
               );
             },
           ),
         ),
-
-        // مؤشر الحفظ
-        if (_isSaving)
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingL),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                const SizedBox(width: AppDimensions.spaceM),
-                Text(
-                  'جارِ الحفظ...',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }

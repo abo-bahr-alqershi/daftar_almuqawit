@@ -197,15 +197,9 @@ class ReportsScreen extends StatelessWidget {
                 icon: Icons.trending_up,
                 color: AppColors.purchases,
                 onTap: () {
-                  // TODO: Navigate to profit analysis
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('قيد التطوير'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  Navigator.pushNamed(context, '/profit-analysis');
                 },
-                isEnabled: false,
+                isEnabled: true,
               ),
               
               const SizedBox(height: 12),
@@ -217,15 +211,9 @@ class ReportsScreen extends StatelessWidget {
                 icon: Icons.people,
                 color: AppColors.debt,
                 onTap: () {
-                  // TODO: Navigate to customers report
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('قيد التطوير'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  Navigator.pushNamed(context, '/customers-report');
                 },
-                isEnabled: false,
+                isEnabled: true,
               ),
               
               const SizedBox(height: 12),
@@ -237,15 +225,9 @@ class ReportsScreen extends StatelessWidget {
                 icon: Icons.inventory_2,
                 color: AppColors.expense,
                 onTap: () {
-                  // TODO: Navigate to products report
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('قيد التطوير'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  Navigator.pushNamed(context, '/products-report');
                 },
-                isEnabled: false,
+                isEnabled: true,
               ),
               
               const SizedBox(height: 24),

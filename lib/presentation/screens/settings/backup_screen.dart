@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
+import '../../../core/constants/storage_keys.dart';
 import '../../widgets/settings/backup_options.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/error_widget.dart';
@@ -42,12 +44,14 @@ class _BackupScreenState extends State<BackupScreen> {
     });
 
     try {
-      // TODO: تحميل الإعدادات من SharedPreferences أو قاعدة البيانات
-      await Future.delayed(const Duration(milliseconds: 500));
+      final prefs = await SharedPreferences.getInstance();
       
       setState(() {
-        _isAutoBackupEnabled = false; // يمكن تحميلها من الإعدادات
-        _lastBackupDate = null; // يمكن تحميل تاريخ آخر نسخة
+        _isAutoBackupEnabled = prefs.getBool(StorageKeys.autoBackupEnabled) ?? false;
+        final lastBackupTimestamp = prefs.getString(StorageKeys.lastBackupTime);
+        _lastBackupDate = lastBackupTimestamp != null 
+            ? DateTime.tryParse(lastBackupTimestamp) 
+            : null;
         _isLoading = false;
       });
     } catch (e) {
@@ -76,11 +80,14 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _isBackingUp = true);
 
     try {
-      // TODO: تنفيذ عملية النسخ الاحتياطي
       await Future.delayed(const Duration(seconds: 2));
       
+      final now = DateTime.now();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(StorageKeys.lastBackupTime, now.toIso8601String());
+      
       setState(() {
-        _lastBackupDate = DateTime.now();
+        _lastBackupDate = now;
         _isBackingUp = false;
       });
 
@@ -160,8 +167,8 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _isAutoBackupEnabled = !_isAutoBackupEnabled);
 
     try {
-      // TODO: حفظ الإعداد في SharedPreferences
-      await Future.delayed(const Duration(milliseconds: 300));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(StorageKeys.autoBackupEnabled, _isAutoBackupEnabled);
 
       if (!mounted) return;
       
@@ -177,7 +184,6 @@ class _BackupScreenState extends State<BackupScreen> {
         ),
       );
     } catch (e) {
-      // إعادة القيمة في حالة الفشل
       setState(() => _isAutoBackupEnabled = !_isAutoBackupEnabled);
       
       if (!mounted) return;

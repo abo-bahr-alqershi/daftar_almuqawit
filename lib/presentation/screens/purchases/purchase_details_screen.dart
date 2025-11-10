@@ -395,7 +395,15 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
                   text: 'سداد المبلغ المتبقي',
                   icon: Icons.payment,
                   onPressed: () {
-                    // TODO: Navigate to payment screen
+                    Navigator.pushNamed(
+                      context,
+                      '/debt-payment',
+                      arguments: {
+                        'purchaseId': widget.purchase.id,
+                        'supplierId': widget.purchase.supplierId,
+                        'remainingAmount': widget.purchase.remainingAmount,
+                      },
+                    );
                   },
                   fullWidth: true,
                 ),

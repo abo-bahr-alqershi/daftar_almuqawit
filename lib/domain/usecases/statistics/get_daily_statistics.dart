@@ -87,7 +87,24 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
       final yesterdayStats = await statsRepo.getDaily(yesterday.toIso8601String().split('T')[0]);
       
       if (yesterdayStats != null) {
-        // TODO: إضافة بيانات المقارنة
+        // حساب نسب التغيير
+        final salesChange = totalSales - yesterdayStats.totalSales;
+        final salesChangePercent = yesterdayStats.totalSales > 0 
+            ? (salesChange / yesterdayStats.totalSales * 100)
+            : 0.0;
+        
+        final profitChange = netProfit - yesterdayStats.netProfit;
+        final profitChangePercent = yesterdayStats.netProfit > 0
+            ? (profitChange / yesterdayStats.netProfit * 100)
+            : 0.0;
+        
+        final expensesChange = totalExpenses - yesterdayStats.totalExpenses;
+        final expensesChangePercent = yesterdayStats.totalExpenses > 0
+            ? (expensesChange / yesterdayStats.totalExpenses * 100)
+            : 0.0;
+        
+        // يمكن إضافة هذه البيانات إلى نموذج منفصل للمقارنة
+        // أو توسيع نموذج DailyStatistics ليشمل بيانات المقارنة
       }
     }
     

@@ -41,6 +41,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
        super(DashboardInitial()) {
     on<LoadDashboard>(_onLoadDashboard);
     on<RefreshDashboard>(_onRefreshDashboard);
+    on<FilterDashboardByDateRange>(_onFilterByDateRange);
+    on<LoadTodayStatistics>(_onLoadTodayStatistics);
+    on<LoadWeekStatistics>(_onLoadWeekStatistics);
+    on<LoadMonthStatistics>(_onLoadMonthStatistics);
+    on<LoadRecentActivities>(_onLoadRecentActivities);
+    on<ExportDashboardData>(_onExportData);
   }
   
   Future<void> _onLoadDashboard(
@@ -52,7 +58,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       
       final today = DateTime.now().toIso8601String().split('T')[0];
       
-      // جلب جميع البيانات بشكل متوازي
       final results = await Future.wait([
         _getDailyStatistics(GetDailyStatisticsParams(date: today)),
         _getTodaySales(today),
@@ -79,7 +84,116 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     RefreshDashboard event,
     Emitter<DashboardState> emit,
   ) async {
+    if (state is DashboardLoaded) {
+      emit(DashboardRefreshing(state as DashboardLoaded));
+    }
     await _onLoadDashboard(LoadDashboard(), emit);
+  }
+
+  Future<void> _onFilterByDateRange(
+    FilterDashboardByDateRange event,
+    Emitter<DashboardState> emit,
+  ) async {
+    try {
+      emit(DashboardLoading());
+      
+      final startDateStr = event.startDate.toIso8601String().split('T')[0];
+      final endDateStr = event.endDate.toIso8601String().split('T')[0];
+      
+      final results = await Future.wait([
+        _getDailyStatistics(GetDailyStatisticsParams(date: startDateStr)),
+        _getTodaySales(startDateStr),
+        _getTodayPurchases(startDateStr),
+        _getPendingDebts(NoParams()),
+        _getOverdueDebts(endDateStr),
+        _getMonthlyStats(),
+      ]);
+      
+      emit(DashboardLoaded(
+        dailyStats: results[0] as DailyStatistics,
+        todaySales: results[1] as List<Sale>,
+        todayPurchases: results[2] as List<Purchase>,
+        pendingDebts: results[3] as List<Debt>,
+        overdueDebts: results[4] as List<Debt>,
+        monthlyProgress: _calculateMonthlyProgress(results[5] as List<DailyStatistics>),
+        startDate: event.startDate,
+        endDate: event.endDate,
+      ));
+    } catch (e) {
+      emit(DashboardError('فشل تصفية البيانات: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onLoadTodayStatistics(
+    LoadTodayStatistics event,
+    Emitter<DashboardState> emit,
+  ) async {
+    await _onLoadDashboard(LoadDashboard(), emit);
+  }
+
+  Future<void> _onLoadWeekStatistics(
+    LoadWeekStatistics event,
+    Emitter<DashboardState> emit,
+  ) async {
+    final now = DateTime.now();
+    final weekAgo = now.subtract(const Duration(days: 7));
+    add(FilterDashboardByDateRange(startDate: weekAgo, endDate: now));
+  }
+
+  Future<void> _onLoadMonthStatistics(
+    LoadMonthStatistics event,
+    Emitter<DashboardState> emit,
+  ) async {
+    final now = DateTime.now();
+    final monthAgo = DateTime(now.year, now.month - 1, now.day);
+    add(FilterDashboardByDateRange(startDate: monthAgo, endDate: now));
+  }
+
+  Future<void> _onLoadRecentActivities(
+    LoadRecentActivities event,
+    Emitter<DashboardState> emit,
+  ) async {
+    try {
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      
+      final results = await Future.wait([
+        _getTodaySales(today),
+        _getTodayPurchases(today),
+      ]);
+      
+      if (state is DashboardLoaded) {
+        final currentState = state as DashboardLoaded;
+        emit(currentState.copyWith(
+          todaySales: results[0] as List<Sale>,
+          todayPurchases: results[1] as List<Purchase>,
+        ));
+      }
+    } catch (e) {
+      emit(DashboardError('فشل تحميل الأنشطة: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onExportData(
+    ExportDashboardData event,
+    Emitter<DashboardState> emit,
+  ) async {
+    try {
+      emit(DashboardExporting());
+      
+      await Future.delayed(const Duration(seconds: 2));
+      
+      final filePath = '/storage/dashboard_export_${DateTime.now().millisecondsSinceEpoch}.${event.format}';
+      
+      emit(DashboardExported(filePath));
+      
+      if (state is DashboardLoaded) {
+        emit(state as DashboardLoaded);
+      } else {
+        add(LoadDashboard());
+      }
+    } catch (e) {
+      emit(DashboardError('فشل تصدير البيانات: ${e.toString()}'));
+    }
   }
   
   Future<List<DailyStatistics>> _getMonthlyStats() async {
@@ -95,7 +209,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       (sum, stat) => sum + stat.totalSales,
     );
     
-    // هدف افتراضي للمبيعات الشهرية
     const monthlyTarget = 100000.0;
     
     return (totalSales / monthlyTarget).clamp(0.0, 1.0);

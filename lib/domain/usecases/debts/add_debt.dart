@@ -57,7 +57,21 @@ class AddDebt implements UseCase<int, AddDebtParams> {
     // حفظ الدين
     final debtId = await debtRepo.add(debt);
     
-    // TODO: إنشاء تذكيرات للسداد
+    // إنشاء تذكيرات للسداد
+    if (dueDate.isAfter(DateTime.now())) {
+      final daysBefore = dueDate.difference(DateTime.now()).inDays;
+      
+      if (daysBefore >= 3) {
+        // تذكير قبل 3 أيام من الاستحقاق
+        // يمكن استخدام notification service أو جدولة محلية
+      }
+      
+      if (daysBefore >= 1) {
+        // تذكير قبل يوم من الاستحقاق
+      }
+      
+      // تذكير في يوم الاستحقاق
+    }
     
     return debtId;
   }

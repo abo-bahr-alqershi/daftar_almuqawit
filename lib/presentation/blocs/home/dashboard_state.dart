@@ -39,6 +39,10 @@ class DashboardLoaded extends DashboardState {
   /// نسبة التقدم الشهري (0.0 إلى 1.0)
   final double monthlyProgress;
   
+  /// الفترة الزمنية المعروضة (اختياري)
+  final DateTime? startDate;
+  final DateTime? endDate;
+  
   DashboardLoaded({
     required this.dailyStats,
     required this.todaySales,
@@ -46,6 +50,8 @@ class DashboardLoaded extends DashboardState {
     required this.pendingDebts,
     required this.overdueDebts,
     required this.monthlyProgress,
+    this.startDate,
+    this.endDate,
   });
   
   @override
@@ -56,7 +62,54 @@ class DashboardLoaded extends DashboardState {
     pendingDebts,
     overdueDebts,
     monthlyProgress,
+    startDate,
+    endDate,
   ];
+
+  DashboardLoaded copyWith({
+    DailyStatistics? dailyStats,
+    List<Sale>? todaySales,
+    List<Purchase>? todayPurchases,
+    List<Debt>? pendingDebts,
+    List<Debt>? overdueDebts,
+    double? monthlyProgress,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return DashboardLoaded(
+      dailyStats: dailyStats ?? this.dailyStats,
+      todaySales: todaySales ?? this.todaySales,
+      todayPurchases: todayPurchases ?? this.todayPurchases,
+      pendingDebts: pendingDebts ?? this.pendingDebts,
+      overdueDebts: overdueDebts ?? this.overdueDebts,
+      monthlyProgress: monthlyProgress ?? this.monthlyProgress,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+    );
+  }
+}
+
+/// حالة تحديث جزئي للوحة التحكم
+class DashboardRefreshing extends DashboardState {
+  final DashboardLoaded currentData;
+
+  DashboardRefreshing(this.currentData);
+
+  @override
+  List<Object?> get props => [currentData];
+}
+
+/// حالة تصدير البيانات
+class DashboardExporting extends DashboardState {}
+
+/// حالة نجاح التصدير
+class DashboardExported extends DashboardState {
+  final String filePath;
+
+  DashboardExported(this.filePath);
+
+  @override
+  List<Object?> get props => [filePath];
 }
 
 /// حالة خطأ في تحميل بيانات لوحة التحكم

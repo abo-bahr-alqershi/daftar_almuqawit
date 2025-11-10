@@ -250,7 +250,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
         subtitle: 'عرض الأرصدة',
         color: AppColors.info,
         onTap: () {
-          // TODO: Navigate to trial balance
+          Navigator.pushNamed(context, '/trial-balance');
         },
       ),
       _ModuleItem(
@@ -259,7 +259,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
         subtitle: 'الميزانية وقائمة الدخل',
         color: AppColors.warning,
         onTap: () {
-          // TODO: Navigate to financial statements
+          Navigator.pushNamed(context, '/financial-statements');
         },
       ),
     ];

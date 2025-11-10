@@ -261,7 +261,11 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                     text: 'إضافة عملية بيع',
                     icon: Icons.add_shopping_cart,
                     onPressed: () {
-                      // TODO: Navigate to add sale screen with selected customer
+                      Navigator.pushNamed(
+                        context,
+                        '/add-sale',
+                        arguments: {'customerId': widget.customer.id},
+                      );
                     },
                     fullWidth: true,
                   ),
@@ -271,7 +275,15 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                     icon: Icons.payment,
                     onPressed: widget.customer.currentDebt > 0
                         ? () {
-                            // TODO: Navigate to payment screen
+                            Navigator.pushNamed(
+                              context,
+                              '/debt-payment',
+                              arguments: {
+                                'customerId': widget.customer.id,
+                                'customerName': widget.customer.name,
+                                'remainingAmount': widget.customer.currentDebt,
+                              },
+                            );
                           }
                         : null,
                     fullWidth: true,

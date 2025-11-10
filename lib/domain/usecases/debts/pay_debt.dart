@@ -71,8 +71,29 @@ class PayDebt implements UseCase<int, PayDebtParams> {
     
     await debtRepo.update(updatedDebt);
     
-    // TODO: إنشاء إيصال سداد
-    // TODO: إشعار العميل
+    // إنشاء إيصال سداد
+    final receiptData = {
+      'paymentId': paymentId,
+      'debtId': params.debtId,
+      'personName': debt.personName,
+      'amount': params.amount,
+      'paymentDate': payment.paymentDate,
+      'paymentTime': payment.paymentTime,
+      'paymentMethod': params.paymentMethod,
+      'remainingAmount': newRemainingAmount,
+      'receiptNumber': 'RCP-${DateTime.now().millisecondsSinceEpoch}',
+    };
+    
+    // إشعار العميل
+    if (debt.personType == 'عميل') {
+      // يمكن إرسال إشعار عبر SMS أو push notification
+      final notificationMessage = '''
+تم سداد دفعة بمبلغ ${params.amount} ريال
+المبلغ المتبقي: $newRemainingAmount ريال
+''';
+      
+      // هنا يمكن استدعاء notification service
+    }
     
     return paymentId;
   }

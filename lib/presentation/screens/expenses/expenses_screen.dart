@@ -24,6 +24,8 @@ class ExpensesScreen extends StatefulWidget {
 class _ExpensesScreenState extends State<ExpensesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedFilter = 'الكل';
+  final TextEditingController _searchController = TextEditingController();
+  List<dynamic> _filteredExpenses = [];
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> with SingleTickerProvid
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -44,6 +47,34 @@ class _ExpensesScreenState extends State<ExpensesScreen> with SingleTickerProvid
         ? LoadTodayExpenses(today)
         : LoadExpenses();
     context.read<ExpensesBloc>().add(event);
+  }
+
+  void _showSearch(List expenses) {
+    showSearch(
+      context: context,
+      delegate: ExpenseSearchDelegate(expenses),
+    );
+  }
+
+  void _filterExpenses(List expenses, String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredExpenses = expenses;
+      });
+    } else {
+      setState(() {
+        _filteredExpenses = expenses.where((expense) {
+          final description = expense.description?.toLowerCase() ?? '';
+          final category = expense.category?.toLowerCase() ?? '';
+          final amount = expense.amount?.toString() ?? '';
+          final searchLower = query.toLowerCase();
+          
+          return description.contains(searchLower) ||
+              category.contains(searchLower) ||
+              amount.contains(searchLower);
+        }).toList();
+      });
+    }
   }
 
   @override
@@ -59,7 +90,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> with SingleTickerProvid
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                // TODO: Implement search
+                final state = context.read<ExpensesBloc>().state;
+                if (state is ExpensesLoaded) {
+                  _showSearch(state.expenses);
+                }
               },
             ),
             PopupMenuButton<String>(
@@ -330,5 +364,104 @@ class _ExpensesScreenState extends State<ExpensesScreen> with SingleTickerProvid
       default:
         return 'لم يتم تسجيل أي مصروفات بعد';
     }
+  }
+}
+
+/// مندوب البحث عن المصروفات
+class ExpenseSearchDelegate extends SearchDelegate<dynamic> {
+  final List expenses;
+
+  ExpenseSearchDelegate(this.expenses);
+
+  @override
+  String get searchFieldLabel => 'ابحث عن مصروف...';
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_forward),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = expenses.where((expense) {
+      final description = expense.description?.toLowerCase() ?? '';
+      final category = expense.category?.toLowerCase() ?? '';
+      final amount = expense.amount?.toString() ?? '';
+      final searchLower = query.toLowerCase();
+      
+      return description.contains(searchLower) ||
+          category.contains(searchLower) ||
+          amount.contains(searchLower);
+    }).toList();
+
+    if (results.isEmpty) {
+      return const Center(
+        child: Text('لا توجد نتائج'),
+      );
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: results.length,
+        itemBuilder: (context, index) {
+          final expense = results[index];
+          return ExpenseCard(
+            expense: expense,
+            onTap: () {
+              close(context, expense);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestions = expenses.where((expense) {
+      final description = expense.description?.toLowerCase() ?? '';
+      final category = expense.category?.toLowerCase() ?? '';
+      final searchLower = query.toLowerCase();
+      
+      return description.contains(searchLower) || category.contains(searchLower);
+    }).toList();
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.builder(
+        itemCount: suggestions.length > 5 ? 5 : suggestions.length,
+        itemBuilder: (context, index) {
+          final expense = suggestions[index];
+          return ListTile(
+            leading: const Icon(Icons.receipt_long, color: AppColors.danger),
+            title: Text(expense.description ?? 'مصروف'),
+            subtitle: Text('${expense.amount ?? 0} ريال - ${expense.category ?? "غير محدد"}'),
+            onTap: () {
+              query = expense.description ?? '';
+              showResults(context);
+            },
+          );
+        },
+      ),
+    );
   }
 }

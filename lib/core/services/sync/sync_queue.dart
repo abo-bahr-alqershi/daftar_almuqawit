@@ -79,8 +79,8 @@ class SyncQueue {
   Future<void> cleanupOldRecords({int daysOld = 30}) async {
     try {
       _logger.info('تنظيف سجلات المزامنة القديمة...');
-      // TODO: تطبيق الحذف من قاعدة البيانات
-      _logger.info('تم تنظيف السجلات القديمة');
+      final deletedCount = await _local.deleteOldRecords(daysOld: daysOld);
+      _logger.info('تم حذف $deletedCount سجل قديم');
     } catch (e) {
       _logger.error('خطأ في تنظيف السجلات', error: e);
     }
@@ -120,8 +120,8 @@ class SyncQueue {
   /// حذف العمليات المكتملة
   Future<void> deleteCompleted() async {
     try {
-      // TODO: تنفيذ حذف العمليات المكتملة
-      _logger.info('تم حذف العمليات المكتملة');
+      final deletedCount = await _local.deleteCompleted();
+      _logger.info('تم حذف $deletedCount عملية مكتملة');
     } catch (e) {
       _logger.error('خطأ في حذف العمليات المكتملة', error: e);
     }
@@ -140,8 +140,7 @@ class SyncQueue {
   /// الحصول على عدد العمليات الفاشلة
   Future<int> getFailedCount() async {
     try {
-      // TODO: تنفيذ استعلام للعمليات الفاشلة
-      return 0;
+      return await _local.getFailedCount();
     } catch (e) {
       _logger.error('خطأ في حساب العمليات الفاشلة', error: e);
       return 0;
@@ -151,11 +150,20 @@ class SyncQueue {
   /// الحصول على عدد العمليات المكتملة
   Future<int> getCompletedCount() async {
     try {
-      // TODO: تنفيذ استعلام للعمليات المكتملة
-      return 0;
+      return await _local.getCompletedCount();
     } catch (e) {
       _logger.error('خطأ في حساب العمليات المكتملة', error: e);
       return 0;
+    }
+  }
+
+  /// الحصول على العمليات الفاشلة
+  Future<List<SyncRecordModel>> getFailed({int limit = 50}) async {
+    try {
+      return await _local.getFailed(limit: limit);
+    } catch (e) {
+      _logger.error('خطأ في الحصول على العمليات الفاشلة', error: e);
+      return [];
     }
   }
 }

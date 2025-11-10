@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
+import '../../../core/constants/storage_keys.dart';
 import '../../widgets/common/app_text_field.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/loading_widget.dart';
@@ -52,16 +54,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: تحميل البيانات من SharedPreferences أو قاعدة البيانات
-      await Future.delayed(const Duration(milliseconds: 500));
+      final prefs = await SharedPreferences.getInstance();
       
       setState(() {
-        _nameController.text = 'أحمد محمد'; // مثال
-        _emailController.text = 'ahmed@example.com';
-        _phoneController.text = '777123456';
-        _businessNameController.text = 'محل القات';
-        _addressController.text = 'صنعاء، اليمن';
-        _profileImagePath = null; // يمكن تحميلها من الإعدادات
+        _nameController.text = prefs.getString(StorageKeys.userName) ?? '';
+        _emailController.text = prefs.getString(StorageKeys.userEmail) ?? '';
+        _phoneController.text = prefs.getString(StorageKeys.userPhone) ?? '';
+        _businessNameController.text = prefs.getString('business_name') ?? '';
+        _addressController.text = prefs.getString('business_address') ?? '';
+        _profileImagePath = prefs.getString(StorageKeys.userPhoto);
+        if (_profileImagePath != null) {
+          _profileImageFile = File(_profileImagePath!);
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -185,8 +189,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // TODO: حفظ البيانات في SharedPreferences أو قاعدة البيانات
-      await Future.delayed(const Duration(seconds: 1));
+      final prefs = await SharedPreferences.getInstance();
+      
+      await prefs.setString(StorageKeys.userName, _nameController.text);
+      await prefs.setString(StorageKeys.userEmail, _emailController.text);
+      await prefs.setString(StorageKeys.userPhone, _phoneController.text);
+      await prefs.setString('business_name', _businessNameController.text);
+      await prefs.setString('business_address', _addressController.text);
+      
+      if (_profileImagePath != null) {
+        await prefs.setString(StorageKeys.userPhoto, _profileImagePath!);
+      }
       
       setState(() => _isSaving = false);
 

@@ -92,4 +92,58 @@ class SyncLocalDataSource {
       whereArgs: [id],
     );
   }
+
+  /// الحصول على عدد العمليات الفاشلة
+  Future<int> getFailedCount() async {
+    final database = await db;
+    final result = await database.rawQuery(
+      'SELECT COUNT(*) as count FROM ${SyncQueueTable.table} WHERE ${SyncQueueTable.cStatus} = ?',
+      ['failed'],
+    );
+    return result.isNotEmpty ? (result.first['count'] as int?) ?? 0 : 0;
+  }
+
+  /// الحصول على عدد العمليات المكتملة
+  Future<int> getCompletedCount() async {
+    final database = await db;
+    final result = await database.rawQuery(
+      'SELECT COUNT(*) as count FROM ${SyncQueueTable.table} WHERE ${SyncQueueTable.cStatus} = ?',
+      ['done'],
+    );
+    return result.isNotEmpty ? (result.first['count'] as int?) ?? 0 : 0;
+  }
+
+  /// حذف العمليات المكتملة
+  Future<int> deleteCompleted() async {
+    final database = await db;
+    return await database.delete(
+      SyncQueueTable.table,
+      where: '${SyncQueueTable.cStatus} = ?',
+      whereArgs: ['done'],
+    );
+  }
+
+  /// حذف السجلات القديمة
+  Future<int> deleteOldRecords({int daysOld = 30}) async {
+    final database = await db;
+    final cutoffDate = DateTime.now().subtract(Duration(days: daysOld)).toIso8601String();
+    return await database.delete(
+      SyncQueueTable.table,
+      where: '${SyncQueueTable.cCreatedAt} < ? AND ${SyncQueueTable.cStatus} = ?',
+      whereArgs: [cutoffDate, 'done'],
+    );
+  }
+
+  /// الحصول على العمليات الفاشلة
+  Future<List<SyncRecordModel>> getFailed({int limit = 50}) async {
+    final database = await db;
+    final rows = await database.query(
+      SyncQueueTable.table,
+      where: '${SyncQueueTable.cStatus} = ?',
+      whereArgs: const ['failed'],
+      orderBy: '${SyncQueueTable.cCreatedAt} ASC',
+      limit: limit,
+    );
+    return rows.map((e) => SyncRecordModel.fromMap(e)).toList();
+  }
 }

@@ -45,10 +45,19 @@ class OfflineQueue {
 
   /// إعادة محاولة العمليات الفاشلة
   Future<void> retryFailed() async {
-    final failed = await _queue.getFailedCount();
-    // TODO: تنفيذ إعادة المحاولة للعمليات الفاشلة
-    if (failed > 0) {
-      // معالجة العمليات الفاشلة
+    final failedOps = await _queue.getFailed();
+    if (failedOps.isEmpty) return;
+
+    for (final op in failedOps) {
+      try {
+        await _queue.markProcessing(op.id!);
+        await _service.syncOnce();
+      } catch (e) {
+        await _queue.incrementRetry(op.id!);
+        if (op.retryCount >= 3) {
+          await _queue.markFailed(op.id!);
+        }
+      }
     }
   }
 
@@ -83,12 +92,25 @@ class OfflineQueue {
   
   /// معالجة جميع العمليات
   Future<void> processAll() async {
-    // تنفيذ معالجة القائمة
     final pending = await _queue.getPending();
+    
     for (final operation in pending) {
-      await _queue.markProcessing(operation.id!);
-      // TODO: تنفيذ العملية
-      await _queue.markDone(operation.id!);
+      try {
+        await _queue.markProcessing(operation.id!);
+        
+        await _repo.syncEntity(
+          operation.entity,
+          operation.operation,
+        );
+        
+        await _queue.markDone(operation.id!);
+      } catch (e) {
+        await _queue.incrementRetry(operation.id!);
+        
+        if (operation.retryCount >= 3) {
+          await _queue.markFailed(operation.id!);
+        }
+      }
     }
   }
 }
