@@ -11,6 +11,13 @@ class StartSync extends SyncEvent {
   StartSync({this.fullSync = false});
 }
 
+/// حدث بدء المزامنة (اسم بديل)
+class SyncStarted extends SyncEvent {
+  final bool fullSync;
+  
+  SyncStarted({this.fullSync = false});
+}
+
 /// حدث مزامنة المبيعات
 class SyncSales extends SyncEvent {}
 

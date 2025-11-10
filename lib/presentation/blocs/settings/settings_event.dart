@@ -10,7 +10,7 @@ class LoadSettings extends SettingsEvent {}
 /// حدث تغيير اللغة
 class ChangeLanguage extends SettingsEvent {
   final String languageCode;
-  ChangeLanguage(this.languageCode);
+  ChangeLanguage({required this.languageCode});
 }
 
 /// حدث تغيير الثيم

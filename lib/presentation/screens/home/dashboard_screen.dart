@@ -6,6 +6,7 @@ import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/home/dashboard_event.dart';
 import '../../blocs/home/dashboard_state.dart';
 import '../../blocs/sync/sync_bloc.dart';
+import '../../blocs/sync/sync_state.dart';
 import '../../navigation/route_names.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/error_widget.dart' as custom_error;

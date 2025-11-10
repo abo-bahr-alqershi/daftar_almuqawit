@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../blocs/home/dashboard_bloc.dart';
+import '../../blocs/home/dashboard_event.dart';
+import '../../blocs/home/dashboard_state.dart';
 import '../../blocs/sync/sync_bloc.dart';
 import '../../blocs/sync/sync_event.dart';
 import '../../blocs/sync/sync_state.dart';

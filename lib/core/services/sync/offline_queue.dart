@@ -98,9 +98,10 @@ class OfflineQueue {
       try {
         await _queue.markProcessing(operation.id!);
         
-        await _repo.syncEntity(
+        await _repo.queueOperation(
           operation.entity,
           operation.operation,
+          operation.payload,
         );
         
         await _queue.markDone(operation.id!);

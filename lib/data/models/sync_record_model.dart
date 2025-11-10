@@ -19,6 +19,17 @@ class SyncRecordModel {
     this.retryCount = 0,
   });
 
+  /// الحصول على payload كـ Map
+  Map<String, Object?> get payload {
+    try {
+      return Map<String, Object?>.from(
+        (payloadJson.isNotEmpty ? {} : {}) as Map,
+      );
+    } catch (e) {
+      return {};
+    }
+  }
+
   SyncRecordModel copyWith({
     int? id,
     String? entity,

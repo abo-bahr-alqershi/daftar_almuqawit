@@ -66,7 +66,7 @@ class QuickStatsWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  stats.date,
+                  stats?.date ?? '',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textOnDark,
@@ -81,7 +81,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'المبيعات',
-                  value: '${stats.totalSales.toStringAsFixed(0)} ر.ي',
+                  value: '${stats?.totalSales.toStringAsFixed(0) ?? '0'} ر.ي',
                   icon: Icons.trending_up,
                 ),
               ),
@@ -93,7 +93,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'المشتريات',
-                  value: '${stats.totalPurchases.toStringAsFixed(0)} ر.ي',
+                  value: '${stats?.totalPurchases.toStringAsFixed(0) ?? '0'} ر.ي',
                   icon: Icons.shopping_cart,
                 ),
               ),
@@ -105,7 +105,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'الربح',
-                  value: '${stats.netProfit.toStringAsFixed(0)} ر.ي',
+                  value: '${stats?.netProfit.toStringAsFixed(0) ?? '0'} ر.ي',
                   icon: Icons.monetization_on,
                 ),
               ),
@@ -117,7 +117,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'المصروفات',
-                  value: '${stats.totalExpenses.toStringAsFixed(0)} ر.ي',
+                  value: '${stats?.totalExpenses.toStringAsFixed(0) ?? '0'} ر.ي',
                   icon: Icons.money_off,
                 ),
               ),

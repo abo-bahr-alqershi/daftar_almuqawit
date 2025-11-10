@@ -39,4 +39,16 @@ class CompleteSale extends QuickSaleEvent {
   CompleteSale({this.customerId});
 }
 
+class SubmitQuickSale extends QuickSaleEvent {
+  final double quantity;
+  final double price;
+  final int? customerId;
+  
+  SubmitQuickSale({
+    required this.quantity,
+    required this.price,
+    this.customerId,
+  });
+}
+
 class CancelSale extends QuickSaleEvent {}

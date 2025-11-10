@@ -39,7 +39,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
 
     if (currentLanguage == languageCode) return;
 
-    settingsBloc.add(ChangeLanguage(languageCode));
+    settingsBloc.add(ChangeLanguage(languageCode: languageCode));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

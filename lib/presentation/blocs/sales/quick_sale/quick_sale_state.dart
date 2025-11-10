@@ -23,6 +23,16 @@ abstract class QuickSaleState extends Equatable {
 
 class QuickSaleInitial extends QuickSaleState {}
 
+class QuickSaleLoading extends QuickSaleState {}
+
+class QuickSaleSuccess extends QuickSaleState {
+  final String message;
+  QuickSaleSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 class QuickSaleInProgress extends QuickSaleState {
   final List<SaleItem> items;
   final double totalAmount;

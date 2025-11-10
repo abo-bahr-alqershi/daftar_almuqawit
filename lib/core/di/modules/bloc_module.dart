@@ -2,113 +2,82 @@
 
 import 'package:get_it/get_it.dart';
 
-import '../../../presentation/blocs/app/app_bloc.dart';
-import '../../../presentation/blocs/splash/splash_bloc.dart';
-import '../../../presentation/blocs/home/home_bloc.dart';
-import '../../../presentation/blocs/app/app_settings_bloc.dart';
-import '../../../presentation/blocs/auth/auth_bloc.dart';
-import '../../../presentation/blocs/sync/sync_bloc.dart';
-import '../../../presentation/blocs/home/dashboard_bloc.dart';
-import '../../../presentation/blocs/suppliers/suppliers_bloc.dart';
-import '../../../presentation/blocs/suppliers/supplier_form_bloc.dart';
-import '../../../presentation/blocs/customers/customers_bloc.dart';
-import '../../../presentation/blocs/customers/customer_form_bloc.dart';
-import '../../../presentation/blocs/customers/customer_search_bloc.dart';
-import '../../../presentation/blocs/sales/sales_bloc.dart';
-import '../../../presentation/blocs/sales/quick_sale/quick_sale_bloc.dart';
-import '../../../presentation/blocs/sales/sale_form_bloc.dart';
-import '../../../presentation/blocs/purchases/purchases_bloc.dart';
-import '../../../presentation/blocs/purchases/purchase_form_bloc.dart';
-import '../../../presentation/blocs/debts/debts_bloc.dart';
-import '../../../presentation/blocs/debts/payment_bloc.dart';
-import '../../../presentation/blocs/expenses/expenses_bloc.dart';
-import '../../../presentation/blocs/expenses/expense_form_bloc.dart';
-import '../../../presentation/blocs/accounting/accounting_bloc.dart';
-import '../../../presentation/blocs/accounting/cash_management_bloc.dart';
-import '../../../presentation/blocs/statistics/statistics_bloc.dart';
-import '../../../presentation/blocs/statistics/reports_bloc.dart';
-import '../../../presentation/blocs/settings/settings_bloc.dart';
-import '../../../presentation/blocs/settings/backup_bloc.dart';
-
-import '../../services/local/shared_preferences_service.dart';
-import '../../services/logger_service.dart';
-import '../../services/sync/sync_manager.dart';
-import '../../services/network/connectivity_service.dart';
-import '../../../domain/usecases/sync/sync_all.dart';
+import '../../../domain/repositories/expense_repository.dart';
+import '../../../domain/repositories/purchase_repository.dart';
+import '../../../domain/repositories/sales_repository.dart';
+import '../../../domain/repositories/statistics_repository.dart';
+import '../../../domain/usecases/backup/create_backup.dart';
+import '../../../domain/usecases/backup/export_to_excel.dart';
+import '../../../domain/usecases/backup/restore_backup.dart';
+import '../../../domain/usecases/backup/schedule_auto_backup.dart';
+import '../../../domain/usecases/debt_payments/add_debt_payment.dart';
+import '../../../domain/usecases/debt_payments/delete_debt_payment.dart';
+import '../../../domain/usecases/debt_payments/get_debt_payments_by_debt.dart';
+import '../../../domain/usecases/debt_payments/update_debt_payment.dart';
+import '../../../domain/usecases/debts/get_overdue_debts.dart';
+import '../../../domain/usecases/debts/get_pending_debts.dart';
+import '../../../domain/usecases/expenses/add_expense.dart';
+import '../../../domain/usecases/expenses/delete_expense.dart';
+import '../../../domain/usecases/expenses/get_daily_expenses.dart';
+import '../../../domain/usecases/expenses/get_expenses_by_category.dart';
+import '../../../domain/usecases/expenses/update_expense.dart';
+import '../../../domain/usecases/purchases/get_today_purchases.dart';
+import '../../../domain/usecases/reports/print_report.dart';
+import '../../../domain/usecases/reports/share_report.dart';
+import '../../../domain/usecases/sales/get_today_sales.dart';
+import '../../../domain/usecases/statistics/get_daily_statistics.dart';
+import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
+import '../../../domain/usecases/statistics/get_yearly_report.dart';
 import '../../../domain/usecases/sync/check_sync_status.dart';
 import '../../../domain/usecases/sync/queue_offline_operation.dart';
 import '../../../domain/usecases/sync/resolve_conflicts.dart';
-import '../../../domain/usecases/statistics/get_daily_statistics.dart';
-import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
-import '../../../domain/usecases/sales/get_today_sales.dart';
-import '../../../domain/usecases/purchases/get_today_purchases.dart';
-import '../../../domain/usecases/debts/get_pending_debts.dart';
-import '../../../domain/usecases/debts/get_overdue_debts.dart';
-import '../../../domain/usecases/suppliers/get_suppliers.dart';
-import '../../../domain/usecases/suppliers/add_supplier.dart';
-import '../../../domain/usecases/suppliers/update_supplier.dart';
-import '../../../domain/usecases/suppliers/delete_supplier.dart';
-import '../../../domain/usecases/suppliers/search_suppliers.dart';
-import '../../../domain/usecases/customers/get_customers.dart';
-import '../../../domain/usecases/customers/add_customer.dart';
-import '../../../domain/usecases/customers/update_customer.dart';
-import '../../../domain/usecases/customers/delete_customer.dart';
-import '../../../domain/usecases/customers/block_customer.dart';
-import '../../../domain/usecases/customers/search_customers.dart';
-import '../../../domain/usecases/sales/get_sales.dart';
-import '../../../domain/usecases/sales/get_sales_by_customer.dart';
-import '../../../domain/usecases/sales/add_sale.dart';
-import '../../../domain/usecases/sales/update_sale.dart';
-import '../../../domain/usecases/sales/delete_sale.dart';
-import '../../../domain/usecases/sales/cancel_sale.dart';
-import '../../../domain/usecases/sales/quick_sale.dart';
-import '../../../domain/usecases/purchases/get_purchases.dart';
-import '../../../domain/usecases/purchases/get_purchases_by_supplier.dart';
-import '../../../domain/usecases/purchases/add_purchase.dart';
-import '../../../domain/usecases/purchases/update_purchase.dart';
-import '../../../domain/usecases/purchases/delete_purchase.dart';
-import '../../../domain/usecases/purchases/cancel_purchase.dart';
-import '../../../domain/usecases/debts/get_debts.dart';
-import '../../../domain/usecases/debts/get_debts_by_person.dart';
-import '../../../domain/usecases/debts/add_debt.dart';
-import '../../../domain/usecases/debts/update_debt.dart';
-import '../../../domain/usecases/debts/delete_debt.dart';
-import '../../../domain/usecases/debts/partial_payment.dart';
-import '../../../domain/usecases/debt_payments/add_debt_payment.dart';
-import '../../../domain/usecases/debt_payments/update_debt_payment.dart';
-import '../../../domain/usecases/debt_payments/delete_debt_payment.dart';
-import '../../../domain/usecases/debt_payments/get_debt_payments_by_debt.dart';
-import '../../../domain/usecases/expenses/get_daily_expenses.dart';
-import '../../../domain/usecases/expenses/get_expenses_by_category.dart';
-import '../../../domain/usecases/expenses/add_expense.dart';
-import '../../../domain/usecases/expenses/update_expense.dart';
-import '../../../domain/usecases/expenses/delete_expense.dart';
-import '../../../domain/usecases/statistics/get_yearly_report.dart';
-import '../../../domain/usecases/reports/print_report.dart';
-import '../../../domain/usecases/reports/share_report.dart';
-import '../../../domain/usecases/backup/create_backup.dart';
-import '../../../domain/usecases/backup/restore_backup.dart';
-import '../../../domain/usecases/backup/export_to_excel.dart';
-import '../../../domain/usecases/backup/schedule_auto_backup.dart';
-import '../../../domain/repositories/expense_repository.dart';
-import '../../../domain/repositories/sales_repository.dart';
-import '../../../domain/repositories/purchase_repository.dart';
-import '../../../domain/repositories/statistics_repository.dart';
+import '../../../domain/usecases/sync/sync_all.dart';
+import '../../../presentation/blocs/accounting/accounting_bloc.dart';
+import '../../../presentation/blocs/accounting/cash_management_bloc.dart';
+import '../../../presentation/blocs/app/app_bloc.dart';
+import '../../../presentation/blocs/app/app_settings_bloc.dart';
+import '../../../presentation/blocs/auth/auth_bloc.dart';
+import '../../../presentation/blocs/customers/customer_form_bloc.dart';
+import '../../../presentation/blocs/customers/customer_search_bloc.dart';
+import '../../../presentation/blocs/customers/customers_bloc.dart';
+import '../../../presentation/blocs/debts/debts_bloc.dart';
+import '../../../presentation/blocs/debts/payment_bloc.dart';
+import '../../../presentation/blocs/expenses/expense_form_bloc.dart';
+import '../../../presentation/blocs/expenses/expenses_bloc.dart';
+import '../../../presentation/blocs/home/dashboard_bloc.dart';
+import '../../../presentation/blocs/home/home_bloc.dart';
+import '../../../presentation/blocs/purchases/purchase_form_bloc.dart';
+import '../../../presentation/blocs/purchases/purchases_bloc.dart';
+import '../../../presentation/blocs/sales/quick_sale/quick_sale_bloc.dart';
+import '../../../presentation/blocs/sales/sale_form_bloc.dart';
+import '../../../presentation/blocs/sales/sales_bloc.dart';
+import '../../../presentation/blocs/settings/backup_bloc.dart';
+import '../../../presentation/blocs/settings/settings_bloc.dart';
+import '../../../presentation/blocs/splash/splash_bloc.dart';
+import '../../../presentation/blocs/statistics/reports_bloc.dart';
+import '../../../presentation/blocs/statistics/statistics_bloc.dart';
+import '../../../presentation/blocs/suppliers/supplier_form_bloc.dart';
+import '../../../presentation/blocs/suppliers/suppliers_bloc.dart';
+import '../../../presentation/blocs/sync/sync_bloc.dart';
+import '../../services/local/shared_preferences_service.dart';
+import '../../services/logger_service.dart';
+import '../../services/network/connectivity_service.dart';
+import '../../services/sync/sync_manager.dart';
 
 class BlocModule {
   static Future<void> register(GetIt sl) async {
-    sl.registerFactory<AppBloc>(() => AppBloc());
+    sl.registerFactory<AppBloc>(AppBloc.new);
     
-    sl.registerFactory<SplashBloc>(() => SplashBloc());
+    sl.registerFactory<SplashBloc>(SplashBloc.new);
     
     sl.registerFactory<HomeBloc>(() => HomeBloc(
       prefs: sl<SharedPreferencesService>(),
       logger: sl<LoggerService>(),
     ));
     
-    sl.registerFactory<AppSettingsBloc>(() => AppSettingsBloc());
+    sl.registerFactory<AppSettingsBloc>(AppSettingsBloc.new);
     
-    sl.registerFactory<AuthBloc>(() => AuthBloc());
+    sl.registerFactory<AuthBloc>(AuthBloc.new);
     
     sl.registerFactory<SyncBloc>(() => SyncBloc(
       syncManager: sl<SyncManager>(),
@@ -136,7 +105,7 @@ class BlocModule {
       searchSuppliersUseCase: sl(),
     ));
     
-    sl.registerFactory<SupplierFormBloc>(() => SupplierFormBloc());
+    sl.registerFactory<SupplierFormBloc>(SupplierFormBloc.new);
     
     sl.registerFactory<CustomersBloc>(() => CustomersBloc(
       getCustomers: sl(),
@@ -153,7 +122,7 @@ class BlocModule {
       getCustomers: sl(),
     ));
     
-    sl.registerFactory<CustomerSearchBloc>(() => CustomerSearchBloc());
+    sl.registerFactory<CustomerSearchBloc>(CustomerSearchBloc.new);
     
     sl.registerFactory<SalesBloc>(() => SalesBloc(
       getSales: sl(),
@@ -169,7 +138,7 @@ class BlocModule {
       quickSaleUseCase: sl(),
     ));
     
-    sl.registerFactory<SaleFormBloc>(() => SaleFormBloc());
+    sl.registerFactory<SaleFormBloc>(SaleFormBloc.new);
     
     sl.registerFactory<PurchasesBloc>(() => PurchasesBloc(
       getPurchases: sl(),
@@ -181,7 +150,7 @@ class BlocModule {
       cancelPurchase: sl(),
     ));
     
-    sl.registerFactory<PurchaseFormBloc>(() => PurchaseFormBloc());
+    sl.registerFactory<PurchaseFormBloc>(PurchaseFormBloc.new);
     
     sl.registerFactory<DebtsBloc>(() => DebtsBloc(
       getDebts: sl(),
@@ -210,7 +179,7 @@ class BlocModule {
       deleteExpense: sl<DeleteExpense>(),
     ));
     
-    sl.registerFactory<ExpenseFormBloc>(() => ExpenseFormBloc());
+    sl.registerFactory<ExpenseFormBloc>(ExpenseFormBloc.new);
     
     sl.registerFactory<AccountingBloc>(() => AccountingBloc(
       salesRepository: sl<SalesRepository>(),

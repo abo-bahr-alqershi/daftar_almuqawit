@@ -94,10 +94,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> with SingleTickerPr
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline,
                     size: 64,
-                    color: AppColors.error,
+                    color: AppColors.danger,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -169,8 +169,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> with SingleTickerPr
 
     final activities = sales.map((sale) {
       return ActivityItem(
-        title: 'مبيعة ${sale.customer != null ? "إلى ${sale.customer!.name}" : ""}',
-        time: _formatTime(sale.date),
+        title: 'مبيعة ${sale.customerName != null ? "إلى ${sale.customerName}" : ""}',
+        time: sale.date,
         icon: Icons.shopping_cart,
         color: AppColors.success,
         amount: '${sale.totalAmount.toStringAsFixed(2)} ريال',
@@ -200,8 +200,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> with SingleTickerPr
 
     final activities = purchases.map((purchase) {
       return ActivityItem(
-        title: 'مشترى ${purchase.supplier != null ? "من ${purchase.supplier!.name}" : ""}',
-        time: _formatTime(purchase.date),
+        title: 'مشترى ${purchase.supplierName != null ? "من ${purchase.supplierName}" : ""}',
+        time: purchase.date,
         icon: Icons.add_shopping_cart,
         color: AppColors.warning,
         amount: '${purchase.totalAmount.toStringAsFixed(2)} ريال',
@@ -252,8 +252,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> with SingleTickerPr
 
     for (final sale in state.todaySales) {
       activities.add(ActivityItem(
-        title: 'مبيعة ${sale.customer != null ? "إلى ${sale.customer!.name}" : ""}',
-        time: _formatTime(sale.date),
+        title: 'مبيعة ${sale.customerName != null ? "إلى ${sale.customerName}" : ""}',
+        time: sale.date,
         icon: Icons.shopping_cart,
         color: AppColors.success,
         amount: '${sale.totalAmount.toStringAsFixed(2)} ريال',
@@ -262,8 +262,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> with SingleTickerPr
 
     for (final purchase in state.todayPurchases) {
       activities.add(ActivityItem(
-        title: 'مشترى ${purchase.supplier != null ? "من ${purchase.supplier!.name}" : ""}',
-        time: _formatTime(purchase.date),
+        title: 'مشترى ${purchase.supplierName != null ? "من ${purchase.supplierName}" : ""}',
+        time: purchase.date,
         icon: Icons.add_shopping_cart,
         color: AppColors.warning,
         amount: '${purchase.totalAmount.toStringAsFixed(2)} ريال',
