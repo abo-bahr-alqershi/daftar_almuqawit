@@ -11,6 +11,7 @@ class ConfirmDialog extends StatelessWidget {
   final VoidCallback? onCancel;
   final Color? confirmColor;
   final IconData? icon;
+  final bool isDestructive;
 
   const ConfirmDialog({
     super.key,
@@ -22,6 +23,7 @@ class ConfirmDialog extends StatelessWidget {
     this.onCancel,
     this.confirmColor,
     this.icon,
+    this.isDestructive = false,
   });
 
   /// Dialog حذف
@@ -34,7 +36,8 @@ class ConfirmDialog extends StatelessWidget {
   })  : confirmText = 'حذف',
         cancelText = 'إلغاء',
         confirmColor = AppColors.danger,
-        icon = Icons.delete_outline;
+        icon = Icons.delete_outline,
+        isDestructive = true;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +84,7 @@ class ConfirmDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(false);
             onCancel?.call();
           },
           child: Text(
@@ -93,11 +96,13 @@ class ConfirmDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(true);
             onConfirm?.call();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: confirmColor ?? AppColors.primary,
+            backgroundColor: isDestructive 
+                ? AppColors.danger 
+                : (confirmColor ?? AppColors.primary),
             foregroundColor: AppColors.textOnDark,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -134,6 +139,7 @@ class ConfirmDialog extends StatelessWidget {
         cancelText: cancelText,
         confirmColor: effectiveColor,
         icon: icon ?? (isDangerous || isDestructive ? Icons.warning_outlined : null),
+        isDestructive: isDangerous || isDestructive,
         onConfirm: () {},
       ),
     );
