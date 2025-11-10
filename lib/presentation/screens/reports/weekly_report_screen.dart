@@ -102,7 +102,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }

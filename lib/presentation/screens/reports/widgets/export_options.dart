@@ -80,7 +80,7 @@ class ExportOptions extends StatelessWidget {
             _ExportCard(
               icon: Icons.picture_as_pdf,
               label: 'PDF',
-              color: AppColors.error,
+              color: AppColors.danger,
               onTap: () => onExport(ExportType.pdf),
             ),
             

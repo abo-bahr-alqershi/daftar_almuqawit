@@ -81,7 +81,7 @@ class _YearlyReportScreenState extends State<YearlyReportScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }
@@ -436,7 +436,7 @@ class _YearlyReportScreenState extends State<YearlyReportScreen> {
                 month: months[worstMonth],
                 value: minSales.toStringAsFixed(2),
                 icon: Icons.trending_down,
-                color: AppColors.error,
+                color: AppColors.danger,
               ),
             ),
           ],

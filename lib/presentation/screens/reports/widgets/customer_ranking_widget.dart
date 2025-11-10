@@ -177,7 +177,7 @@ class CustomerRankingWidget extends StatelessWidget {
       case RankingType.topBuyers:
         return AppColors.success;
       case RankingType.topDebtors:
-        return AppColors.error;
+        return AppColors.danger;
       case RankingType.mostFrequent:
         return AppColors.info;
     }
@@ -279,13 +279,13 @@ class _CustomerRankingTile extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.danger.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           'محظور',
                           style: AppTextStyles.caption.copyWith(
-                            color: AppColors.error,
+                            color: AppColors.danger,
                             fontSize: 9,
                           ),
                         ),
@@ -387,7 +387,7 @@ class _CustomerRankingTile extends StatelessWidget {
       case RankingType.topBuyers:
         return AppColors.success;
       case RankingType.topDebtors:
-        return AppColors.error;
+        return AppColors.danger;
       case RankingType.mostFrequent:
         return AppColors.info;
     }

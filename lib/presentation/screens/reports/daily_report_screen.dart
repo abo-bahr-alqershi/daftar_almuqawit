@@ -83,7 +83,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }

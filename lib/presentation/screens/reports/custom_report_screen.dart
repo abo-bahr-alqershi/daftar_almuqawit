@@ -98,7 +98,7 @@ class _CustomReportScreenState extends State<CustomReportScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }
@@ -392,7 +392,7 @@ class _CustomReportScreenState extends State<CustomReportScreen> {
               const SizedBox(width: 8),
               Text(
                 'الفلاتر النشطة',
-                style: AppTextStyles.h4.copyWith(
+                style: AppTextStyles.titleMedium.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
@@ -943,7 +943,7 @@ class _FilterDialogState extends State<_FilterDialog> {
             children: [
               Text(
                 'عرض البيانات',
-                style: AppTextStyles.h4.copyWith(
+                style: AppTextStyles.titleMedium.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -982,7 +982,7 @@ class _FilterDialogState extends State<_FilterDialog> {
               
               Text(
                 'الترتيب',
-                style: AppTextStyles.h4.copyWith(
+                style: AppTextStyles.titleMedium.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),

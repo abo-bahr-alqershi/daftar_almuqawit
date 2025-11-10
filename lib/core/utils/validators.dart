@@ -309,4 +309,7 @@ class Validators {
 
   /// التحقق من الاسم (اسم بديل)
   static String? validateName(String? value) => customerName(value);
+
+  /// التحقق من المبلغ (اسم بديل)
+  static String? validateAmount(String? value) => amount(value);
 }

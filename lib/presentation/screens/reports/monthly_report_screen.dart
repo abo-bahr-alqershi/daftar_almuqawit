@@ -83,7 +83,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }

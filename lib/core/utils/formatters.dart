@@ -226,4 +226,10 @@ class Formatters {
 
   /// تنسيق وقت (للتوافق)
   static String timeHM(DateTime date) => time(date);
+
+  /// تنسيق عملة (للتوافق)
+  static String formatCurrency(num value) => currency(value);
+
+  /// تنسيق تاريخ (للتوافق)
+  static String formatDate(DateTime date) => displayDate(date);
 }

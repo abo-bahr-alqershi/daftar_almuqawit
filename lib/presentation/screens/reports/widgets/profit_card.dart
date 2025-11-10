@@ -38,7 +38,7 @@ class ProfitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = totalProfit >= 0;
-    final profitColor = isPositive ? AppColors.success : AppColors.error;
+    final profitColor = isPositive ? AppColors.success : AppColors.danger;
     
     return Container(
       padding: const EdgeInsets.all(20),
