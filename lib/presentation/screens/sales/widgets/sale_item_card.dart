@@ -243,15 +243,20 @@ class SaleItemCard extends StatelessWidget {
     return sale.paymentMethod;
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final saleDate = DateTime(date.year, date.month, date.day);
-    
-    if (saleDate == today) {
-      return 'اليوم ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    } else {
-      return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+  String _formatDate(String date) {
+    try {
+      final dateTime = DateTime.parse(date);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final saleDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+      
+      if (saleDate == today) {
+        return 'اليوم ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      } else {
+        return '${dateTime.year}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')}';
+      }
+    } catch (e) {
+      return date;
     }
   }
 }
