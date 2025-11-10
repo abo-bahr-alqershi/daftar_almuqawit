@@ -188,34 +188,7 @@ import '../../domain/usecases/backup/schedule_auto_backup.dart';
 import '../../domain/usecases/reports/print_report.dart';
 import '../../domain/usecases/reports/share_report.dart';
 
-// Blocs
-import '../../presentation/blocs/app/app_bloc.dart';
-import '../../presentation/blocs/splash/splash_bloc.dart';
-import '../../presentation/blocs/home/home_bloc.dart';
-import '../../presentation/blocs/app/app_settings_bloc.dart';
-import '../../presentation/blocs/auth/auth_bloc.dart';
-import '../../presentation/blocs/sync/sync_bloc.dart';
-import '../../presentation/blocs/home/dashboard_bloc.dart';
-import '../../presentation/blocs/suppliers/suppliers_bloc.dart';
-import '../../presentation/blocs/suppliers/supplier_form_bloc.dart';
-import '../../presentation/blocs/customers/customers_bloc.dart';
-import '../../presentation/blocs/customers/customer_form_bloc.dart';
-import '../../presentation/blocs/customers/customer_search_bloc.dart';
-import '../../presentation/blocs/sales/sales_bloc.dart';
-import '../../presentation/blocs/sales/quick_sale/quick_sale_bloc.dart';
-import '../../presentation/blocs/sales/sale_form_bloc.dart';
-import '../../presentation/blocs/purchases/purchases_bloc.dart';
-import '../../presentation/blocs/purchases/purchase_form_bloc.dart';
-import '../../presentation/blocs/debts/debts_bloc.dart';
-import '../../presentation/blocs/debts/payment_bloc.dart';
-import '../../presentation/blocs/expenses/expenses_bloc.dart';
-import '../../presentation/blocs/expenses/expense_form_bloc.dart';
-import '../../presentation/blocs/accounting/accounting_bloc.dart';
-import '../../presentation/blocs/accounting/cash_management_bloc.dart';
-import '../../presentation/blocs/statistics/statistics_bloc.dart';
-import '../../presentation/blocs/statistics/reports_bloc.dart';
-import '../../presentation/blocs/settings/settings_bloc.dart';
-import '../../presentation/blocs/settings/backup_bloc.dart';
+
 
 /// حاوية الاعتمادات (DI) باستخدام GetIt
 final GetIt sl = GetIt.instance;
@@ -254,7 +227,6 @@ class ServiceLocator {
     await DatabaseModule.register(sl);
     await FirebaseModule.register(sl);
     await RepositoryModule.register(sl);
-    await BlocModule.register(sl);
 
     // UseCases registrations (Suppliers)
     sl.registerLazySingleton<AddSupplier>(() => AddSupplier(sl()));
@@ -381,133 +353,6 @@ class ServiceLocator {
       exportService: sl<ExportService>(),
     ));
 
-    // Blocs (factories)
-    sl.registerFactory<AppBloc>(() => AppBloc());
-    sl.registerFactory<SplashBloc>(() => SplashBloc());
-    sl.registerFactory<HomeBloc>(() => HomeBloc(
-      prefs: sl<SharedPreferencesService>(),
-      logger: sl<LoggerService>(),
-    ));
-    sl.registerFactory<AppSettingsBloc>(() => AppSettingsBloc());
-    sl.registerFactory<AuthBloc>(() => AuthBloc());
-    sl.registerFactory<SyncBloc>(() => SyncBloc(
-      syncManager: sl<SyncManager>(),
-      syncAll: sl<SyncAll>(),
-      checkSyncStatus: sl<CheckSyncStatus>(),
-      queueOfflineOperation: sl<QueueOfflineOperation>(),
-      resolveConflicts: sl<ResolveConflicts>(),
-      connectivityService: sl<ConnectivityService>(),
-    ));
-    sl.registerFactory<DashboardBloc>(() => DashboardBloc(
-      getDailyStatistics: sl<GetDailyStatistics>(),
-      getMonthlyStatistics: sl<GetMonthlyStatistics>(),
-      getTodaySales: sl<GetTodaySales>(),
-      getTodayPurchases: sl<GetTodayPurchases>(),
-      getPendingDebts: sl<GetPendingDebts>(),
-      getOverdueDebts: sl<GetOverdueDebts>(),
-    ));
-    sl.registerFactory<SuppliersBloc>(() => SuppliersBloc(
-      getSuppliers: sl(),
-      addSupplier: sl(),
-      updateSupplier: sl(),
-      deleteSupplier: sl(),
-      searchSuppliersUseCase: sl(),
-    ));
-    sl.registerFactory<SupplierFormBloc>(() => SupplierFormBloc());
-    sl.registerFactory<CustomersBloc>(() => CustomersBloc(
-      getCustomers: sl(),
-      addCustomer: sl(),
-      updateCustomer: sl(),
-      deleteCustomer: sl(),
-      blockCustomer: sl(),
-      searchCustomersUseCase: sl(),
-    ));
-    sl.registerFactory<CustomerFormBloc>(() => CustomerFormBloc(
-      addCustomer: sl(),
-      updateCustomer: sl(),
-      getCustomers: sl(),
-    ));
-    sl.registerFactory<CustomerSearchBloc>(() => CustomerSearchBloc());
-    sl.registerFactory<SalesBloc>(() => SalesBloc(
-      getSales: sl(),
-      getTodaySales: sl(),
-      getSalesByCustomer: sl(),
-      addSale: sl(),
-      updateSale: sl(),
-      deleteSale: sl(),
-      cancelSale: sl(),
-    ));
-    sl.registerFactory<QuickSaleBloc>(() => QuickSaleBloc(
-      quickSaleUseCase: sl(),
-    ));
-    sl.registerFactory<SaleFormBloc>(() => SaleFormBloc());
-    sl.registerFactory<PurchasesBloc>(() => PurchasesBloc(
-      getPurchases: sl(),
-      getTodayPurchases: sl(),
-      getPurchasesBySupplier: sl(),
-      addPurchase: sl(),
-      updatePurchase: sl(),
-      deletePurchase: sl(),
-      cancelPurchase: sl(),
-    ));
-    sl.registerFactory<PurchaseFormBloc>(() => PurchaseFormBloc());
-    sl.registerFactory<DebtsBloc>(() => DebtsBloc(
-      getDebts: sl(),
-      getPendingDebts: sl(),
-      getOverdueDebts: sl(),
-      getDebtsByPerson: sl(),
-      addDebt: sl(),
-      updateDebt: sl(),
-      deleteDebt: sl(),
-      partialPayment: sl(),
-    ));
-    sl.registerFactory<PaymentBloc>(() => PaymentBloc(
-      addDebtPayment: sl<AddDebtPayment>(),
-      updateDebtPayment: sl<UpdateDebtPayment>(),
-      deleteDebtPayment: sl<DeleteDebtPayment>(),
-      getDebtPaymentsByDebt: sl<GetDebtPaymentsByDebt>(),
-    ));
-    sl.registerFactory<ExpensesBloc>(() => ExpensesBloc(
-      repository: sl<ExpenseRepository>(),
-      getTodayExpenses: sl<GetDailyExpenses>(),
-      getExpensesByType: sl<GetExpensesByCategory>(),
-      addExpense: sl<AddExpense>(),
-      updateExpense: sl<UpdateExpense>(),
-      deleteExpense: sl<DeleteExpense>(),
-    ));
-    sl.registerFactory<ExpenseFormBloc>(() => ExpenseFormBloc());
-    sl.registerFactory<AccountingBloc>(() => AccountingBloc(
-      salesRepository: sl<SalesRepository>(),
-      purchaseRepository: sl<PurchaseRepository>(),
-      expenseRepository: sl<ExpenseRepository>(),
-    ));
-    sl.registerFactory<CashManagementBloc>(() => CashManagementBloc(
-      getDailyStats: sl<GetDailyStatistics>(),
-      logger: sl<LoggerService>(),
-    ));
-    sl.registerFactory<StatisticsBloc>(() => StatisticsBloc(
-      getDailyStats: sl<GetDailyStatistics>(),
-      repository: sl<StatisticsRepository>(),
-      getMonthStats: sl<GetMonthlyStatistics>(),
-      getYearStats: sl<GetYearlyReport>(),
-    ));
-    sl.registerFactory<ReportsBloc>(() => ReportsBloc(
-      printReport: sl<PrintReport>(),
-      shareReport: sl<ShareReport>(),
-      getDailyStats: sl<GetDailyStatistics>(),
-      getMonthlyStats: sl<GetMonthlyStatistics>(),
-      logger: sl<LoggerService>(),
-    ));
-    sl.registerFactory<SettingsBloc>(() => SettingsBloc(
-      prefs: sl<SharedPreferencesService>(),
-      logger: sl<LoggerService>(),
-    ));
-    sl.registerFactory<BackupBloc>(() => BackupBloc(
-      createBackup: sl<CreateBackup>(),
-      restoreBackup: sl<RestoreBackup>(),
-      exportToExcel: sl<ExportToExcel>(),
-      scheduleAutoBackup: sl<ScheduleAutoBackup>(),
-      logger: sl<LoggerService>(),
-    ));
+    await BlocModule.register(sl);
   }
 }

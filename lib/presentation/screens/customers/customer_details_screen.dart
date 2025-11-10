@@ -232,7 +232,13 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
           const SizedBox(height: AppDimensions.spaceM),
 
-          CustomerRatingWidget(customer: widget.customer),
+          CustomerRatingWidget(
+            initialRating: 0,
+            onRatingChanged: (rating) {
+            },
+            readOnly: false,
+            showLabel: true,
+          ),
 
           const SizedBox(height: AppDimensions.spaceM),
 
@@ -281,12 +287,22 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   /// تبويب الديون
   Widget _buildDebtsTab() {
-    return CustomerDebtCard(customer: widget.customer);
+    // TODO: Implement debts list for customer
+    return Center(
+      child: Text(
+        'قريباً: عرض قائمة الديون الخاصة بالعميل',
+        style: AppTextStyles.bodyMedium,
+      ),
+    );
   }
 
   /// تبويب السجل
   Widget _buildHistoryTab() {
-    return CustomerHistoryTab(customerId: widget.customer.id!);
+    return const CustomerHistoryTab(
+      sales: [],
+      payments: [],
+      isLoading: false,
+    );
   }
 
   Widget _buildStatusChip(Customer customer) {
@@ -433,13 +449,15 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   void _toggleBlockStatus(BuildContext context) async {
     final action = widget.customer.isBlocked ? 'إلغاء حظر' : 'حظر';
-    final confirmed = await ConfirmDialog.show(
+    final confirmed = await showDialog<bool>(
       context: context,
-      title: '$action العميل',
-      message: 'هل أنت متأكد من $action العميل "${widget.customer.name}"؟',
-      confirmText: action,
-      cancelText: 'إلغاء',
-      isDangerous: !widget.customer.isBlocked,
+      builder: (context) => ConfirmDialog(
+        title: '$action العميل',
+        message: 'هل أنت متأكد من $action العميل "${widget.customer.name}"؟',
+        confirmText: action,
+        cancelText: 'إلغاء',
+        isDestructive: !widget.customer.isBlocked,
+      ),
     );
 
     if (confirmed == true && widget.customer.id != null) {

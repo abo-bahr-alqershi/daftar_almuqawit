@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs
 
-/// تعريف جدول العملاء customers
 class CustomersTable {
   CustomersTable._();
   static const String table = 'customers';
@@ -8,6 +7,7 @@ class CustomersTable {
   static const String cId = 'id';
   static const String cName = 'name';
   static const String cPhone = 'phone';
+  static const String cAddress = 'address';
   static const String cNickname = 'nickname';
   static const String cCustomerType = 'customer_type';
   static const String cCreditLimit = 'credit_limit';
@@ -22,6 +22,7 @@ CREATE TABLE $table (
   $cId INTEGER PRIMARY KEY AUTOINCREMENT,
   $cName TEXT NOT NULL,
   $cPhone TEXT,
+  $cAddress TEXT,
   $cNickname TEXT,
   $cCustomerType TEXT DEFAULT 'عادي',
   $cCreditLimit REAL DEFAULT 0,

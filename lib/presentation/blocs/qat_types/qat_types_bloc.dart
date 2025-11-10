@@ -1,7 +1,5 @@
-/// Bloc إدارة أنواع القات
-/// يدير جميع العمليات المتعلقة بأنواع القات
-
 import 'package:bloc/bloc.dart';
+import '../../../domain/usecases/base/base_usecase.dart';
 import '../../../domain/usecases/qat_types/add_qat_type.dart';
 import '../../../domain/usecases/qat_types/delete_qat_type.dart';
 import '../../../domain/usecases/qat_types/get_qat_type_by_id.dart';
@@ -10,7 +8,6 @@ import '../../../domain/usecases/qat_types/update_qat_type.dart';
 import 'qat_types_event.dart';
 import 'qat_types_state.dart';
 
-/// Bloc أنواع القات
 class QatTypesBloc extends Bloc<QatTypesEvent, QatTypesState> {
   final GetQatTypes getQatTypes;
   final GetQatTypeById getQatTypeById;
@@ -34,25 +31,27 @@ class QatTypesBloc extends Bloc<QatTypesEvent, QatTypesState> {
     on<FilterQatTypesByQuality>(_onFilterByQuality);
   }
 
-  /// معالج تحميل جميع أنواع القات
   Future<void> _onLoadQatTypes(
       LoadQatTypes event, Emitter<QatTypesState> emit) async {
     try {
       emit(QatTypesLoading());
-      final qatTypes = await getQatTypes();
+      final qatTypes = await getQatTypes(const NoParams());
       emit(QatTypesLoaded(qatTypes));
     } catch (e) {
       emit(QatTypesError('فشل تحميل أنواع القات: ${e.toString()}'));
     }
   }
 
-  /// معالج تحميل نوع قات معين
   Future<void> _onLoadQatTypeById(
       LoadQatTypeById event, Emitter<QatTypesState> emit) async {
     try {
       emit(QatTypesLoading());
       final qatType = await getQatTypeById(event.id);
-      emit(QatTypeDetailsLoaded(qatType));
+      if (qatType != null) {
+        emit(QatTypeDetailsLoaded(qatType));
+      } else {
+        emit(QatTypesError('لم يتم العثور على نوع القات'));
+      }
     } catch (e) {
       emit(QatTypesError('فشل تحميل نوع القات: ${e.toString()}'));
     }
@@ -94,12 +93,11 @@ class QatTypesBloc extends Bloc<QatTypesEvent, QatTypesState> {
     }
   }
 
-  /// معالج البحث في أنواع القات
   Future<void> _onSearchQatTypes(
       SearchQatTypes event, Emitter<QatTypesState> emit) async {
     try {
       emit(QatTypesLoading());
-      final allQatTypes = await getQatTypes();
+      final allQatTypes = await getQatTypes(const NoParams());
       
       final results = allQatTypes.where((qatType) {
         return qatType.name.toLowerCase().contains(event.query.toLowerCase()) ||
@@ -112,12 +110,11 @@ class QatTypesBloc extends Bloc<QatTypesEvent, QatTypesState> {
     }
   }
 
-  /// معالج الفلترة حسب الجودة
   Future<void> _onFilterByQuality(
       FilterQatTypesByQuality event, Emitter<QatTypesState> emit) async {
     try {
       emit(QatTypesLoading());
-      final allQatTypes = await getQatTypes();
+      final allQatTypes = await getQatTypes(const NoParams());
       
       final filtered = allQatTypes.where((qatType) {
         return qatType.qualityGrade == event.qualityGrade;

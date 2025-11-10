@@ -173,7 +173,7 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen> {
       context: context,
       builder: (context) => ConfirmDialog(
         title: 'حذف الدفعة',
-        message: 'هل أنت متأكد من حذف هذه الدفعة؟\nالمبلغ: ${Formatters.formatCurrency(payment.amount)}',
+        message: 'هل أنت متأكد من حذف هذه الدفعة؟\nالمبلغ: ${Formatters.currency(payment.amount)}',
         confirmText: 'حذف',
         cancelText: 'إلغاء',
         isDestructive: true,
@@ -347,7 +347,7 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen> {
                       _StatItem(
                         icon: Icons.attach_money,
                         label: 'إجمالي المدفوع',
-                        value: Formatters.formatCurrency(_calculateTotal()),
+                        value: Formatters.currency(_calculateTotal()),
                       ),
                     ],
                   ),
@@ -362,7 +362,7 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen> {
                           message: _allPayments.isEmpty
                               ? 'لم يتم إضافة أي دفعات بعد'
                               : 'لا توجد دفعات تطابق الفلاتر المحددة',
-                          actionText: _allPayments.isEmpty ? 'إضافة دفعة' : 'إعادة تعيين الفلاتر',
+                          actionLabel: _allPayments.isEmpty ? 'إضافة دفعة' : 'إعادة تعيين الفلاتر',
                           onAction: _allPayments.isEmpty ? _showAddPaymentForm : _resetFilters,
                         )
                       : ListView.builder(

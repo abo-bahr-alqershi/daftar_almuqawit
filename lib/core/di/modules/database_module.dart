@@ -13,6 +13,7 @@ import '../../../data/datasources/local/sales_local_datasource.dart';
 import '../../../data/datasources/local/statistics_local_datasource.dart';
 import '../../../data/datasources/local/supplier_local_datasource.dart';
 import '../../../data/datasources/local/sync_local_datasource.dart';
+import '../../../data/datasources/local/search_local_datasource.dart';
 import '../../../data/database/database_helper.dart';
 
 class DatabaseModule {
@@ -28,5 +29,6 @@ class DatabaseModule {
     sl.registerLazySingleton<AccountingLocalDataSource>(() => AccountingLocalDataSource(sl<DatabaseHelper>()));
     sl.registerLazySingleton<StatisticsLocalDataSource>(() => StatisticsLocalDataSource(sl<DatabaseHelper>()));
     sl.registerLazySingleton<SyncLocalDataSource>(() => SyncLocalDataSource(sl<DatabaseHelper>()));
+    sl.registerLazySingleton<SearchLocalDataSource>(() => SearchLocalDataSource(sl<DatabaseHelper>()));
   }
 }

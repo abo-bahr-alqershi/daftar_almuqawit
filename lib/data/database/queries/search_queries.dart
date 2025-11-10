@@ -194,8 +194,10 @@ class SearchQueries {
   static String advancedSearchSales({
     String? paymentMethod,
     String? status,
-    double? minAmount,
-    double? maxAmount,
+    double? minTotal,
+    double? maxTotal,
+    String? startDate,
+    String? endDate,
   }) {
     final conditions = <String>[];
     
@@ -207,12 +209,20 @@ class SearchQueries {
       conditions.add("${DatabaseConstants.columnSaleStatus} = '$status'");
     }
     
-    if (minAmount != null) {
-      conditions.add('${DatabaseConstants.columnSaleTotal} >= $minAmount');
+    if (minTotal != null) {
+      conditions.add('${DatabaseConstants.columnSaleTotal} >= $minTotal');
     }
     
-    if (maxAmount != null) {
-      conditions.add('${DatabaseConstants.columnSaleTotal} <= $maxAmount');
+    if (maxTotal != null) {
+      conditions.add('${DatabaseConstants.columnSaleTotal} <= $maxTotal');
+    }
+    
+    if (startDate != null) {
+      conditions.add("${DatabaseConstants.columnSaleDate} >= '$startDate'");
+    }
+    
+    if (endDate != null) {
+      conditions.add("${DatabaseConstants.columnSaleDate} <= '$endDate'");
     }
     
     final whereClause = conditions.isEmpty ? '' : 'AND ${conditions.join(' AND ')}';

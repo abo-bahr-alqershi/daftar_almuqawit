@@ -67,13 +67,9 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
       emit(PaymentLoading());
       
       // استدعاء Use Case لتحديث الدفعة
-      final result = await updateDebtPayment(event.payment);
+      await updateDebtPayment(event.payment);
       
-      if (result > 0) {
-        emit(PaymentUpdated('تم تحديث الدفعة بنجاح'));
-      } else {
-        emit(PaymentError('فشل في تحديث الدفعة'));
-      }
+      emit(PaymentUpdated('تم تحديث الدفعة بنجاح'));
     } catch (e) {
       emit(PaymentError('خطأ في تحديث الدفعة: ${e.toString()}'));
     }
@@ -88,13 +84,9 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
       emit(PaymentLoading());
       
       // استدعاء Use Case لحذف الدفعة
-      final result = await deleteDebtPayment(event.paymentId);
+      await deleteDebtPayment(event.paymentId);
       
-      if (result > 0) {
-        emit(PaymentDeleted('تم حذف الدفعة بنجاح'));
-      } else {
-        emit(PaymentError('فشل في حذف الدفعة'));
-      }
+      emit(PaymentDeleted('تم حذف الدفعة بنجاح'));
     } catch (e) {
       emit(PaymentError('خطأ في حذف الدفعة: ${e.toString()}'));
     }
