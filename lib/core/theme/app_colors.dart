@@ -54,6 +54,9 @@ class AppColors {
   
   /// لون النص المعطل
   static const Color textDisabled = Color(0xFFCBD5E1);
+  
+  /// لون النص التلميحي
+  static const Color textHint = Color(0xFF94A3B8);
 
   // ========== ألوان الحالات ==========
   
@@ -91,6 +94,9 @@ class AppColors {
   
   /// لون الظل
   static const Color shadow = Color(0x1A000000);
+  
+  /// لون العنصر المعطل
+  static const Color disabled = Color(0xFFE2E8F0);
 
   // ========== ألوان خاصة بالتطبيق ==========
   

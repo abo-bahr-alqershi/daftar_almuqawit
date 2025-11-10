@@ -90,6 +90,11 @@ class Validators {
     
     return null;
   }
+  
+  /// التحقق من صحة رقم الهاتف (اسم بديل)
+  static bool isValidPhone(String? value) {
+    return phone(value) == null;
+  }
 
   // ========== التحقق من الأرقام ==========
 

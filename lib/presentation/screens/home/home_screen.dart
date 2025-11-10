@@ -1,183 +1,154 @@
-/// الشاشة الرئيسية للتطبيق
-/// تعرض القائمة الرئيسية وملخص اليوم والوصول السريع للوظائف
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../blocs/home/dashboard_bloc.dart';
+import '../../blocs/sync/sync_bloc.dart';
+import '../../blocs/sync/sync_state.dart';
+import '../../navigation/route_names.dart';
+import '../../widgets/common/loading_widget.dart';
+import 'widgets/menu_grid.dart';
+import 'widgets/quick_stats_widget.dart';
+import 'widgets/sync_indicator.dart';
+import 'widgets/shortcuts_bar.dart';
+import 'widgets/recent_activities.dart';
 
-/// الشاشة الرئيسية
-class HomeScreen extends StatelessWidget {
+/// الشاشة الرئيسية للتطبيق
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: Text('الصفحة الرئيسية', style: AppTextStyles.title),
-          actions: [
-            // أيقونة حالة المزامنة
-            IconButton(
-              icon: const Icon(Icons.sync),
-              onPressed: () {
-                // TODO: بدء المزامنة
-              },
-            ),
-            // أيقونة الإشعارات
-            IconButton(
-              icon: const Icon(Icons.notifications),
-              onPressed: () {
-                // TODO: عرض الإشعارات
-              },
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ملخص اليوم
-              _buildDailySummary(),
-              const SizedBox(height: 24),
-              
-              // القائمة الرئيسية
-              Text('القائمة الرئيسية', style: AppTextStyles.subtitle),
-              const SizedBox(height: 16),
-              _buildMainMenu(context),
-              const SizedBox(height: 24),
-              
-              // الوصول السريع
-              Text('وصول سريع', style: AppTextStyles.subtitle),
-              const SizedBox(height: 16),
-              _buildQuickAccess(context),
+              Text(
+                'دفتر المقاوت',
+                style: AppTextStyles.h2.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'مرحباً بك',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  /// بناء بطاقة ملخص اليوم
-  Widget _buildDailySummary() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('ملخص اليوم', style: AppTextStyles.subtitle),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildSummaryItem('المبيعات', '0', Icons.shopping_cart),
-                _buildSummaryItem('المشتريات', '0', Icons.shopping_bag),
-                _buildSummaryItem('الربح', '0', Icons.attach_money),
-              ],
+          actions: [
+            BlocBuilder<SyncBloc, SyncState>(
+              builder: (context, state) {
+                return SyncIndicator(
+                  isSyncing: state is SyncInProgress,
+                  lastSyncTime: state is SyncSuccess ? DateTime.now() : null,
+                  onTap: () {},
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              color: AppColors.textPrimary,
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              color: AppColors.textPrimary,
+              onPressed: () => Navigator.pushNamed(context, RouteNames.settings),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// بناء عنصر في ملخص اليوم
-  Widget _buildSummaryItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 32, color: Colors.blue),
-        const SizedBox(height: 8),
-        Text(value, style: AppTextStyles.title),
-        Text(label, style: AppTextStyles.caption),
-      ],
-    );
-  }
-
-  /// بناء شبكة القائمة الرئيسية
-  Widget _buildMainMenu(BuildContext context) {
-    final menuItems = [
-      {'title': 'بيع سريع', 'icon': Icons.point_of_sale, 'route': '/quick-sale'},
-      {'title': 'المبيعات', 'icon': Icons.receipt_long, 'route': '/sales'},
-      {'title': 'المشتريات', 'icon': Icons.shopping_basket, 'route': '/purchases'},
-      {'title': 'العملاء', 'icon': Icons.people, 'route': '/customers'},
-      {'title': 'الموردين', 'icon': Icons.local_shipping, 'route': '/suppliers'},
-      {'title': 'الديون', 'icon': Icons.account_balance_wallet, 'route': '/debts'},
-      {'title': 'المصروفات', 'icon': Icons.money_off, 'route': '/expenses'},
-      {'title': 'التقارير', 'icon': Icons.bar_chart, 'route': '/reports'},
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1,
-      ),
-      itemCount: menuItems.length,
-      itemBuilder: (context, index) {
-        final item = menuItems[index];
-        return _buildMenuItem(
-          context,
-          item['title'] as String,
-          item['icon'] as IconData,
-          item['route'] as String,
-        );
-      },
-    );
-  }
-
-  /// بناء عنصر في القائمة
-  Widget _buildMenuItem(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String route,
-  ) {
-    return Card(
-      child: InkWell(
-        onTap: () {
-          // TODO: التنقل للشاشة المطلوبة
-          // Navigator.pushNamed(context, route);
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: Colors.blue),
-            const SizedBox(height: 8),
-            Text(title, style: AppTextStyles.body, textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// بناء أزرار الوصول السريع
-  Widget _buildQuickAccess(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // TODO: فتح شاشة البيع السريع
-            },
-            icon: const Icon(Icons.flash_on),
-            label: const Text('بيع سريع'),
+        body: RefreshIndicator(
+          onRefresh: () async {
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                
+                BlocBuilder<DashboardBloc, DashboardState>(
+                  builder: (context, state) {
+                    if (state is DashboardLoading) {
+                      return const LoadingWidget();
+                    }
+                    
+                    if (state is DashboardLoaded) {
+                      return QuickStatsWidget(
+                        stats: state.dailyStats,
+                      );
+                    }
+                    
+                    return const SizedBox.shrink();
+                  },
+                ),
+                
+                const SizedBox(height: 24),
+                
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'اختصارات سريعة',
+                    style: AppTextStyles.h3.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                ShortcutsBar(
+                  onQuickSale: () => Navigator.pushNamed(context, RouteNames.sales),
+                  onAddPurchase: () => Navigator.pushNamed(context, RouteNames.purchases),
+                  onAddExpense: () => Navigator.pushNamed(context, RouteNames.expenses),
+                  onViewReports: () => Navigator.pushNamed(context, RouteNames.statistics),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'القائمة الرئيسية',
+                    style: AppTextStyles.h3.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                const MenuGrid(),
+                
+                const SizedBox(height: 24),
+                
+                const RecentActivities(
+                  activities: [],
+                ),
+                
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // TODO: فتح شاشة التقارير
-            },
-            icon: const Icon(Icons.assessment),
-            label: const Text('التقارير'),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
