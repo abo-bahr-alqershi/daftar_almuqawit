@@ -42,3 +42,30 @@ class DebtOperationSuccess extends DebtsState {
   @override
   List<Object?> get props => [message];
 }
+
+/// حالة تحميل تفاصيل دين بنجاح
+class DebtDetailsLoaded extends DebtsState {
+  final Debt debt;
+  DebtDetailsLoaded(this.debt);
+  
+  @override
+  List<Object?> get props => [debt];
+}
+
+/// حالة تحميل الديون المتأخرة بنجاح
+class OverdueDebtsLoaded extends DebtsState {
+  final List<Debt> overdueDebts;
+  OverdueDebtsLoaded(this.overdueDebts);
+  
+  @override
+  List<Object?> get props => [overdueDebts];
+}
+
+/// حالة إضافة دفعة بنجاح
+class DebtPaymentAdded extends DebtsState {
+  final String message;
+  DebtPaymentAdded(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}

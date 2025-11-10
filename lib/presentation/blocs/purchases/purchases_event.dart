@@ -44,3 +44,9 @@ class CancelPurchaseEvent extends PurchasesEvent {
   final int id;
   CancelPurchaseEvent(this.id);
 }
+
+/// حدث تحميل مشترى بواسطة المعرف
+class LoadPurchaseById extends PurchasesEvent {
+  final String purchaseId;
+  LoadPurchaseById(this.purchaseId);
+}

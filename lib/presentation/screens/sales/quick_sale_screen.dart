@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../blocs/sales/quick_sale/quick_sale_bloc.dart';
+import '../../blocs/sales/quick_sale/quick_sale_event.dart';
+import '../../blocs/sales/quick_sale/quick_sale_state.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
 import '../../widgets/common/number_pad.dart';

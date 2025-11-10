@@ -46,3 +46,15 @@ class PayDebtEvent extends DebtsEvent {
   final double amount;
   PayDebtEvent(this.id, this.amount);
 }
+
+/// حدث تحميل تفاصيل دين
+class LoadDebtDetails extends DebtsEvent {
+  final String debtId;
+  LoadDebtDetails(this.debtId);
+}
+
+/// حدث إرسال تذكير بالدين
+class SendDebtReminder extends DebtsEvent {
+  final String debtId;
+  SendDebtReminder(this.debtId);
+}

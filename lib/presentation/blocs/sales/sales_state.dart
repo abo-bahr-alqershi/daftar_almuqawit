@@ -35,3 +35,12 @@ class SaleOperationSuccess extends SalesState {
   @override
   List<Object?> get props => [message];
 }
+
+/// حالة نجاح إضافة مبيعة
+class SalesSuccess extends SalesState {
+  final String message;
+  SalesSuccess(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}

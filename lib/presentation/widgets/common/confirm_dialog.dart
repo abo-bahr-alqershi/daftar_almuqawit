@@ -118,7 +118,13 @@ class ConfirmDialog extends StatelessWidget {
     String? cancelText,
     Color? confirmColor,
     IconData? icon,
+    bool isDangerous = false,
+    bool isDestructive = false,
   }) {
+    final effectiveColor = isDangerous || isDestructive 
+        ? AppColors.danger 
+        : (confirmColor ?? AppColors.primary);
+    
     return showDialog<bool>(
       context: context,
       builder: (context) => ConfirmDialog(
@@ -126,10 +132,35 @@ class ConfirmDialog extends StatelessWidget {
         message: message,
         confirmText: confirmText,
         cancelText: cancelText,
-        confirmColor: confirmColor,
-        icon: icon,
+        confirmColor: effectiveColor,
+        icon: icon ?? (isDangerous || isDestructive ? Icons.warning_outlined : null),
         onConfirm: () {},
       ),
     );
   }
+}
+
+/// دالة مساعدة لإظهار dialog التأكيد
+Future<bool?> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String? confirmText,
+  String? cancelText,
+  Color? confirmColor,
+  IconData? icon,
+  bool isDangerous = false,
+  bool isDestructive = false,
+}) {
+  return ConfirmDialog.show(
+    context,
+    title: title,
+    message: message,
+    confirmText: confirmText,
+    cancelText: cancelText,
+    confirmColor: confirmColor,
+    icon: icon,
+    isDangerous: isDangerous,
+    isDestructive: isDestructive,
+  );
 }

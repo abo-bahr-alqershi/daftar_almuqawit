@@ -42,3 +42,39 @@ class PurchaseOperationSuccess extends PurchasesState {
   @override
   List<Object?> get props => [message];
 }
+
+/// حالة نجاح إضافة مشترى
+class PurchaseAdded extends PurchasesState {
+  final String message;
+  PurchaseAdded(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
+/// حالة نجاح تحديث مشترى
+class PurchaseUpdated extends PurchasesState {
+  final String message;
+  PurchaseUpdated(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
+/// حالة نجاح حذف مشترى
+class PurchaseDeleted extends PurchasesState {
+  final String message;
+  PurchaseDeleted(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
+/// حالة تحميل مشترى واحد
+class PurchaseLoaded extends PurchasesState {
+  final Purchase purchase;
+  PurchaseLoaded(this.purchase);
+  
+  @override
+  List<Object?> get props => [purchase];
+}
