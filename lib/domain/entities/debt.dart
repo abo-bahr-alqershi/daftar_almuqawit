@@ -17,6 +17,28 @@ class Debt extends BaseEntity {
   final String status; // مسدد | مسدد جزئي | غير مسدد
   final String? lastPaymentDate;
   final String? notes;
+  
+  // خصائص إضافية للتوافق
+  /// المبلغ الإجمالي (نفس originalAmount)
+  double get totalAmount => originalAmount;
+  
+  /// اسم العميل (نفس personName)
+  String get customerName => personName;
+  
+  /// رقم هاتف العميل
+  final String? customerPhone;
+  
+  /// نوع الدين
+  String get debtType => transactionType ?? 'دين عام';
+  
+  /// الوصف
+  String get description => notes ?? '';
+  
+  /// تاريخ الإنشاء
+  String get createdAt => date;
+  
+  /// قائمة الدفعات (فارغة افتراضياً)
+  final List<dynamic> payments;
 
   const Debt({
     super.id,
@@ -33,6 +55,8 @@ class Debt extends BaseEntity {
     this.status = 'غير مسدد',
     this.lastPaymentDate,
     this.notes,
+    this.customerPhone,
+    this.payments = const [],
   });
 
   @override
@@ -67,6 +91,8 @@ class Debt extends BaseEntity {
       'status': status,
       'last_payment_date': lastPaymentDate,
       'notes': notes,
+      'customer_phone': customerPhone,
+      'payments': payments,
     };
   }
 }

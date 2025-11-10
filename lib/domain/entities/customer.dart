@@ -38,6 +38,9 @@ class Customer extends BaseEntity {
   double get outstandingBalance {
     return currentDebt;
   }
+  
+  /// إجمالي الديون (نفس currentDebt)
+  double get totalDebt => currentDebt;
 
   /// التحقق من تجاوز حد الائتمان
   bool get hasExceededCreditLimit {

@@ -32,6 +32,13 @@ class Sale extends BaseEntity {
   final String? notes;
   final String? createdAt;
   final String? updatedAt;
+  
+  // خصائص إضافية للتوافق
+  /// السعر (نفس unitPrice)
+  double get price => unitPrice;
+  
+  /// اليوم (من التاريخ)
+  String get day => date.split('-').last;
 
   const Sale({
     super.id,

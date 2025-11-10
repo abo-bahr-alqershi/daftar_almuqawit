@@ -24,6 +24,13 @@ class Purchase extends BaseEntity {
   final String? notes;
   final String? createdAt;
   final String? updatedAt;
+  
+  // خصائص إضافية للتوافق
+  /// سعر الوحدة (نفس unitPrice)
+  double get pricePerUnit => unitPrice;
+  
+  /// هل تم الدفع بالكامل
+  bool get isPaid => paymentStatus == 'مدفوع' || remainingAmount == 0;
 
   const Purchase({
     super.id,
