@@ -261,7 +261,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
                     if (filteredPurchases.isEmpty) {
                       return EmptyWidget(
-                        message: 'لا توجد مشتريات',
+                        title: 'لا توجد مشتريات',
+                        message: 'لم يتم تسجيل أي عملية شراء بعد',
                         icon: Icons.shopping_cart_outlined,
                         actionLabel: 'إضافة مشترى',
                         onAction: _showAddPurchaseScreen,
@@ -308,7 +309,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                   }
 
                   return const EmptyWidget(
-                    message: 'لا يوجد بيانات',
+                    title: 'لا يوجد بيانات',
+                    message: 'لم يتم تحميل بيانات المشتريات',
                     icon: Icons.shopping_cart_outlined,
                   );
                 },

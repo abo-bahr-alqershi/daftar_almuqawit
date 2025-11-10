@@ -59,7 +59,8 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen> {
           if (state is OverdueDebtsLoaded) {
             if (state.overdueDebts.isEmpty) {
               return const EmptyWidget(
-                message: 'لا توجد ديون متأخرة',
+                title: 'لا توجد ديون متأخرة',
+                message: 'جميع الديون مسددة أو ضمن المواعيد',
                 icon: Icons.check_circle_outline,
               );
             }

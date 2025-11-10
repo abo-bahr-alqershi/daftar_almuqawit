@@ -77,7 +77,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Future<void> _deleteCustomer(Customer customer) async {
     final confirmed = await ConfirmDialog.show(
-      context: context,
+      context,
       title: 'حذف العميل',
       message: 'هل أنت متأكد من حذف العميل "${customer.name}"؟\nسيتم حذف جميع البيانات المرتبطة به.',
       confirmText: 'حذف',
@@ -93,7 +93,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   Future<void> _toggleBlockCustomer(Customer customer) async {
     final action = customer.isBlocked ? 'إلغاء حظر' : 'حظر';
     final confirmed = await ConfirmDialog.show(
-      context: context,
+      context,
       title: '$action العميل',
       message: 'هل أنت متأكد من $action العميل "${customer.name}"؟',
       confirmText: action,
@@ -251,9 +251,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                     if (filteredCustomers.isEmpty) {
                       return EmptyWidget(
-                        message: _searchQuery.isEmpty
+                        title: _searchQuery.isEmpty
                             ? 'لا يوجد عملاء مسجلين'
                             : 'لا توجد نتائج للبحث',
+                        message: _searchQuery.isEmpty
+                            ? 'ابدأ بإضافة عملاء جدد'
+                            : 'جرب البحث بكلمات مختلفة',
                         icon: Icons.people_outline,
                         actionLabel: _searchQuery.isEmpty ? 'إضافة عميل' : null,
                         onAction: _searchQuery.isEmpty ? _showAddCustomerScreen : null,
@@ -281,7 +284,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   }
 
                   return const EmptyWidget(
-                    message: 'لا يوجد بيانات',
+                    title: 'لا يوجد بيانات',
+                    message: 'لم يتم تحميل بيانات العملاء',
                     icon: Icons.people_outline,
                   );
                 },

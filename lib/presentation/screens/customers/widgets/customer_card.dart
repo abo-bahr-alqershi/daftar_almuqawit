@@ -11,6 +11,7 @@ class CustomerCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onToggleBlock;
   final bool showActions;
 
   const CustomerCard({
@@ -19,6 +20,7 @@ class CustomerCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onToggleBlock,
     this.showActions = true,
   });
 
@@ -211,7 +213,24 @@ class CustomerCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (onEdit != null)
+                    if (onToggleBlock != null)
+                      TextButton.icon(
+                        onPressed: onToggleBlock,
+                        icon: Icon(
+                          customer.isBlocked ? Icons.check_circle : Icons.block,
+                          size: 18,
+                        ),
+                        label: Text(customer.isBlocked ? 'إلغاء الحظر' : 'حظر'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: customer.isBlocked ? AppColors.success : AppColors.warning,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
+                    if (onEdit != null) ...[
+                      const SizedBox(width: AppDimensions.spaceS),
                       TextButton.icon(
                         onPressed: onEdit,
                         icon: const Icon(Icons.edit, size: 18),
@@ -224,6 +243,7 @@ class CustomerCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    ],
                     if (onDelete != null) ...[
                       const SizedBox(width: AppDimensions.spaceS),
                       TextButton.icon(

@@ -66,11 +66,12 @@ class _CustomersListScreenState extends State<CustomersListScreen> {
 
   Future<void> _deleteCustomer(Customer customer) async {
     final confirmed = await ConfirmDialog.show(
-      context: context,
+      context,
       title: 'حذف العميل',
       message: 'هل أنت متأكد من حذف العميل "${customer.name}"؟',
       confirmText: 'حذف',
       cancelText: 'إلغاء',
+      isDangerous: true,
     );
 
     if (confirmed == true && customer.id != null) {
@@ -81,7 +82,7 @@ class _CustomersListScreenState extends State<CustomersListScreen> {
   Future<void> _toggleBlockCustomer(Customer customer) async {
     final action = customer.isBlocked ? 'إلغاء حظر' : 'حظر';
     final confirmed = await ConfirmDialog.show(
-      context: context,
+      context,
       title: '$action العميل',
       message: 'هل أنت متأكد من $action العميل "${customer.name}"؟',
       confirmText: action,
@@ -235,9 +236,12 @@ class _CustomersListScreenState extends State<CustomersListScreen> {
 
                     if (filteredCustomers.isEmpty) {
                       return EmptyWidget(
-                        message: _searchQuery.isEmpty
+                        title: _searchQuery.isEmpty
                             ? 'لا يوجد عملاء مسجلين'
                             : 'لا توجد نتائج للبحث',
+                        message: _searchQuery.isEmpty
+                            ? 'ابدأ بإضافة عملاء جدد'
+                            : 'جرب البحث بكلمات مختلفة',
                         icon: Icons.people_outline,
                         actionLabel: _searchQuery.isEmpty ? 'إضافة عميل' : null,
                         onAction: _searchQuery.isEmpty ? _showAddCustomerScreen : null,
@@ -265,7 +269,8 @@ class _CustomersListScreenState extends State<CustomersListScreen> {
                   }
 
                   return const EmptyWidget(
-                    message: 'لا يوجد بيانات',
+                    title: 'لا يوجد بيانات',
+                    message: 'لم يتم تحميل بيانات العملاء',
                     icon: Icons.people_outline,
                   );
                 },

@@ -62,13 +62,14 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       AddDebtEvent(
         Debt(
           personType: 'عميل',
-          personId: _selectedCustomerId!,
+          personId: int.tryParse(_selectedCustomerId!) ?? 0,
           personName: 'عميل مجهول', // يجب جلب الاسم من قاعدة البيانات
           originalAmount: amount,
           remainingAmount: amount,
-          date: _selectedDate ?? DateTime.now(),
-          dueDate: _dueDate,
+          date: (_selectedDate ?? DateTime.now()).toString().split(' ')[0],
+          dueDate: _dueDate?.toString().split(' ')[0],
           notes: _notesController.text,
+          transactionType: _debtType,
         ),
       ),
     );
@@ -264,7 +265,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                             ? null
                             : () async {
                                 final confirm = await ConfirmDialog.show(
-                                  context: context,
+                                  context,
                                   title: 'إلغاء العملية',
                                   message: 'هل تريد إلغاء إضافة الدين؟',
                                   confirmText: 'نعم، إلغاء',

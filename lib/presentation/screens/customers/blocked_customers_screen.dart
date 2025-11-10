@@ -184,9 +184,12 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen> {
                 Expanded(
                   child: _filteredCustomers.isEmpty
                       ? EmptyWidget(
-                          message: _searchController.text.isEmpty
+                          title: _searchController.text.isEmpty
                               ? 'لا يوجد عملاء محظورون'
                               : 'لم يتم العثور على عملاء',
+                          message: _searchController.text.isEmpty
+                              ? 'لم يتم حظر أي عميل بعد'
+                              : 'جرب البحث بكلمات مختلفة',
                           icon: Icons.block,
                         )
                       : RefreshIndicator(
@@ -208,7 +211,8 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen> {
           }
 
           return const EmptyWidget(
-            message: 'لا يوجد بيانات',
+            title: 'لا يوجد بيانات',
+            message: 'لم يتم تحميل بيانات العملاء',
             icon: Icons.block,
           );
         },

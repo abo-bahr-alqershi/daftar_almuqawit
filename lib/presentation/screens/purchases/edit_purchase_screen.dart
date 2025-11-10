@@ -123,10 +123,10 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
             icon: const Icon(Icons.delete_outline),
             onPressed: () async {
               final confirm = await ConfirmDialog.show(
-                context: context,
+                context,
                 title: 'حذف عملية الشراء',
                 message: 'هل أنت متأكد من حذف هذه العملية؟ لا يمكن التراجع عن هذا الإجراء.',
-                confirmText: 'نعم، حذف',
+                confirmText: 'حذف',
                 cancelText: 'إلغاء',
                 isDestructive: true,
               );

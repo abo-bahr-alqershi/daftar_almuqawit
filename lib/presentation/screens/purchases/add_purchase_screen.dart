@@ -331,7 +331,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                             ? null
                             : () async {
                                 final confirm = await ConfirmDialog.show(
-                                  context: context,
+                                  context,
                                   title: 'إلغاء العملية',
                                   message: 'هل تريد إلغاء إضافة عملية الشراء؟',
                                   confirmText: 'نعم، إلغاء',

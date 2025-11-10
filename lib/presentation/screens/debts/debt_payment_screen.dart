@@ -81,7 +81,7 @@ class _DebtPaymentScreenState extends State<DebtPaymentScreen> {
     }
 
     final confirm = await ConfirmDialog.show(
-      context: context,
+      context,
       title: 'تأكيد الدفع',
       message: 'هل أنت متأكد من تسجيل دفعة بمبلغ ${amount.toStringAsFixed(2)} ريال؟',
       confirmText: 'نعم، تسجيل الدفع',

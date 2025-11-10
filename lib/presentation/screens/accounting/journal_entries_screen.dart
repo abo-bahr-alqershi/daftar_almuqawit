@@ -201,7 +201,8 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
 
                     if (entries.isEmpty) {
                       return EmptyWidget(
-                        message: 'لا توجد قيود يومية',
+                        title: 'لا توجد قيود يومية',
+                        message: 'لم يتم تسجيل أي قيد محاسبي بعد',
                         icon: Icons.description_outlined,
                         actionLabel: 'إضافة قيد جديد',
                         onAction: _showAddJournalEntry,
@@ -229,7 +230,8 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
                   }
 
                   return const EmptyWidget(
-                    message: 'لا توجد بيانات',
+                    title: 'لا توجد بيانات',
+                    message: 'لم يتم تحميل بيانات القيود اليومية',
                     icon: Icons.description_outlined,
                   );
                 },

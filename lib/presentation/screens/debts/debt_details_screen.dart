@@ -110,7 +110,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> with SingleTicker
                     controller: _tabController,
                     children: [
                       _buildDetailsTab(debt),
-                      PaymentHistory(debtId: widget.debtId, payments: debt.payments),
+                      PaymentHistory(debtId: widget.debtId, payments: debt.payments.cast()),
                       DebtTimeline(debt: debt),
                     ],
                   ),
