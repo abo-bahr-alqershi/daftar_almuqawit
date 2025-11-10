@@ -104,7 +104,14 @@ class _AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
       setState(() => _isSubmitting = true);
 
       // TODO: Create JournalEntry object and submit
-      context.read<AccountingBloc>().add(AddTransaction());
+      final totalAmount = _calculateTotal(true); // أو _calculateTotal(false) حيث أنها متساوية
+      context.read<AccountingBloc>().add(
+        AddTransaction(
+          'journal_entry',
+          totalAmount,
+          _descriptionController.text,
+        ),
+      );
 
       Navigator.pop(context, true);
     }
@@ -158,7 +165,7 @@ class _AddJournalEntryScreenState extends State<AddJournalEntryScreen> {
                                 label: 'التاريخ',
                                 selectedDate: _selectedDate,
                                 onDateSelected: (date) {
-                                  setState(() => _selectedDate = date);
+                                  setState(() => _selectedDate = date ?? DateTime.now());
                                 },
                               ),
                               const SizedBox(height: AppDimensions.spaceM),

@@ -10,6 +10,7 @@ import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
 import '../../widgets/common/loading_widget.dart';
 import 'widgets/auth_header.dart';
+import '../../navigation/route_names.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -170,11 +171,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../navigation/route_names.dart';
-import '../../widgets/common/app_button.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});

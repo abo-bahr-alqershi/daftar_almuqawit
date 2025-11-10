@@ -295,4 +295,18 @@ class Validators {
       (v) => range(v, 1, 5, field: 'التقييم'),
     ]);
   }
+
+  // ========== أسماء بديلة للتوافق ==========
+
+  /// التحقق من البريد الإلكتروني (اسم بديل)
+  static String? validateEmail(String? value) => email(value);
+
+  /// التحقق من كلمة المرور (اسم بديل)
+  static String? validatePassword(String? value) => password(value);
+
+  /// التحقق من رقم الهاتف (اسم بديل)
+  static String? validatePhone(String? value) => phone(value);
+
+  /// التحقق من الاسم (اسم بديل)
+  static String? validateName(String? value) => customerName(value);
 }

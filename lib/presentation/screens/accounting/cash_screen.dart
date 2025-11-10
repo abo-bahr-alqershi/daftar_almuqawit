@@ -33,7 +33,7 @@ class _CashScreenState extends State<CashScreen> {
 
   void _loadCashData() {
     context.read<CashManagementBloc>().add(
-      LoadCashBalance(_selectedDate.toIso8601String().split('T')[0]),
+      LoadCashBalance(),
     );
   }
 
@@ -134,7 +134,6 @@ class _CashScreenState extends State<CashScreen> {
                   if (state is CashManagementError) {
                     return app_error.ErrorWidget(
                       message: state.message,
-                      onRetry: _loadCashData,
                     );
                   }
 

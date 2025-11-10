@@ -82,3 +82,6 @@ class EmptyWidget extends StatelessWidget {
     );
   }
 }
+
+// Alias للتوافق
+typedef EmptyState = EmptyWidget;

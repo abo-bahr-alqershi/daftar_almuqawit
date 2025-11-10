@@ -8,13 +8,18 @@ class DateUtils {
 
   static DateTime parseYMD(String s) => DateFormat('yyyy-MM-dd').parse(s);
   
-  /// تنسيق التاريخ
-  static String formatDate(String dateStr, {String format = 'dd/MM/yyyy'}) {
+  /// تنسيق التاريخ من String
+  static String formatDate(dynamic date, {String format = 'dd/MM/yyyy'}) {
     try {
-      final date = DateTime.parse(dateStr);
-      return DateFormat(format, 'ar').format(date);
+      if (date is DateTime) {
+        return DateFormat(format, 'ar').format(date);
+      } else if (date is String) {
+        final parsedDate = DateTime.parse(date);
+        return DateFormat(format, 'ar').format(parsedDate);
+      }
+      return date.toString();
     } catch (e) {
-      return dateStr;
+      return date.toString();
     }
   }
   

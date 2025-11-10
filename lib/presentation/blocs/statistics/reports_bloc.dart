@@ -132,7 +132,9 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       emit(ReportsLoading('جاري إنشاء التقرير اليومي...'));
       _logger.info('إنشاء تقرير يومي للتاريخ: ${event.date}');
       
-      final stats = await _getDailyStats(event.date);
+      final stats = await _getDailyStats(
+        GetDailyStatisticsParams(date: event.date)
+      );
       
       if (stats == null) {
         emit(ReportsError('لا توجد بيانات لهذا التاريخ'));
@@ -162,7 +164,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       _logger.info('إنشاء تقرير شهري: ${event.year}/${event.month}');
       
       final stats = await _getMonthlyStats(
-        GetMonthlyStatisticsParams(year: event.year, month: event.month),
+        (year: event.year, month: event.month),
       );
       
       final reportData = {
@@ -190,7 +192,9 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       
       await _printReport(PrintReportParams(
         reportType: event.reportType,
-        data: event.data,
+        date: event.data['date'] as String?,
+        year: event.data['year'] as int?,
+        month: event.data['month'] as int?,
       ));
       
       emit(ReportsSuccess('تم إرسال التقرير للطباعة'));
@@ -211,7 +215,10 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       
       await _shareReport(ShareReportParams(
         reportType: event.reportType,
-        data: event.data,
+        format: ShareFormat.pdf,
+        date: event.data['date'] as String?,
+        year: event.data['year'] as int?,
+        month: event.data['month'] as int?,
       ));
       
       emit(ReportsSuccess('تم مشاركة التقرير بنجاح'));

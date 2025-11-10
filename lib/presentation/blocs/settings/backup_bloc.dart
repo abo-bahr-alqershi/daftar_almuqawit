@@ -7,6 +7,7 @@ import '../../../domain/usecases/backup/create_backup.dart';
 import '../../../domain/usecases/backup/restore_backup.dart';
 import '../../../domain/usecases/backup/export_to_excel.dart';
 import '../../../domain/usecases/backup/schedule_auto_backup.dart';
+import '../../../domain/usecases/base/base_usecase.dart';
 import '../../../core/services/logger_service.dart';
 
 // Events
@@ -107,7 +108,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       emit(BackupInProgress('جاري إنشاء النسخة الاحتياطية...'));
       _logger.info('بدء إنشاء نسخة احتياطية');
       
-      final backupPath = await _createBackup(null);
+      final backupPath = await _createBackup(const CreateBackupParams());
       
       emit(BackupSuccess('تم إنشاء النسخة الاحتياطية بنجاح', filePath: backupPath));
       _logger.info('تم إنشاء النسخة الاحتياطية: $backupPath');
@@ -160,7 +161,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     try {
       _logger.info('جدولة النسخ الاحتياطي التلقائي');
       
-      await _scheduleAutoBackup(null);
+      await _scheduleAutoBackup(const NoParams());
       
       emit(BackupSuccess('تم تفعيل النسخ الاحتياطي التلقائي'));
       _logger.info('تم تفعيل النسخ الاحتياطي التلقائي');

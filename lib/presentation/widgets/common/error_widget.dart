@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// حالة خطأ مع رسالة
-class ErrorWidget extends StatelessWidget {
+class AppErrorWidget extends StatelessWidget {
   final String title;
   final String? message;
   final IconData? icon;
+  final VoidCallback? onRetry;
 
-  const ErrorWidget({
+  const AppErrorWidget({
     super.key,
     this.title = 'حدث خطأ',
     this.message,
     this.icon,
+    this.onRetry,
   });
 
   @override
@@ -56,9 +58,25 @@ class ErrorWidget extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ],
+            if (onRetry != null) ...[
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('إعادة المحاولة'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 }
+
+// Alias للتوافق
+typedef ErrorWidget = AppErrorWidget;

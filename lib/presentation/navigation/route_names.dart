@@ -7,6 +7,12 @@ class RouteNames {
   static const String splash = '/';
   static const String home = '/home';
 
+  // Auth routes
+  static const String login = '/login';
+  static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
+  static const String setup = '/setup';
+
   // Features
   static const String suppliers = '/suppliers';
   static const String customers = '/customers';

@@ -31,12 +31,20 @@ class CashManagementBloc extends Bloc<CashManagementEvent, CashManagementState> 
       
       // الحصول على إحصائيات اليوم لحساب الرصيد
       final today = DateTime.now().toIso8601String().split('T')[0];
-      final stats = await _getDailyStats(today);
+      final stats = await _getDailyStats(
+        GetDailyStatisticsParams(date: today)
+      );
       
       final balance = stats?.cashBalance ?? 0.0;
+      final totalIncome = stats?.totalSales ?? 0.0;
+      final totalExpenses = stats?.totalExpenses ?? 0.0;
       
-      emit(CashBalanceLoaded(balance));
-      _logger.info('تم تحميل رصيد الصندوق: $balance');
+      emit(CashBalanceLoaded(
+        balance: balance,
+        totalIncome: totalIncome,
+        totalExpenses: totalExpenses,
+      ));
+      _logger.info('تم تحميل رصيد الصندوق: $balance (إيرادات: $totalIncome، مصروفات: $totalExpenses)');
     } catch (e, s) {
       _logger.error('فشل تحميل رصيد الصندوق', error: e, stackTrace: s);
       emit(CashManagementError('فشل تحميل رصيد الصندوق: ${e.toString()}'));

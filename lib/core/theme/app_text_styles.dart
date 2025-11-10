@@ -332,4 +332,13 @@ class AppTextStyles {
 
   /// نص عادي (للتوافق مع الكود القديم)
   static TextStyle get body => bodyMedium;
+
+  /// عنوان H1 (للتوافق)
+  static TextStyle get h1 => displayLarge;
+
+  /// عنوان H2 (للتوافق)
+  static TextStyle get h2 => displayMedium;
+
+  /// عنوان H3 (للتوافق)
+  static TextStyle get h3 => displaySmall;
 }

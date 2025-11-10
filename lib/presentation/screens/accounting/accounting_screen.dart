@@ -81,7 +81,6 @@ class _AccountingScreenState extends State<AccountingScreen> {
             if (state is AccountingError) {
               return app_error.ErrorWidget(
                 message: state.message,
-                onRetry: _loadAccountingData,
               );
             }
 

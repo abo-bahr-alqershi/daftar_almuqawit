@@ -29,7 +29,7 @@ class QuickSale implements UseCase<int, QuickSaleParams> {
     }
     
     // حساب الربح (إذا تم توفير سعر التكلفة)
-    double? profit;
+    double profit = 0.0;
     if (params.costPrice != null) {
       profit = totalAmount - (params.costPrice! * params.quantity);
     }

@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/validators.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_event.dart';
+import '../../blocs/auth/auth_state.dart';
+import '../../navigation/route_names.dart';
+import '../../widgets/common/app_button.dart';
+import '../../widgets/common/app_text_field.dart';
+import '../../widgets/common/loading_widget.dart';
+import 'widgets/auth_header.dart';
 
 class SocialLoginButtons extends StatelessWidget {
   final VoidCallback? onGoogleLogin;
@@ -93,19 +103,6 @@ class _SocialLoginButton extends StatelessWidget {
     );
   }
 }
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/validators.dart';
-import '../../blocs/auth/auth_bloc.dart';
-import '../../blocs/auth/auth_event.dart';
-import '../../blocs/auth/auth_state.dart';
-import '../../navigation/route_names.dart';
-import '../../widgets/common/app_button.dart';
-import '../../widgets/common/app_text_field.dart';
-import '../../widgets/common/loading_widget.dart';
-import 'widgets/auth_header.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

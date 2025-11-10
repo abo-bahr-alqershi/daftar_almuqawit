@@ -11,9 +11,17 @@ class CashManagementLoading extends CashManagementState {}
 
 class CashBalanceLoaded extends CashManagementState {
   final double balance;
-  CashBalanceLoaded(this.balance);
+  final double totalIncome;
+  final double totalExpenses;
+  
+  CashBalanceLoaded({
+    required this.balance,
+    this.totalIncome = 0.0,
+    this.totalExpenses = 0.0,
+  });
+  
   @override
-  List<Object?> get props => [balance];
+  List<Object?> get props => [balance, totalIncome, totalExpenses];
 }
 
 class CashTransactionsLoaded extends CashManagementState {
