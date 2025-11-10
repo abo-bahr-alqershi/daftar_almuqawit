@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/sale.dart';
 import '../../blocs/sales/sales_bloc.dart';
 import '../../blocs/sales/sales_event.dart';
 import '../../blocs/sales/sales_state.dart';
