@@ -26,4 +26,12 @@ class RouteNames {
   static const String accounting = '/accounting';
   static const String statistics = '/statistics';
   static const String settings = '/settings';
+  
+  // Reports routes
+  static const String reports = '/reports';
+  static const String dailyReport = '/reports/daily';
+  static const String weeklyReport = '/reports/weekly';
+  static const String monthlyReport = '/reports/monthly';
+  static const String yearlyReport = '/reports/yearly';
+  static const String customReport = '/reports/custom';
 }

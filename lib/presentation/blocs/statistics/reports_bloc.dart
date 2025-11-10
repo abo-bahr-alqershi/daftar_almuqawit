@@ -2,101 +2,13 @@
 /// يدير إنشاء وعرض التقارير المختلفة
 
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import '../../../domain/usecases/reports/print_report.dart';
 import '../../../domain/usecases/reports/share_report.dart';
 import '../../../domain/usecases/statistics/get_daily_statistics.dart';
 import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
 import '../../../core/services/logger_service.dart';
-
-// Events
-abstract class ReportsEvent extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
-
-class GenerateDailyReportEvent extends ReportsEvent {
-  final String date;
-  
-  GenerateDailyReportEvent(this.date);
-  
-  @override
-  List<Object?> get props => [date];
-}
-
-class GenerateMonthlyReportEvent extends ReportsEvent {
-  final int year;
-  final int month;
-  
-  GenerateMonthlyReportEvent(this.year, this.month);
-  
-  @override
-  List<Object?> get props => [year, month];
-}
-
-class PrintReportEvent extends ReportsEvent {
-  final String reportType;
-  final Map<String, dynamic> data;
-  
-  PrintReportEvent(this.reportType, this.data);
-  
-  @override
-  List<Object?> get props => [reportType, data];
-}
-
-class ShareReportEvent extends ReportsEvent {
-  final String reportType;
-  final Map<String, dynamic> data;
-  
-  ShareReportEvent(this.reportType, this.data);
-  
-  @override
-  List<Object?> get props => [reportType, data];
-}
-
-// States
-abstract class ReportsState extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
-
-class ReportsInitial extends ReportsState {}
-
-class ReportsLoading extends ReportsState {
-  final String message;
-  
-  ReportsLoading(this.message);
-  
-  @override
-  List<Object?> get props => [message];
-}
-
-class ReportsLoaded extends ReportsState {
-  final Map<String, dynamic> reportData;
-  
-  ReportsLoaded(this.reportData);
-  
-  @override
-  List<Object?> get props => [reportData];
-}
-
-class ReportsSuccess extends ReportsState {
-  final String message;
-  
-  ReportsSuccess(this.message);
-  
-  @override
-  List<Object?> get props => [message];
-}
-
-class ReportsError extends ReportsState {
-  final String message;
-  
-  ReportsError(this.message);
-  
-  @override
-  List<Object?> get props => [message];
-}
+import 'reports_event.dart';
+import 'reports_state.dart';
 
 /// Bloc التقارير
 class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {

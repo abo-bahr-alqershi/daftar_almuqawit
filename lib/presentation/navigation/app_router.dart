@@ -16,6 +16,12 @@ import '../screens/expenses/expenses_screen.dart';
 import '../screens/accounting/accounting_screen.dart';
 import '../screens/statistics/statistics_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/reports/reports_screen.dart';
+import '../screens/reports/daily_report_screen.dart';
+import '../screens/reports/weekly_report_screen.dart';
+import '../screens/reports/monthly_report_screen.dart';
+import '../screens/reports/yearly_report_screen.dart';
+import '../screens/reports/custom_report_screen.dart';
 
 /// مدير التوجيه الرئيسي للتطبيق
 class AppRouter {
@@ -62,6 +68,18 @@ class AppRouter {
         return _buildRoute(const StatisticsScreen());
       case RouteNames.settings:
         return _buildRoute(const SettingsScreen());
+      case RouteNames.reports:
+        return _buildRoute(const ReportsScreen());
+      case RouteNames.dailyReport:
+        return _buildRoute(const DailyReportScreen());
+      case RouteNames.weeklyReport:
+        return _buildRoute(const WeeklyReportScreen());
+      case RouteNames.monthlyReport:
+        return _buildRoute(const MonthlyReportScreen());
+      case RouteNames.yearlyReport:
+        return _buildRoute(const YearlyReportScreen());
+      case RouteNames.customReport:
+        return _buildRoute(const CustomReportScreen());
       default:
         return _buildRoute(const SplashScreen());
     }

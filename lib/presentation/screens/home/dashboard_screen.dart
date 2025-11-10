@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../blocs/home/dashboard_bloc.dart';
+import '../../blocs/home/dashboard_event.dart';
+import '../../blocs/home/dashboard_state.dart';
 import '../../blocs/sync/sync_bloc.dart';
 import '../../navigation/route_names.dart';
 import '../../widgets/common/loading_widget.dart';
@@ -184,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: _StatCard(
                   title: 'الديون',
-                  value: '${state.dailyStats.totalDebts}',
+                  value: '${(state.dailyStats.newDebts + state.dailyStats.collectedDebts).toStringAsFixed(0)}',
                   subtitle: 'ريال',
                   icon: Icons.account_balance_wallet,
                   color: AppColors.debt,

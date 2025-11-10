@@ -81,7 +81,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'المبيعات',
-                  value: '${stats.totalSalesAmount.toStringAsFixed(0)} ر.ي',
+                  value: '${stats.totalSales.toStringAsFixed(0)} ر.ي',
                   icon: Icons.trending_up,
                 ),
               ),
@@ -93,7 +93,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'المشتريات',
-                  value: '${stats.totalPurchasesAmount.toStringAsFixed(0)} ر.ي',
+                  value: '${stats.totalPurchases.toStringAsFixed(0)} ر.ي',
                   icon: Icons.shopping_cart,
                 ),
               ),
@@ -105,7 +105,7 @@ class QuickStatsWidget extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   label: 'الربح',
-                  value: '${stats.totalProfit.toStringAsFixed(0)} ر.ي',
+                  value: '${stats.netProfit.toStringAsFixed(0)} ر.ي',
                   icon: Icons.monetization_on,
                 ),
               ),

@@ -2,7 +2,6 @@
 /// يدير بيانات وإحصائيات لوحة التحكم الرئيسية
 
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import '../../../domain/usecases/statistics/get_daily_statistics.dart';
 import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
 import '../../../domain/usecases/sales/get_today_sales.dart';
@@ -14,63 +13,8 @@ import '../../../domain/entities/sale.dart';
 import '../../../domain/entities/purchase.dart';
 import '../../../domain/entities/debt.dart';
 import '../../../domain/usecases/base/base_usecase.dart';
-
-// Events
-abstract class DashboardEvent extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
-
-class LoadDashboard extends DashboardEvent {}
-
-class RefreshDashboard extends DashboardEvent {}
-
-// States
-abstract class DashboardState extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
-
-class DashboardInitial extends DashboardState {}
-
-class DashboardLoading extends DashboardState {}
-
-class DashboardLoaded extends DashboardState {
-  final DailyStatistics todayStats;
-  final List<Sale> todaySales;
-  final List<Purchase> todayPurchases;
-  final List<Debt> pendingDebts;
-  final List<Debt> overdueDebts;
-  final double monthlyProgress;
-  
-  DashboardLoaded({
-    required this.todayStats,
-    required this.todaySales,
-    required this.todayPurchases,
-    required this.pendingDebts,
-    required this.overdueDebts,
-    required this.monthlyProgress,
-  });
-  
-  @override
-  List<Object?> get props => [
-    todayStats,
-    todaySales,
-    todayPurchases,
-    pendingDebts,
-    overdueDebts,
-    monthlyProgress,
-  ];
-}
-
-class DashboardError extends DashboardState {
-  final String message;
-  
-  DashboardError(this.message);
-  
-  @override
-  List<Object?> get props => [message];
-}
+import 'dashboard_event.dart';
+import 'dashboard_state.dart';
 
 /// Bloc لوحة التحكم
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
@@ -119,7 +63,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       ]);
       
       emit(DashboardLoaded(
-        todayStats: results[0] as DailyStatistics,
+        dailyStats: results[0] as DailyStatistics,
         todaySales: results[1] as List<Sale>,
         todayPurchases: results[2] as List<Purchase>,
         pendingDebts: results[3] as List<Debt>,

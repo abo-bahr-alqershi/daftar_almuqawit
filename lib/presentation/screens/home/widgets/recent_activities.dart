@@ -33,7 +33,10 @@ class RecentActivities extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  // الانتقال إلى صفحة جميع النشاطات
+                  // TODO: تنفيذ صفحة النشاطات الكاملة
+                },
                 child: const Text('عرض الكل'),
               ),
             ],

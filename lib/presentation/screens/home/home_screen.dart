@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/sync/sync_bloc.dart';
+import '../../blocs/sync/sync_event.dart';
 import '../../blocs/sync/sync_state.dart';
 import '../../navigation/route_names.dart';
 import '../../widgets/common/loading_widget.dart';
@@ -74,6 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         body: RefreshIndicator(
           onRefresh: () async {
+            // تحديث لوحة التحكم
+            context.read<DashboardBloc>().add(LoadDashboard());
+            // تحديث المزامنة
+            context.read<SyncBloc>().add(SyncStarted());
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
