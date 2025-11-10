@@ -93,7 +93,7 @@ class AppDatePicker extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    return app_date_utils.formatDate(date, format: dateFormat);
+    return app_date_utils.DateUtils.formatDate(date, format: dateFormat);
   }
 
   @override
@@ -256,8 +256,8 @@ class AppDateRangePicker extends StatelessWidget {
   }
 
   String _formatDateRange(DateTimeRange range) {
-    final start = app_date_utils.formatDate(range.start, format: 'yyyy/MM/dd');
-    final end = app_date_utils.formatDate(range.end, format: 'yyyy/MM/dd');
+    final start = app_date_utils.DateUtils.formatDate(range.start, format: 'yyyy/MM/dd');
+    final end = app_date_utils.DateUtils.formatDate(range.end, format: 'yyyy/MM/dd');
     return '$start - $end';
   }
 

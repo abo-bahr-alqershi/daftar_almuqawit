@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../data/models/supplier_model.dart';
+import '../../../../domain/entities/supplier.dart';
 
 /// بطاقة عرض المورد
 class SupplierCard extends StatelessWidget {
-  final SupplierModel supplier;
+  final Supplier supplier;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;

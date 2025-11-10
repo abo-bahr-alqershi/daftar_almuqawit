@@ -151,7 +151,7 @@ class BackupOptions extends StatelessWidget {
         const SizedBox(height: AppDimensions.spaceM),
         
         // زر جدولة النسخ التلقائي
-        AppButton.outlined(
+        AppButton.secondary(
           text: 'جدولة النسخ التلقائي',
           onPressed: isBackingUp || isRestoring ? null : onScheduleAutoBackup,
           icon: Icons.schedule,

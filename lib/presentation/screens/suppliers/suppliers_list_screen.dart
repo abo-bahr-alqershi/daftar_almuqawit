@@ -135,7 +135,7 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
               color: AppColors.surface,
               padding: const EdgeInsets.all(AppDimensions.paddingM),
               child: SupplierSearchBar(
-                onSearch: (query) {
+                onChanged: (query) {
                   setState(() => _searchQuery = query);
                 },
               ),

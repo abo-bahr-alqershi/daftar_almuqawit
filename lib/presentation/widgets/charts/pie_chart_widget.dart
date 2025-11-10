@@ -5,7 +5,7 @@ import '../../../core/theme/app_text_styles.dart';
 
 /// ويدجت رسم بياني دائري
 class PieChartWidget extends StatelessWidget {
-  final List<PieChartData> data;
+  final List<AppPieChartData> data;
   final bool showPercentages;
   final bool showLegend;
   final double radius;
@@ -63,9 +63,9 @@ class PieChartWidget extends StatelessWidget {
   }
 }
 
-class PieChartData {
+class AppPieChartData {
   final String label;
   final double value;
   final Color color;
-  const PieChartData({required this.label, required this.value, required this.color});
+  const AppPieChartData({required this.label, required this.value, required this.color});
 }

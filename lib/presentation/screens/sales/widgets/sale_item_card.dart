@@ -55,7 +55,7 @@ class SaleItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '#${sale.id.substring(0, 8)}',
+                          '#${sale.id?.substring(0, 8) ?? 'N/A'}',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
@@ -198,7 +198,7 @@ class SaleItemCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _formatDate(sale.date),
+                        sale.date,
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),

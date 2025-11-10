@@ -51,6 +51,7 @@ dependencies:
   url_launcher: ^6.2.1
   share_plus: ^7.2.1
   file_picker: ^8.1.31
+  image_picker: ^1.0.7
   excel: ^3.0.0
   pdf: ^3.10.7
   printing: ^5.11.1

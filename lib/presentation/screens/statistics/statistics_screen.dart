@@ -322,7 +322,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   'الديون',
                   totalDebts,
                   Icons.account_balance_wallet,
-                  AppColors.error,
+                  AppColors.danger,
                 ),
               ),
             ],
@@ -428,11 +428,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           SizedBox(
             height: 200,
             child: LineChartWidget(
-              data: _prepareChartData(stats),
-              xLabels: _getXLabels(stats),
-              yAxisLabel: 'المبلغ (ر.س)',
+              dataSets: _prepareChartData(stats),
               showGrid: true,
-              animate: true,
             ),
           ),
         ],
@@ -536,17 +533,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           SizedBox(
             height: 200,
             child: PieChartWidget(
-              data: {
-                'مبيعات نقدية': totalCashSales,
-                'مبيعات آجلة': totalCreditSales,
-              },
-              colors: {
-                'مبيعات نقدية': AppColors.success,
-                'مبيعات آجلة': AppColors.warning,
-              },
+              data: [
+                AppPieChartData(
+                  label: 'مبيعات نقدية',
+                  value: totalCashSales,
+                  color: AppColors.success,
+                ),
+                AppPieChartData(
+                  label: 'مبيعات آجلة',
+                  value: totalCreditSales,
+                  color: AppColors.warning,
+                ),
+              ],
               showLegend: true,
-              showValues: true,
-              animate: true,
+              showPercentages: true,
             ),
           ),
         ],

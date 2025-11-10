@@ -5,7 +5,7 @@ import '../../../core/theme/app_text_styles.dart';
 
 /// ويدجت رسم بياني بالأعمدة
 class BarChartWidget extends StatelessWidget {
-  final List<BarChartData> data;
+  final List<AppBarChartData> data;
   final String? title;
   final bool showGrid;
   final Color? barColor;
@@ -45,8 +45,8 @@ class BarChartWidget extends StatelessWidget {
   }
 }
 
-class BarChartData {
+class AppBarChartData {
   final String label;
   final double value;
-  const BarChartData({required this.label, required this.value});
+  const AppBarChartData({required this.label, required this.value});
 }
