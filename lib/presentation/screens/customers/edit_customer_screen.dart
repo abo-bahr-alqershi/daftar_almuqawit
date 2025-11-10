@@ -5,7 +5,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customer_form_bloc.dart';
 import '../../blocs/customers/customer_form_event.dart';
-import '../../blocs/customers/customer_form_state.dart';
+import '../../blocs/customers/customers_state.dart';
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
 import '../../widgets/common/app_button.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../blocs/sales/sales_bloc.dart';
+import '../../blocs/sales/sales_state.dart';
 import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart';
+import '../../widgets/common/error_widget.dart' as custom_error;
 
 /// شاشة مبيعات اليوم
 class TodaySalesScreen extends StatelessWidget {

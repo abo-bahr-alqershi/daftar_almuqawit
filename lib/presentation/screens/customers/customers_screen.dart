@@ -76,7 +76,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Future<void> _deleteCustomer(Customer customer) async {
-    final confirmed = await showConfirmDialog(
+    final confirmed = await ConfirmDialog.show(
       context: context,
       title: 'حذف العميل',
       message: 'هل أنت متأكد من حذف العميل "${customer.name}"؟\nسيتم حذف جميع البيانات المرتبطة به.',
@@ -92,7 +92,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Future<void> _toggleBlockCustomer(Customer customer) async {
     final action = customer.isBlocked ? 'إلغاء حظر' : 'حظر';
-    final confirmed = await showConfirmDialog(
+    final confirmed = await ConfirmDialog.show(
       context: context,
       title: '$action العميل',
       message: 'هل أنت متأكد من $action العميل "${customer.name}"؟',

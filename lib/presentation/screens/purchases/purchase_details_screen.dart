@@ -42,7 +42,7 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
   }
 
   Future<void> _deletePurchase() async {
-    final confirmed = await showConfirmDialog(
+    final confirmed = await ConfirmDialog.show(
       context: context,
       title: 'حذف المشترى',
       message: 'هل أنت متأكد من حذف هذا المشترى؟\nلن يمكن التراجع عن هذا الإجراء.',
@@ -62,7 +62,7 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
   }
 
   Future<void> _cancelPurchase() async {
-    final confirmed = await showConfirmDialog(
+    final confirmed = await ConfirmDialog.show(
       context: context,
       title: 'إلغاء المشترى',
       message: 'هل أنت متأكد من إلغاء هذا المشترى؟',

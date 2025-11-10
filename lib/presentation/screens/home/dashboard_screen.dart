@@ -6,7 +6,7 @@ import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/sync/sync_bloc.dart';
 import '../../navigation/route_names.dart';
 import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart';
+import '../../widgets/common/error_widget.dart' as custom_error;
 import 'widgets/quick_stats_widget.dart';
 import 'widgets/sync_indicator.dart';
 
@@ -71,7 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             if (state is DashboardError) {
               return Center(
-                child: AppErrorWidget(
+                child: custom_error.AppErrorWidget(
                   message: state.message,
                   onRetry: _loadDashboard,
                 ),

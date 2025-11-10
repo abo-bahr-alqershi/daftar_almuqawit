@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../blocs/debts/debts_bloc.dart';
+import '../../blocs/debts/debts_state.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
 import '../../widgets/common/app_date_picker.dart';
 import '../../widgets/common/app_dropdown.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import '../../widgets/common/snackbar_widget.dart';
-import './widgets/customer_selector.dart';
+import '../../sales/widgets/customer_selector.dart';
 
 /// شاشة إضافة دين
 /// 
@@ -56,14 +56,17 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
     final amount = double.parse(_amountController.text);
 
     context.read<DebtsBloc>().add(
-      AddDebt(
-        customerId: _selectedCustomerId!,
-        amount: amount,
-        debtType: _debtType,
-        description: _descriptionController.text,
-        date: _selectedDate ?? DateTime.now(),
-        dueDate: _dueDate,
-        notes: _notesController.text,
+      AddDebtEvent(
+        Debt(
+          personType: 'عميل',
+          personId: _selectedCustomerId!,
+          personName: 'عميل مجهول', // يجب جلب الاسم من قاعدة البيانات
+          originalAmount: amount,
+          remainingAmount: amount,
+          date: _selectedDate ?? DateTime.now(),
+          dueDate: _dueDate,
+          notes: _notesController.text,
+        ),
       ),
     );
   }
@@ -78,7 +81,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       ),
       body: BlocConsumer<DebtsBloc, DebtsState>(
         listener: (context, state) {
-          if (state is DebtAdded) {
+          if (state is DebtOperationSuccess) {
             SnackbarWidget.showSuccess(
               context: context,
               message: 'تمت إضافة الدين بنجاح',

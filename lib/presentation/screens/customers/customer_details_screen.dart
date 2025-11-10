@@ -433,7 +433,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   void _toggleBlockStatus(BuildContext context) async {
     final action = widget.customer.isBlocked ? 'إلغاء حظر' : 'حظر';
-    final confirmed = await showConfirmDialog(
+    final confirmed = await ConfirmDialog.show(
       context: context,
       title: '$action العميل',
       message: 'هل أنت متأكد من $action العميل "${widget.customer.name}"؟',

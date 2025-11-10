@@ -13,7 +13,6 @@ import '../screens/sales/sales_screen.dart';
 import '../screens/debts/debts_screen.dart';
 import '../screens/debt_payments/debt_payments_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
-import '../screens/accounts/accounts_screen.dart';
 import '../screens/accounting/accounting_screen.dart';
 import '../screens/statistics/statistics_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -56,7 +55,7 @@ class AppRouter {
       case RouteNames.expenses:
         return _buildRoute(const ExpensesScreen());
       case RouteNames.accounts:
-        return _buildRoute(const AccountsScreen());
+        return _buildRoute(const AccountingScreen());
       case RouteNames.accounting:
         return _buildRoute(const AccountingScreen());
       case RouteNames.statistics:
