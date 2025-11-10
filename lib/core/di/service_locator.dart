@@ -3,7 +3,6 @@ import 'modules/database_module.dart';
 import 'modules/firebase_module.dart';
 import 'modules/repository_module.dart';
 import 'modules/bloc_module.dart';
-    // ignore_for_file: public_member_api_docs
 
 import 'package:get_it/get_it.dart';
 
@@ -33,55 +32,7 @@ import '../services/sync/conflict_resolver.dart';
 import '../services/sync/sync_queue.dart';
 import '../services/sync/offline_queue.dart';
 
-// Local DataSources
-// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
-// import '../../data/datasources/local/supplier_local_datasource.dart';
-// import '../../data/datasources/local/customer_local_datasource.dart';
-// import '../../data/datasources/local/qat_type_local_datasource.dart';
-// import '../../data/datasources/local/purchase_local_datasource.dart';
-// import '../../data/datasources/local/sales_local_datasource.dart';
-// import '../../data/datasources/local/debt_local_datasource.dart';
-// import '../../data/datasources/local/debt_payment_local_datasource.dart';
-// import '../../data/datasources/local/expense_local_datasource.dart';
-// import '../../data/datasources/local/accounting_local_datasource.dart';
-// import '../../data/datasources/local/statistics_local_datasource.dart';
-// import '../../data/datasources/local/sync_local_datasource.dart';
-
-// Remote DataSources
-// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
-// import '../../data/datasources/remote/suppliers_remote_datasource.dart';
-// import '../../data/datasources/remote/customers_remote_datasource.dart';
-// import '../../data/datasources/remote/qat_types_remote_datasource.dart';
-// import '../../data/datasources/remote/purchases_remote_datasource.dart';
-// import '../../data/datasources/remote/sales_remote_datasource.dart';
-// import '../../data/datasources/remote/debts_remote_datasource.dart';
-// import '../../data/datasources/remote/debt_payments_remote_datasource.dart';
-// import '../../data/datasources/remote/expenses_remote_datasource.dart';
-// import '../../data/datasources/remote/accounts_remote_datasource.dart';
-// import '../../data/datasources/remote/journal_entries_remote_datasource.dart';
-// import '../../data/datasources/remote/journal_entry_details_remote_datasource.dart';
-// import '../../data/datasources/remote/daily_stats_remote_datasource.dart';
-
-// Repositories impl
-// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
-// import '../../data/repositories/supplier_repository_impl.dart';
-// import '../../data/repositories/customer_repository_impl.dart';
-// import '../../data/repositories/qat_type_repository_impl.dart';
-// import '../../data/repositories/purchase_repository_impl.dart';
-// import '../../data/repositories/sale_repository_impl.dart';
-// import '../../data/repositories/debt_repository_impl.dart';
-// import '../../data/repositories/debt_payment_repository_impl.dart';
-// import '../../data/repositories/expense_repository_impl.dart';
-// import '../../data/repositories/accounting_repository_impl.dart';
-// import '../../data/repositories/statistics_repository_impl.dart';
-// import '../../data/repositories/sync_repository_impl.dart';
-// import '../../data/repositories/backup_repository_impl.dart';
-
 // Repositories interfaces
-// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
-// import '../../domain/repositories/supplier_repository.dart';
-// import '../../domain/repositories/customer_repository.dart';
-// import '../../domain/repositories/qat_type_repository.dart';
 import '../../domain/repositories/purchase_repository.dart';
 import '../../domain/repositories/sales_repository.dart';
 import '../../domain/repositories/debt_repository.dart';
@@ -95,8 +46,6 @@ import '../../domain/repositories/customer_repository.dart';
 import '../../domain/repositories/supplier_repository.dart';
 
 // UseCases
-// TODO: سيتم استخدامها عند تنفيذ setup() كاملاً
-// import '../../domain/usecases/base/base_usecase.dart';
 // Suppliers
 import '../../domain/usecases/suppliers/add_supplier.dart';
 import '../../domain/usecases/suppliers/get_suppliers.dart';
@@ -196,7 +145,7 @@ final GetIt sl = GetIt.instance;
 class ServiceLocator {
   ServiceLocator._();
 
-  /// تهيئة أولية فارغة؛ سيتم إضافة التسجيلات تدريجياً مع إنشاء الطبقات
+  /// تهيئة جميع الاعتماديات للتطبيق
   static Future<void> setup() async {
     // Database
     sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
@@ -224,6 +173,7 @@ class ServiceLocator {
     sl.registerLazySingleton<ConflictResolver>(() => ConflictResolver());
     sl.registerLazySingleton<SyncQueue>(() => SyncQueue());
     sl.registerLazySingleton<OfflineQueue>(() => OfflineQueue());
+    
     await DatabaseModule.register(sl);
     await FirebaseModule.register(sl);
     await RepositoryModule.register(sl);
