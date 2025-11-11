@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../data/database/database_helper.dart';
 import '../../data/database/database_config.dart';
-import 'cloud_storage_service.dart';
 import 'google_drive_service.dart';
 export 'google_drive_service.dart' show DriveBackupInfo;
 import 'logger_service.dart';
@@ -226,45 +225,186 @@ class BackupService {
     }
   }
 
-  /// استعادة من Google Drive
+  /// استعادة من Google Drive مع آليات حماية احترافية
+  /// 
+  /// الميزات:
+  /// - إنشاء نسخة احتياطية تلقائية قبل الاستعادة
+  /// - التحقق من صحة الملف المحمّل
+  /// - معالجة شاملة للأخطاء مع إمكانية التراجع
+  /// - مؤشرات تقدم دقيقة
   Future<void> restoreFromDrive(
     String driveFileId, {
     Function(double progress)? onDownloadProgress,
+    bool createSafetyBackup = true,
   }) async {
+    String? safetyBackupPath;
+    String? downloadedFilePath;
+    
     try {
-      _logger.info('⬇️ بدء الاستعادة من Google Drive...');
+      _logger.info('⬇️ بدء الاستعادة الآمنة من Google Drive...');
+      _logger.info('📁 معرف الملف: $driveFileId');
 
       // التحقق من تسجيل الدخول
       if (!_googleDrive.isSignedIn) {
-        throw Exception('يجب تسجيل الدخول إلى Google Drive أولاً');
+        _logger.warning('⚠️ لم يتم تسجيل الدخول - محاولة تسجيل دخول صامت...');
+        final signedIn = await _googleDrive.signInSilently();
+        if (!signedIn) {
+          throw Exception('يجب تسجيل الدخول إلى Google Drive أولاً');
+        }
       }
 
-      // تحميل من Google Drive
+      // 1️⃣ إنشاء نسخة احتياطية للحماية (Safety Backup)
+      if (createSafetyBackup) {
+        _logger.info('🛡️ إنشاء نسخة احتياطية للحماية قبل الاستعادة...');
+        onDownloadProgress?.call(0.05);
+        
+        try {
+          safetyBackupPath = await createBackup();
+          _logger.info('✅ تم إنشاء نسخة الحماية: $safetyBackupPath');
+        } catch (e) {
+          _logger.warning('⚠️ فشل إنشاء نسخة الحماية، متابعة بحذر... $e');
+        }
+        
+        onDownloadProgress?.call(0.1);
+      }
+
+      // 2️⃣ تحميل النسخة من Google Drive
+      _logger.info('⬇️ تحميل النسخة الاحتياطية من Google Drive...');
       final dir = await getApplicationDocumentsDirectory();
-      final localPath = p.join(dir.path, 'restore_drive_temp.db');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      downloadedFilePath = p.join(dir.path, 'restore_drive_${timestamp}_temp.db');
 
       await _googleDrive.downloadBackup(
         driveFileId,
-        localPath,
-        onProgress: onDownloadProgress,
+        downloadedFilePath,
+        onProgress: (progress) {
+          final adjustedProgress = 0.1 + (progress * 0.5);
+          onDownloadProgress?.call(adjustedProgress);
+        },
       );
 
-      _logger.info('تم تحميل النسخة، بدء الاستعادة...');
+      _logger.info('✅ تم تحميل النسخة بنجاح');
+      onDownloadProgress?.call(0.6);
 
-      // استعادة من الملف المحلي
-      await restoreBackup(localPath);
+      // 3️⃣ التحقق من صحة الملف المحمّل
+      _logger.info('🔍 التحقق من صحة الملف المحمّل...');
+      final downloadedFile = File(downloadedFilePath);
+      
+      if (!await downloadedFile.exists()) {
+        throw Exception('فشل تحميل الملف من Google Drive');
+      }
 
-      // حذف الملف المؤقت
-      await File(localPath).delete();
+      final fileSize = await downloadedFile.length();
+      _logger.info('📊 حجم الملف المحمّل: ${(fileSize / 1024).toStringAsFixed(1)} KB');
+      
+      if (fileSize < 1024) {
+        throw Exception('الملف المحمّل صغير جداً، قد يكون تالفاً');
+      }
 
-      _logger.info('✅ تمت الاستعادة من Google Drive بنجاح');
+      onDownloadProgress?.call(0.7);
+
+      // 4️⃣ التحقق من صحة قاعدة البيانات
+      _logger.info('🔍 التحقق من صحة قاعدة البيانات...');
+      final isValid = await _validateDatabaseFile(downloadedFilePath);
+      
+      if (!isValid) {
+        throw Exception('الملف المحمّل ليس قاعدة بيانات صحيحة');
+      }
+
+      _logger.info('✅ قاعدة البيانات صالحة');
+      onDownloadProgress?.call(0.8);
+
+      // 5️⃣ إغلاق الاتصال الحالي
+      _logger.info('🔒 إغلاق قاعدة البيانات الحالية...');
+      await DatabaseHelper.instance.close();
+      onDownloadProgress?.call(0.85);
+
+      // 6️⃣ استبدال قاعدة البيانات
+      _logger.info('🔄 استبدال قاعدة البيانات...');
+      final dstPath = await DatabaseConfig.databasePath;
+      await downloadedFile.copy(dstPath);
+      onDownloadProgress?.call(0.9);
+
+      // 7️⃣ إعادة فتح القاعدة
+      _logger.info('🔓 إعادة فتح قاعدة البيانات...');
+      await DatabaseHelper.init();
+      onDownloadProgress?.call(0.95);
+
+      // 8️⃣ التحقق من نجاح الاستعادة
+      _logger.info('✅ التحقق النهائي...');
+      final db = await DatabaseHelper.instance.database;
+      final result = await db.rawQuery('SELECT COUNT(*) as count FROM sqlite_master');
+      _logger.info('📊 عدد الجداول: ${result.first['count']}');
+
+      // 9️⃣ حذف الملف المؤقت
+      await downloadedFile.delete();
+      _logger.info('🗑️ تم حذف الملف المؤقت');
+
+      onDownloadProgress?.call(1.0);
+      _logger.info('✅✅✅ تمت الاستعادة من Google Drive بنجاح!');
+      
+      // حذف نسخة الحماية بعد النجاح (اختياري)
+      if (safetyBackupPath != null) {
+        _logger.info('💡 نسخة الحماية محفوظة في: $safetyBackupPath');
+      }
+      
     } catch (e, stackTrace) {
       _logger.error(
         '❌ فشلت الاستعادة من Google Drive',
         error: e,
         stackTrace: stackTrace,
       );
+
+      // محاولة التراجع إلى نسخة الحماية
+      if (safetyBackupPath != null) {
+        _logger.warning('⚠️ محاولة استعادة نسخة الحماية...');
+        
+        try {
+          await restoreBackup(safetyBackupPath);
+          _logger.info('✅ تم التراجع إلى نسخة الحماية بنجاح');
+          
+          throw Exception(
+            'فشلت الاستعادة: ${e.toString()}\n'
+            'تم التراجع إلى النسخة السابقة بنجاح',
+          );
+        } catch (rollbackError) {
+          _logger.error('❌ فشل التراجع إلى نسخة الحماية', error: rollbackError);
+          
+          throw Exception(
+            'فشلت الاستعادة والتراجع:\n'
+            'خطأ الاستعادة: ${e.toString()}\n'
+            'خطأ التراجع: ${rollbackError.toString()}',
+          );
+        }
+      }
+
+      // تنظيف الملف المؤقت في حالة الفشل
+      if (downloadedFilePath != null) {
+        try {
+          await File(downloadedFilePath).delete();
+        } catch (_) {}
+      }
+
       rethrow;
+    }
+  }
+
+  /// التحقق من صحة ملف قاعدة البيانات
+  Future<bool> _validateDatabaseFile(String filePath) async {
+    try {
+      final file = File(filePath);
+      
+      if (!await file.exists()) {
+        return false;
+      }
+
+      final bytes = await file.openRead(0, 16).first;
+      final header = String.fromCharCodes(bytes.take(15));
+      
+      return header == 'SQLite format 3';
+    } catch (err) {
+      _logger.error('فشل التحقق من صحة قاعدة البيانات', error: err);
+      return false;
     }
   }
 

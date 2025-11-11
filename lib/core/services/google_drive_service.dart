@@ -203,7 +203,7 @@ class GoogleDriveService {
 
   // ========== رفع النسخ الاحتياطية ==========
 
-  /// رفع ملف نسخة احتياطية إلى Google Drive
+  /// رفع ملف نسخة احتياطية إلى Google Drive مع تتبع التقدم
   ///
   /// Returns: معرف الملف في Google Drive
   Future<String> uploadBackup(
@@ -221,10 +221,17 @@ class GoogleDriveService {
       }
 
       final fileName = path.basename(filePath);
-      _logger.info('📤 رفع النسخة الاحتياطية إلى Google Drive: $fileName');
+      final fileSize = await file.length();
+      
+      _logger.info('📤 رفع النسخة الاحتياطية إلى Google Drive');
+      _logger.info('📦 اسم الملف: $fileName');
+      _logger.info('📊 حجم الملف: ${(fileSize / 1024).toStringAsFixed(1)} KB');
+
+      onProgress?.call(0.0);
 
       // إنشاء مجلد النسخ الاحتياطية إذا لم يكن موجوداً
       final folderId = await _getOrCreateBackupFolder();
+      onProgress?.call(0.1);
 
       // إعداد معلومات الملف
       final driveFile = drive.File();
@@ -233,17 +240,21 @@ class GoogleDriveService {
       driveFile.description =
           'نسخة احتياطية من تطبيق دفتر المقوت - ${DateTime.now().toIso8601String()}';
 
+      onProgress?.call(0.2);
+
       // رفع الملف
-      final media = drive.Media(file.openRead(), await file.length());
+      _logger.info('📤 بدء رفع الملف...');
+      final media = drive.Media(file.openRead(), fileSize);
 
       final uploadedFile = await _driveApi!.files.create(
         driveFile,
         uploadMedia: media,
       );
 
-      _logger.info('✅ تم رفع النسخة بنجاح! File ID: ${uploadedFile.id}');
+      _logger.info('✅ تم رفع النسخة بنجاح!');
+      _logger.info('📁 معرف الملف: ${uploadedFile.id}');
+      _logger.info('📦 اسم الملف: ${uploadedFile.name}');
 
-      // TODO: يمكن إضافة تتبع التقدم هنا إذا لزم الأمر
       onProgress?.call(1.0);
 
       return uploadedFile.id!;
@@ -354,7 +365,7 @@ class GoogleDriveService {
 
   // ========== تحميل النسخ ==========
 
-  /// تحميل نسخة احتياطية من Google Drive
+  /// تحميل نسخة احتياطية من Google Drive مع تتبع دقيق للتقدم
   Future<String> downloadBackup(
     String fileId,
     String localPath, {
@@ -366,27 +377,58 @@ class GoogleDriveService {
 
     try {
       _logger.info('⬇️ بدء تحميل النسخة الاحتياطية من Google Drive...');
+      _logger.info('📁 معرف الملف: $fileId');
 
-      final media =
-          await _driveApi!.files.get(
-                fileId,
-                downloadOptions: drive.DownloadOptions.fullMedia,
-              )
-              as drive.Media;
+      // الحصول على معلومات الملف أولاً لمعرفة الحجم
+      final fileInfo = await _driveApi!.files.get(
+        fileId,
+        $fields: 'id, name, size',
+      ) as drive.File;
+
+      final fileName = fileInfo.name ?? 'backup.db';
+      final fileSize = int.tryParse(fileInfo.size ?? '0') ?? 0;
+      
+      _logger.info('📦 اسم الملف: $fileName');
+      _logger.info('📊 حجم الملف: ${(fileSize / 1024).toStringAsFixed(1)} KB');
+
+      // تحميل محتوى الملف
+      final media = await _driveApi!.files.get(
+        fileId,
+        downloadOptions: drive.DownloadOptions.fullMedia,
+      ) as drive.Media;
 
       final file = File(localPath);
       await file.parent.create(recursive: true);
 
       final sink = file.openWrite();
+      int downloadedBytes = 0;
+
+      onProgress?.call(0.0);
 
       await for (var data in media.stream) {
         sink.add(data);
-        // TODO: يمكن حساب التقدم هنا
+        downloadedBytes += data.length;
+
+        if (fileSize > 0) {
+          final progress = downloadedBytes / fileSize;
+          _logger.info('📥 تقدم التحميل: ${(progress * 100).toStringAsFixed(1)}%');
+          onProgress?.call(progress);
+        }
       }
 
       await sink.close();
 
-      _logger.info('✅ تم تحميل النسخة بنجاح: $localPath');
+      final actualSize = await file.length();
+      _logger.info('✅ تم تحميل النسخة بنجاح!');
+      _logger.info('📁 الموقع: $localPath');
+      _logger.info('📊 الحجم الفعلي: ${(actualSize / 1024).toStringAsFixed(1)} KB');
+
+      if (fileSize > 0 && actualSize != fileSize) {
+        _logger.warning(
+          '⚠️ تحذير: الحجم الفعلي ($actualSize) يختلف عن الحجم المتوقع ($fileSize)',
+        );
+      }
+
       onProgress?.call(1.0);
 
       return localPath;
@@ -396,6 +438,15 @@ class GoogleDriveService {
         error: e,
         stackTrace: stackTrace,
       );
+      
+      try {
+        final file = File(localPath);
+        if (await file.exists()) {
+          await file.delete();
+          _logger.info('🗑️ تم حذف الملف الجزئي المحمّل');
+        }
+      } catch (_) {}
+      
       rethrow;
     }
   }
@@ -514,6 +565,39 @@ class DriveBackupInfo {
     return 'منذ ${(diff.inDays / 365).floor()} سنة';
   }
 
+  /// تاريخ الإنشاء بصيغة قابلة للقراءة
+  String get formattedDate {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final createdDate = DateTime(
+      createdTime.year,
+      createdTime.month,
+      createdTime.day,
+    );
+
+    if (createdDate == today) {
+      return 'اليوم ${createdTime.hour.toString().padLeft(2, '0')}:${createdTime.minute.toString().padLeft(2, '0')}';
+    } else if (createdDate == yesterday) {
+      return 'أمس ${createdTime.hour.toString().padLeft(2, '0')}:${createdTime.minute.toString().padLeft(2, '0')}';
+    } else {
+      return '${createdTime.year}-${createdTime.month.toString().padLeft(2, '0')}-${createdTime.day.toString().padLeft(2, '0')} '
+          '${createdTime.hour.toString().padLeft(2, '0')}:${createdTime.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
+  /// هل النسخة حديثة (أقل من 24 ساعة)
+  bool get isRecent {
+    final diff = DateTime.now().difference(createdTime);
+    return diff.inHours < 24;
+  }
+
+  /// هل النسخة قديمة (أكثر من 30 يوم)
+  bool get isOld {
+    final diff = DateTime.now().difference(createdTime);
+    return diff.inDays > 30;
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -522,6 +606,9 @@ class DriveBackupInfo {
     'createdTime': createdTime.toIso8601String(),
     'modifiedTime': modifiedTime.toIso8601String(),
     'timeAgo': timeAgo,
+    'formattedDate': formattedDate,
+    'isRecent': isRecent,
+    'isOld': isOld,
     'description': description,
   };
 }
