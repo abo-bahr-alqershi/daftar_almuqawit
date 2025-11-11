@@ -1,5 +1,6 @@
 /// شاشة التقرير الأسبوعي
 /// تعرض تقرير مفصل عن أسبوع محدد
+library;
 
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -42,9 +43,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     final now = DateTime.now();
     final weekday = now.weekday;
     // السبت هو أول يوم في الأسبوع (6 في DateTime)
-    final startOfWeek = now.subtract(Duration(days: (weekday == 7 ? 0 : weekday + 1)));
+    final startOfWeek = now.subtract(
+      Duration(days: (weekday == 7 ? 0 : weekday + 1)),
+    );
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
-    
+
     setState(() {
       _selectedWeekStart = startOfWeek;
       _selectedWeekEnd = endOfWeek;
@@ -61,227 +64,216 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-          title: Text(
-            'التقرير الأسبوعي',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
+  Widget build(BuildContext context) => Directionality(
+    textDirection: ui.TextDirection.rtl,
+    child: Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        title: Text(
+          'التقرير الأسبوعي',
+          style: AppTextStyles.h2.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
           ),
-          actions: [
-            BlocBuilder<ReportsBloc, ReportsState>(
-              builder: (context, state) {
-                if (state is ReportsLoaded) {
-                  return ExportOptions(
-                    iconsOnly: true,
-                    onExport: (type) => _handleExport(type, state.reportData),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ],
         ),
-        body: BlocConsumer<ReportsBloc, ReportsState>(
-          listener: (context, state) {
-            if (state is ReportsSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            } else if (state is ReportsError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.danger,
-                ),
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is ReportsLoading) {
-              return const Center(child: LoadingWidget());
-            }
-
-            if (state is ReportsError) {
-              return Center(
-                child: custom_error.AppErrorWidget(
-                  message: state.message,
-                  onRetry: _loadReport,
-                ),
-              );
-            }
-
-            if (state is ReportsLoaded) {
-              return RefreshIndicator(
-                onRefresh: () async => _loadReport(),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // منتقي الأسبوع
-                      _buildWeekPicker(),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // بطاقة الربح
-                      _buildProfitCard(state.reportData),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // الإحصائيات التفصيلية
-                      _buildDetailedStats(state.reportData),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // مقارنة الأيام
-                      _buildDailyComparison(state.reportData),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // المخططات البيانية
-                      _buildCharts(state.reportData),
-                      
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return const Center(child: LoadingWidget());
-          },
-        ),
+        actions: [
+          BlocBuilder<ReportsBloc, ReportsState>(
+            builder: (context, state) {
+              if (state is ReportsLoaded) {
+                return ExportOptions(
+                  iconsOnly: true,
+                  onExport: (type) => _handleExport(type, state.reportData),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
       ),
-    );
-  }
+      body: BlocConsumer<ReportsBloc, ReportsState>(
+        listener: (context, state) {
+          if (state is ReportsSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          } else if (state is ReportsError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is ReportsLoading) {
+            return const Center(child: LoadingWidget());
+          }
+
+          if (state is ReportsError) {
+            return Center(
+              child: custom_error.AppErrorWidget(
+                message: state.message,
+                onRetry: _loadReport,
+              ),
+            );
+          }
+
+          if (state is ReportsLoaded) {
+            return RefreshIndicator(
+              onRefresh: () async => _loadReport(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // منتقي الأسبوع
+                    _buildWeekPicker(),
+
+                    const SizedBox(height: 24),
+
+                    // بطاقة الربح
+                    _buildProfitCard(state.reportData),
+
+                    const SizedBox(height: 24),
+
+                    // الإحصائيات التفصيلية
+                    _buildDetailedStats(state.reportData),
+
+                    const SizedBox(height: 24),
+
+                    // مقارنة الأيام
+                    _buildDailyComparison(state.reportData),
+
+                    const SizedBox(height: 24),
+
+                    // المخططات البيانية
+                    _buildCharts(state.reportData),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return const Center(child: LoadingWidget());
+        },
+      ),
+    ),
+  );
 
   /// بناء منتقي الأسبوع
-  Widget _buildWeekPicker() {
-    return InkWell(
-      onTap: _selectWeek,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.border,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.date_range,
-                color: AppColors.primary,
-                size: 24,
-              ),
-            ),
-            
-            const SizedBox(width: 16),
-            
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'الفترة المحددة',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const Icon(
-              Icons.arrow_back_ios,
-              size: 16,
-              color: AppColors.textHint,
-            ),
-          ],
-        ),
+  Widget _buildWeekPicker() => InkWell(
+    onTap: _selectWeek,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
       ),
-    );
-  }
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.date_range,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'الفترة المحددة',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Icon(Icons.arrow_back_ios, size: 16, color: AppColors.textHint),
+        ],
+      ),
+    ),
+  );
 
   /// بناء بطاقة الربح
   Widget _buildProfitCard(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-    
+    var totalSales = 0;
+    var totalPurchases = 0;
+    var totalExpenses = 0;
+
     final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-    
-    for (var day in dailyStats) {
+
+    for (final day in dailyStats) {
       totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
       totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
       totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
     }
-    
+
     final grossProfit = totalSales - totalPurchases;
     final netProfit = grossProfit - totalExpenses;
     final profitMargin = totalSales > 0 ? (netProfit / totalSales * 100) : 0.0;
-    
+
     return ProfitCard(
       totalProfit: netProfit,
       grossProfit: grossProfit,
       netProfit: netProfit,
       profitMargin: profitMargin,
-      period: '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
-      showDetails: true,
+      period:
+          '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
     );
   }
 
   /// بناء الإحصائيات التفصيلية
   Widget _buildDetailedStats(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-    double cashBalance = 0.0;
-    
+    var totalSales = 0;
+    var totalPurchases = 0;
+    var totalExpenses = 0;
+    var cashBalance = 0;
+
     final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-    
-    for (var day in dailyStats) {
+
+    for (final day in dailyStats) {
       totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
       totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
       totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
     }
-    
+
     // آخر رصيد في الأسبوع
     if (dailyStats.isNotEmpty) {
       cashBalance = (dailyStats.last['cashBalance'] as num?)?.toDouble() ?? 0.0;
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -292,9 +284,9 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         Row(
           children: [
             Expanded(
@@ -318,9 +310,9 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         Row(
           children: [
             Expanded(
@@ -351,24 +343,30 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   /// بناء مقارنة الأيام
   Widget _buildDailyComparison(Map<String, dynamic> data) {
     final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-    
+
     if (dailyStats.isEmpty) {
       return const SizedBox.shrink();
     }
-    
-    final days = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+
+    final days = [
+      'السبت',
+      'الأحد',
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+    ];
     final chartData = <ChartDataPoint>[];
-    
-    for (int i = 0; i < dailyStats.length && i < 7; i++) {
+
+    for (var i = 0; i < dailyStats.length && i < 7; i++) {
       final day = dailyStats[i];
       final sales = (day['totalSales'] as num?)?.toDouble() ?? 0.0;
-      chartData.add(ChartDataPoint(
-        label: days[i],
-        value: sales,
-        color: AppColors.primary,
-      ));
+      chartData.add(
+        ChartDataPoint(label: days[i], value: sales, color: AppColors.primary),
+      );
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -379,14 +377,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         ChartWidget(
           title: 'المبيعات حسب اليوم',
           chartType: ChartType.bar,
           data: chartData,
-          height: 250,
         ),
       ],
     );
@@ -394,18 +391,18 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
   /// بناء المخططات البيانية
   Widget _buildCharts(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-    
+    var totalSales = 0;
+    var totalPurchases = 0;
+    var totalExpenses = 0;
+
     final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-    
-    for (var day in dailyStats) {
+
+    for (final day in dailyStats) {
       totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
       totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
       totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
     }
-    
+
     final chartData = [
       ChartDataPoint(
         label: 'المبيعات',
@@ -423,7 +420,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         color: AppColors.expense,
       ),
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -434,14 +431,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         ChartWidget(
           title: 'نظرة عامة على المعاملات',
           chartType: ChartType.pie,
           data: chartData,
-          height: 250,
         ),
       ],
     );
@@ -449,31 +445,29 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
   /// اختيار أسبوع
   Future<void> _selectWeek() async {
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: _selectedWeekStart,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: AppColors.textOnDark,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.primary,
+            onSurface: AppColors.textPrimary,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
 
     if (picked != null) {
       final weekday = picked.weekday;
-      final startOfWeek = picked.subtract(Duration(days: (weekday == 7 ? 0 : weekday + 1)));
+      final startOfWeek = picked.subtract(
+        Duration(days: (weekday == 7 ? 0 : weekday + 1)),
+      );
       final endOfWeek = startOfWeek.add(const Duration(days: 6));
-      
+
       setState(() {
         _selectedWeekStart = startOfWeek;
         _selectedWeekEnd = endOfWeek;
@@ -486,7 +480,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   void _handleExport(ExportType type, Map<String, dynamic> data) {
     final startDateString = _dateFormat.format(_selectedWeekStart);
     final endDateString = _dateFormat.format(_selectedWeekEnd);
-    
+
     switch (type) {
       case ExportType.print:
         context.read<ReportsBloc>().add(
@@ -511,23 +505,15 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         );
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('هذه الميزة قيد التطوير'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('هذه الميزة قيد التطوير')));
     }
   }
 }
 
 /// بطاقة إحصائية
 class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-
   const _StatCard({
     required this.title,
     required this.value,
@@ -535,56 +521,59 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.color,
   });
+  final String title;
+  final String value;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  subtitle,
-                  style: AppTextStyles.caption.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                subtitle,
+                style: AppTextStyles.caption.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          value,
+          style: AppTextStyles.h2.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }

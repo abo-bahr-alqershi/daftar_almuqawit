@@ -38,6 +38,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
   late Animation<double> _successBounceAnimation;
 
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _priceController = TextEditingController();
   final bool _isCalculating = false;
   bool _showSuccess = false;
 
@@ -117,6 +118,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
     _totalAnimationController.dispose();
     _successAnimationController.dispose();
     _scrollController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
@@ -165,6 +167,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
         final defaultPrice = _unitSellPrices[unit];
         if (defaultPrice != null && defaultPrice > 0) {
           _price = defaultPrice;
+          _priceController.text = defaultPrice.toStringAsFixed(2);
         }
       }
     });
@@ -244,6 +247,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
 
                                     // إدخال الكمية
                                     _buildQuantitySection(),
+
+                                    const SizedBox(height: 24),
+
+                                    // إدخال السعر
+                                    _buildPriceSection(),
 
                                     const SizedBox(height: 24),
 
@@ -719,6 +727,223 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
         _totalAnimationController.forward(from: 0);
       },
       label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
+    ),
+  );
+
+  Widget _buildPriceSection() => Container(
+    margin: const EdgeInsets.symmetric(horizontal: 20),
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [AppColors.surface, AppColors.surface.withValues(alpha: 0.5)],
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+      ),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: AppColors.primary.withValues(alpha: 0.2),
+        width: 1.5,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.attach_money,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              _selectedUnit != null ? 'سعر $_selectedUnit' : 'السعر',
+              style: AppTextStyles.titleMedium.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _priceController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: '0.00',
+                          hintStyle: TextStyle(color: AppColors.textHint),
+                        ),
+                        onChanged: (value) {
+                          final price = double.tryParse(value);
+                          if (price != null) {
+                            setState(() {
+                              _price = price;
+                            });
+                            _totalAnimationController.forward(from: 0);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'ريال',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              children: [
+                _buildPriceButton(
+                  icon: Icons.add,
+                  onPressed: () {
+                    setState(() {
+                      _price += 10;
+                      _priceController.text = _price.toStringAsFixed(2);
+                    });
+                    _totalAnimationController.forward(from: 0);
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildPriceButton(
+                  icon: Icons.remove,
+                  onPressed: () {
+                    setState(() {
+                      if (_price > 10) _price -= 10;
+                      _priceController.text = _price.toStringAsFixed(2);
+                    });
+                    _totalAnimationController.forward(from: 0);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        if (_unitSellPrices[_selectedUnit] != null &&
+            _unitSellPrices[_selectedUnit]! > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.info.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: AppColors.info,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'السعر الافتراضي: ${_unitSellPrices[_selectedUnit]} ريال',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.info,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _price = _unitSellPrices[_selectedUnit]!;
+                        _priceController.text = _price.toStringAsFixed(2);
+                      });
+                      _totalAnimationController.forward(from: 0);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'استخدام',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+
+  Widget _buildPriceButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) => Material(
+    color: AppColors.primary,
+    borderRadius: BorderRadius.circular(12),
+    child: InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onPressed();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: Icon(icon, color: Colors.white, size: 24),
+      ),
     ),
   );
 
