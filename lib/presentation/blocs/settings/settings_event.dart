@@ -21,3 +21,27 @@ class ChangeTheme extends SettingsEvent {
 
 /// حدث حفظ الإعدادات
 class SaveSettings extends SettingsEvent {}
+
+/// حدث تبديل المزامنة التلقائية
+class ToggleAutoSync extends SettingsEvent {
+  final bool enabled;
+  ToggleAutoSync(this.enabled);
+}
+
+/// حدث تبديل النسخ الاحتياطي التلقائي
+class ToggleAutoBackup extends SettingsEvent {
+  final bool enabled;
+  ToggleAutoBackup(this.enabled);
+}
+
+/// حدث تبديل الإشعارات
+class ToggleNotifications extends SettingsEvent {
+  final bool enabled;
+  ToggleNotifications(this.enabled);
+}
+
+/// حدث تبديل الصوت
+class ToggleSound extends SettingsEvent {
+  final bool enabled;
+  ToggleSound(this.enabled);
+}

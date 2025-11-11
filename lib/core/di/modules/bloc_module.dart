@@ -65,10 +65,16 @@ import '../../services/local/shared_preferences_service.dart';
 import '../../services/logger_service.dart';
 import '../../services/network/connectivity_service.dart';
 import '../../services/sync/sync_manager.dart';
+import '../../services/backup_service.dart';
 
 class BlocModule {
   static Future<void> register(GetIt sl) async {
-    sl.registerFactory<AppBloc>(AppBloc.new);
+    sl.registerFactory<AppBloc>(() => AppBloc(
+      prefsService: sl<SharedPreferencesService>(),
+      syncManager: sl<SyncManager>(),
+      backupService: sl<BackupService>(),
+      logger: sl<LoggerService>(),
+    ));
     
     sl.registerFactory<SplashBloc>(SplashBloc.new);
     
@@ -222,6 +228,8 @@ class BlocModule {
     sl.registerFactory<SettingsBloc>(() => SettingsBloc(
       prefs: sl<SharedPreferencesService>(),
       logger: sl<LoggerService>(),
+      syncManager: sl<SyncManager>(),
+      backupService: sl<BackupService>(),
     ));
     
     sl.registerFactory<BackupBloc>(() => BackupBloc(
