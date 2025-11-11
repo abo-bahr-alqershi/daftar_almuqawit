@@ -435,7 +435,7 @@ class SaleItemCard extends StatelessWidget {
                       ),
                       if (sale.dueDate != null)
                         Text(
-                          'تاريخ الاستحقاق: ${Formatters.date(sale.dueDate!)}',
+                          'تاريخ الاستحقاق: ${sale.dueDate}',
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.warning,
                           ),

@@ -26,8 +26,8 @@ class SaleSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(AppDimensions.paddingMedium),
-      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+      margin: const EdgeInsets.all(AppDimensions.paddingM),
+      padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -37,7 +37,7 @@ class SaleSummary extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withOpacity(0.3),
@@ -59,7 +59,7 @@ class SaleSummary extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(width: AppDimensions.paddingMedium),
+              const SizedBox(width: AppDimensions.paddingM),
               Expanded(
                 child: _StatCard(
                   icon: Icons.monetization_on,
@@ -71,7 +71,7 @@ class SaleSummary extends StatelessWidget {
             ],
           ),
           
-          const SizedBox(height: AppDimensions.paddingMedium),
+          const SizedBox(height: AppDimensions.paddingM),
           
           // الصف الثاني: الربح والمدفوع
           Row(
@@ -84,7 +84,7 @@ class SaleSummary extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(width: AppDimensions.paddingMedium),
+              const SizedBox(width: AppDimensions.paddingM),
               Expanded(
                 child: _StatCard(
                   icon: Icons.check_circle,
@@ -98,12 +98,12 @@ class SaleSummary extends StatelessWidget {
           
           // عرض المتبقي إذا كان هناك مبالغ غير مدفوعة
           if (totalRemaining > 0) ...[
-            const SizedBox(height: AppDimensions.paddingMedium),
+            const SizedBox(height: AppDimensions.paddingM),
             Container(
-              padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+              padding: const EdgeInsets.all(AppDimensions.paddingS),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusS),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.3),
                   width: 1,
@@ -161,7 +161,7 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusS),
         border: Border.all(
           color: Colors.white.withOpacity(0.2),
           width: 1,

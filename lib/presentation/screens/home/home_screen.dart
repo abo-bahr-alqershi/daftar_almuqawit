@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               ShortcutsBar(
                 onQuickSale: () =>
-                    Navigator.pushNamed(context, RouteNames.sales),
+                    Navigator.pushNamed(context, RouteNames.quickSale),
                 onAddPurchase: () =>
                     Navigator.pushNamed(context, RouteNames.purchases),
                 onAddExpense: () =>

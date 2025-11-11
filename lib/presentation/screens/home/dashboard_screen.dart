@@ -213,10 +213,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         childAspectRatio: 1,
         children: [
           _QuickActionCard(
-            icon: Icons.add_shopping_cart,
+            icon: Icons.flash_on,
             label: 'بيع سريع',
-            color: AppColors.sales,
-            onTap: () => Navigator.pushNamed(context, RouteNames.sales),
+            color: AppColors.success,
+            onTap: () => Navigator.pushNamed(context, RouteNames.quickSale),
           ),
           _QuickActionCard(
             icon: Icons.shopping_bag,
