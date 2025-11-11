@@ -32,55 +32,56 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('إضافة عملية بيع'),
-        backgroundColor: AppColors.primary,
-      ),
-      body: BlocConsumer<SalesBloc, SalesState>(
-        listener: (context, state) {
-          if (state is SalesSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('تمت إضافة البيع بنجاح')),
-            );
-            Navigator.of(context).pop();
-          } else if (state is SalesError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
-        builder: (context, salesState) {
-          if (salesState is SalesLoading) {
-            return const LoadingWidget();
-          }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('إضافة عملية بيع'),
+      backgroundColor: AppColors.primary,
+    ),
+    body: BlocConsumer<SalesBloc, SalesState>(
+      listener: (context, state) {
+        if (state is SalesSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تمت إضافة البيع بنجاح')),
+          );
+          Navigator.of(context).pop();
+        } else if (state is SalesError) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
+      builder: (context, salesState) {
+        if (salesState is SalesLoading) {
+          return const LoadingWidget();
+        }
 
-          return BlocBuilder<CustomersBloc, CustomersState>(
-            builder: (context, customersState) {
-              return BlocBuilder<QatTypesBloc, QatTypesState>(
+        return BlocBuilder<CustomersBloc, CustomersState>(
+          builder: (context, customersState) =>
+              BlocBuilder<QatTypesBloc, QatTypesState>(
                 builder: (context, qatTypesState) {
-                  if (customersState is CustomersLoaded && 
+                  if (customersState is CustomersLoaded &&
                       qatTypesState is QatTypesLoaded) {
                     return SaleForm(
                       customers: customersState.customers,
                       qatTypes: qatTypesState.qatTypes,
                       onSubmit: (data) {
-                        context.read<SalesBloc>().add(AddSaleEvent(
-                          Sale(
-                            date: data['date'],
-                            time: data['time'],
-                            customerId: data['customerId'],
-                            qatTypeId: data['qatTypeId'],
-                            quantity: data['quantity'],
-                            unit: data['unit'] ?? 'كيس',
-                            unitPrice: data['unitPrice'],
-                            totalAmount: data['totalAmount'],
-                            discount: data['discount'],
-                            paymentMethod: data['paymentMethod'],
-                            notes: data['notes'],
+                        context.read<SalesBloc>().add(
+                          AddSaleEvent(
+                            Sale(
+                              date: data['date'],
+                              time: data['time'],
+                              customerId: data['customerId'],
+                              qatTypeId: data['qatTypeId'],
+                              quantity: data['quantity'],
+                              unit: data['unit'] ?? 'كيس',
+                              unitPrice: data['unitPrice'],
+                              totalAmount: data['totalAmount'],
+                              discount: data['discount'],
+                              paymentMethod: data['paymentMethod'],
+                              notes: data['notes'],
+                            ),
                           ),
-                        ));
+                        );
                       },
                       onCancel: () => Navigator.of(context).pop(),
                     );
@@ -88,11 +89,9 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
 
                   return const LoadingWidget();
                 },
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
+              ),
+        );
+      },
+    ),
+  );
 }

@@ -175,7 +175,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -501,15 +501,40 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   /// معالجة التصدير
   void _handleExport(ExportType type, Map<String, dynamic> data) {
+    // حساب تاريخ البداية والنهاية للشهر
+    final startDate = DateTime(_selectedYear, _selectedMonth, 1);
+    final endDate = DateTime(_selectedYear, _selectedMonth + 1, 0);
+    final dateFormat = DateFormat('yyyy-MM-dd');
+    
     switch (type) {
       case ExportType.print:
         context.read<ReportsBloc>().add(
-          PrintReportEvent('monthly', data),
+          PrintReportEvent(
+            'monthly',
+            data,
+            startDate: dateFormat.format(startDate),
+            endDate: dateFormat.format(endDate),
+            customData: {
+              ...data,
+              'year': _selectedYear,
+              'month': _selectedMonth,
+            },
+          ),
         );
         break;
       case ExportType.share:
         context.read<ReportsBloc>().add(
-          ShareReportEvent('monthly', data),
+          ShareReportEvent(
+            'monthly',
+            data,
+            startDate: dateFormat.format(startDate),
+            endDate: dateFormat.format(endDate),
+            customData: {
+              ...data,
+              'year': _selectedYear,
+              'month': _selectedMonth,
+            },
+          ),
         );
         break;
       default:
@@ -557,7 +582,7 @@ class _StatCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

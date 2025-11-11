@@ -94,7 +94,7 @@ class _SaleFormState extends State<SaleForm> {
       _unitSellPrices = {};
       _priceController.clear();
       
-      if (qatTypeId != null) {
+      if (qatTypeId != null && widget.qatTypes.isNotEmpty) {
         final selectedQatType = widget.qatTypes.firstWhere(
           (qt) => qt.id.toString() == qatTypeId,
           orElse: () => widget.qatTypes.first,

@@ -118,10 +118,16 @@ class _RecentActivitiesState extends State<RecentActivities>
                     animation: _itemAnimations[index],
                     builder: (context, child) {
                       // تأكد من أن قيمة opacity في النطاق الصحيح
-                      final opacityValue = _itemAnimations[index].value.clamp(0.0, 1.0);
-                      final scaleValue = (0.95 + (opacityValue * 0.05)).clamp(0.0, 1.0);
+                      final opacityValue = _itemAnimations[index].value.clamp(
+                        0.0,
+                        1.0,
+                      );
+                      final scaleValue = (0.95 + (opacityValue * 0.05)).clamp(
+                        0.0,
+                        1.0,
+                      );
                       final translateValue = 50 * (1 - opacityValue);
-                      
+
                       return Transform.translate(
                         offset: Offset(translateValue, 0),
                         child: Opacity(

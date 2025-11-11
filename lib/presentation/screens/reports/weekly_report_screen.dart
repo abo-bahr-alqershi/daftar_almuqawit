@@ -189,7 +189,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -484,15 +484,30 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
   /// معالجة التصدير
   void _handleExport(ExportType type, Map<String, dynamic> data) {
+    final startDateString = _dateFormat.format(_selectedWeekStart);
+    final endDateString = _dateFormat.format(_selectedWeekEnd);
+    
     switch (type) {
       case ExportType.print:
         context.read<ReportsBloc>().add(
-          PrintReportEvent('weekly', data),
+          PrintReportEvent(
+            'weekly',
+            data,
+            startDate: startDateString,
+            endDate: endDateString,
+            customData: data,
+          ),
         );
         break;
       case ExportType.share:
         context.read<ReportsBloc>().add(
-          ShareReportEvent('weekly', data),
+          ShareReportEvent(
+            'weekly',
+            data,
+            startDate: startDateString,
+            endDate: endDateString,
+            customData: data,
+          ),
         );
         break;
       default:
@@ -540,7 +555,7 @@ class _StatCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

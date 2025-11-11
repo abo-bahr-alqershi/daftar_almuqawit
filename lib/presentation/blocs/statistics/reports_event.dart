@@ -87,10 +87,25 @@ class PrintReportEvent extends ReportsEvent {
   /// بيانات التقرير
   final Map<String, dynamic> data;
   
-  PrintReportEvent(this.reportType, this.data);
+  /// تاريخ البداية (اختياري)
+  final String? startDate;
+  
+  /// تاريخ النهاية (اختياري)
+  final String? endDate;
+  
+  /// بيانات مخصصة (اختياري)
+  final Map<String, dynamic>? customData;
+  
+  PrintReportEvent(
+    this.reportType,
+    this.data, {
+    this.startDate,
+    this.endDate,
+    this.customData,
+  });
   
   @override
-  List<Object?> get props => [reportType, data];
+  List<Object?> get props => [reportType, data, startDate, endDate, customData];
 }
 
 /// مشاركة تقرير
@@ -101,10 +116,25 @@ class ShareReportEvent extends ReportsEvent {
   /// بيانات التقرير
   final Map<String, dynamic> data;
   
-  ShareReportEvent(this.reportType, this.data);
+  /// تاريخ البداية (اختياري)
+  final String? startDate;
+  
+  /// تاريخ النهاية (اختياري)
+  final String? endDate;
+  
+  /// بيانات مخصصة (اختياري)
+  final Map<String, dynamic>? customData;
+  
+  ShareReportEvent(
+    this.reportType,
+    this.data, {
+    this.startDate,
+    this.endDate,
+    this.customData,
+  });
   
   @override
-  List<Object?> get props => [reportType, data];
+  List<Object?> get props => [reportType, data, startDate, endDate, customData];
 }
 
 /// تصدير تقرير إلى Excel

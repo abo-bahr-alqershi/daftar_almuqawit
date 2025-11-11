@@ -160,7 +160,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -345,12 +345,30 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
 
   /// معالجة التصدير
   void _handleExport(ExportType type, Map<String, dynamic> data) {
+    final dateString = _dateFormat.format(_selectedDate);
+    
     switch (type) {
       case ExportType.print:
-        context.read<ReportsBloc>().add(PrintReportEvent('daily', data));
+        context.read<ReportsBloc>().add(
+          PrintReportEvent(
+            'daily',
+            data,
+            startDate: dateString,
+            endDate: dateString,
+            customData: data,
+          ),
+        );
         break;
       case ExportType.share:
-        context.read<ReportsBloc>().add(ShareReportEvent('daily', data));
+        context.read<ReportsBloc>().add(
+          ShareReportEvent(
+            'daily',
+            data,
+            startDate: dateString,
+            endDate: dateString,
+            customData: data,
+          ),
+        );
         break;
       default:
         ScaffoldMessenger.of(
@@ -393,7 +411,7 @@ class _StatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

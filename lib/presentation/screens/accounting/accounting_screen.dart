@@ -46,8 +46,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Directionality(
+  Widget build(BuildContext context) => Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
@@ -122,10 +121,8 @@ class _AccountingScreenState extends State<AccountingScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildFinancialSummary(AccountingLoaded state) {
-    return Container(
+  Widget _buildFinancialSummary(AccountingLoaded state) => Container(
       padding: const EdgeInsets.all(AppDimensions.paddingXL),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -192,15 +189,13 @@ class _AccountingScreenState extends State<AccountingScreen> {
         ],
       ),
     );
-  }
 
   Widget _buildSummaryItem({
     required IconData icon,
     required String label,
     required String value,
     required Color color,
-  }) {
-    return Container(
+  }) => Container(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
@@ -227,7 +222,6 @@ class _AccountingScreenState extends State<AccountingScreen> {
         ],
       ),
     );
-  }
 
   Widget _buildModulesGrid() {
     final modules = [
@@ -282,8 +276,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
     );
   }
 
-  Widget _buildModuleCard(_ModuleItem module) {
-    return Card(
+  Widget _buildModuleCard(_ModuleItem module) => Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
@@ -336,10 +329,8 @@ class _AccountingScreenState extends State<AccountingScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildQuickStats(AccountingLoaded state) {
-    return Card(
+  Widget _buildQuickStats(AccountingLoaded state) => Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
@@ -373,15 +364,13 @@ class _AccountingScreenState extends State<AccountingScreen> {
         ),
       ),
     );
-  }
 
   Widget _buildStatRow({
     required IconData icon,
     required String label,
     required String value,
     required Color color,
-  }) {
-    return Row(
+  }) => Row(
       children: [
         Icon(icon, color: color, size: 24),
         const SizedBox(width: AppDimensions.spaceM),
@@ -402,15 +391,9 @@ class _AccountingScreenState extends State<AccountingScreen> {
         ),
       ],
     );
-  }
 }
 
 class _ModuleItem {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
 
   _ModuleItem({
     required this.icon,
@@ -419,4 +402,9 @@ class _ModuleItem {
     required this.color,
     required this.onTap,
   });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
 }
