@@ -274,6 +274,89 @@ class _BackupScreenState extends State<BackupScreen> {
     }
   }
 
+  /// نسخ احتياطي إلى Google Drive
+  Future<void> _backupToDrive() async {
+    // التحقق من تسجيل الدخول أولاً
+    if (!_backupService.isSignedInToDrive) {
+      final signedIn = await _backupService.signInToGoogleDrive();
+
+      if (!signedIn) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يجب تسجيل الدخول إلى Google Drive أولاً'),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => const ConfirmDialog(
+        title: 'نسخ احتياطي إلى Google Drive',
+        message:
+            'هل تريد رفع نسخة احتياطية إلى Google Drive؟\n\nستظهر النسخة في حسابك على drive.google.com',
+        confirmText: 'نعم، ارفع',
+        cancelText: 'إلغاء',
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isBackingUp = true);
+
+    try {
+      _logger.info('بدء النسخ الاحتياطي إلى Google Drive...');
+
+      final driveFileId = await _backupService.createBackupToDrive(
+        onUploadProgress: (progress) {
+          _logger.info('تقدم الرفع: ${(progress * 100).toStringAsFixed(0)}%');
+        },
+      );
+
+      _logger.info('تم رفع النسخة إلى Google Drive بنجاح! ID: $driveFileId');
+
+      final now = DateTime.now();
+      final prefs = sl.get<SharedPreferencesService>();
+      await prefs.setString(StorageKeys.lastBackupTime, now.toIso8601String());
+
+      setState(() {
+        _lastBackupDate = now;
+        _isBackingUp = false;
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '✅ تم رفع النسخة إلى Google Drive بنجاح!\n\nيمكنك مشاهدتها في drive.google.com',
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      _logger.error('فشل النسخ الاحتياطي إلى Google Drive', error: e);
+
+      setState(() => _isBackingUp = false);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشل رفع النسخة إلى Google Drive: $e'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -360,6 +443,7 @@ class _BackupScreenState extends State<BackupScreen> {
                   // خيارات النسخ الاحتياطي
                   BackupOptions(
                     onBackupNow: _backupNow,
+                    onBackupToDrive: _backupToDrive,
                     onRestore: _restore,
                     onAutoBackup: _toggleAutoBackup,
                     onExportData: _exportData,

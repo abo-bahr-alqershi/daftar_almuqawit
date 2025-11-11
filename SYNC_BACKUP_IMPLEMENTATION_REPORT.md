@@ -144,6 +144,8 @@ Future<void> _onAppStarted(AppStarted event, ...) async {
     _logger.info('تم تفعيل النسخ الاحتياطي التلقائي بنجاح');
   }
   
+    **ملاحظة جديدة:** تمت إضافة جدولة النسخ الاحتياطي التلقائي عند تحميل الإعدادات؛
+    يقوم `SettingsBloc._onLoadSettings` الآن باستدعاء `_backupService.scheduleAutoBackup()` إذا كانت `autoBackupEnabled == true`، لضمان عمل النسخ التلقائي عند بدء التطبيق.
   emit(const AppReady());
 }
 ```

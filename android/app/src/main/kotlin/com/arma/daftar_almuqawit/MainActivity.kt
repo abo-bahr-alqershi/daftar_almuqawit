@@ -1,4 +1,4 @@
-package com.example.daftar_almuqawit
+package com.arma.daftar_almuqawit
 
 import io.flutter.embedding.android.FlutterActivity
 

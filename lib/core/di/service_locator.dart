@@ -163,7 +163,7 @@ class ServiceLocator {
     sl.registerLazySingleton<ExportService>(() => ExportService());
     sl.registerLazySingleton<NotificationService>(() => NotificationService());
     sl.registerLazySingleton<FirebaseAuthService>(() => FirebaseAuthService.instance);
-    sl.registerLazySingleton<FirebaseStorageService>(() => FirebaseStorageService());
+    sl.registerLazySingleton<FirebaseStorageService>(() => FirebaseStorageService.instance);
     sl.registerLazySingleton<FirebaseAnalyticsService>(() => FirebaseAnalyticsService());
     sl.registerLazySingleton<ShareService>(() => ShareService());
     sl.registerLazySingleton<PrintService>(() => PrintService());

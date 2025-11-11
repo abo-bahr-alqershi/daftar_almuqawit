@@ -12,7 +12,20 @@
           "package_name": "com.arma.daftar_almuqawit"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "882426821019-fl7ksdn1j64d3lmdf3qrl1qdksfnq6oq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.arma.daftar_almuqawit",
+            "certificate_hash": "c611843731bc9123aa706fb5aae5c7a77bcad198"
+          }
+        },
+        {
+          "client_id": "882426821019-q4hjlkvns3dfnik499cq8u4uspl6188m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD74JS5U1hjMH4i32pOcolUafnAnv955ac"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "882426821019-q4hjlkvns3dfnik499cq8u4uspl6188m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "882426821019-fqqjs73b92375g5g5rhsbpao9fpregnq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.arma.daftaralmuqawit"
+              }
+            }
+          ]
         }
       }
     }

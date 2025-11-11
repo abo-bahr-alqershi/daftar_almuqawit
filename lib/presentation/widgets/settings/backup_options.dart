@@ -4,10 +4,11 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
 
 /// ويدجت خيارات النسخ الاحتياطي
-/// 
+///
 /// يعرض خيارات النسخ الاحتياطي والاستعادة مع أيقونات وأوصاف
 class BackupOptions extends StatelessWidget {
   final VoidCallback? onBackupNow;
+  final VoidCallback? onBackupToDrive;
   final VoidCallback? onRestore;
   final VoidCallback? onAutoBackup;
   final VoidCallback? onExportData;
@@ -17,6 +18,7 @@ class BackupOptions extends StatelessWidget {
   const BackupOptions({
     super.key,
     this.onBackupNow,
+    this.onBackupToDrive,
     this.onRestore,
     this.onAutoBackup,
     this.onExportData,
@@ -40,7 +42,11 @@ class BackupOptions extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.info, size: AppDimensions.iconM),
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.info,
+                  size: AppDimensions.iconM,
+                ),
                 const SizedBox(width: AppDimensions.spaceM),
                 Expanded(
                   child: Column(
@@ -48,12 +54,16 @@ class BackupOptions extends StatelessWidget {
                     children: [
                       Text(
                         'آخر نسخة احتياطية',
-                        style: AppTextStyles.labelMedium.copyWith(color: AppColors.info),
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.info,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _formatDate(lastBackupDate!),
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -75,6 +85,17 @@ class BackupOptions extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.spaceM),
 
+        // خيار النسخ الاحتياطي إلى Google Drive
+        _BackupOptionTile(
+          icon: Icons.cloud_upload,
+          title: 'نسخ احتياطي إلى Google Drive',
+          description: 'رفع نسخة آمنة إلى حسابك على Google Drive',
+          iconColor: const Color(0xFF4285F4), // Google Blue
+          iconBackgroundColor: const Color(0xFF4285F4).withOpacity(0.1),
+          onTap: onBackupToDrive,
+        ),
+        const SizedBox(height: AppDimensions.spaceM),
+
         // خيار الاستعادة
         _BackupOptionTile(
           icon: Icons.restore,
@@ -93,7 +114,9 @@ class BackupOptions extends StatelessWidget {
           description: isAutoBackupEnabled
               ? 'النسخ التلقائي مفعّل'
               : 'النسخ التلقائي معطّل',
-          iconColor: isAutoBackupEnabled ? AppColors.success : AppColors.textSecondary,
+          iconColor: isAutoBackupEnabled
+              ? AppColors.success
+              : AppColors.textSecondary,
           iconBackgroundColor: isAutoBackupEnabled
               ? AppColors.successLight
               : AppColors.disabled.withOpacity(0.1),
@@ -179,23 +202,16 @@ class _BackupOptionTile extends StatelessWidget {
                 color: iconBackgroundColor,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusS),
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: AppDimensions.iconM,
-              ),
+              child: Icon(icon, color: iconColor, size: AppDimensions.iconM),
             ),
             const SizedBox(width: AppDimensions.spaceM),
-            
+
             // النص
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: AppTextStyles.titleSmall,
-                  ),
+                  Text(title, style: AppTextStyles.titleSmall),
                   const SizedBox(height: 4),
                   Text(
                     description,
@@ -206,7 +222,7 @@ class _BackupOptionTile extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // السهم أو الـ trailing
             if (trailing != null)
               trailing!

@@ -18,17 +18,24 @@ class StorageKeys {
   static const String userPhoto = 'user_photo';
   static const String rememberMe = 'remember_me';
   
-  // إعدادات المزامنة
+  // إعدادات المزامنة (Firebase Storage)
   static const String lastSyncTime = 'last_sync_time';
+  static const String lastSyncResult = 'last_sync_result';
   static const String autoSyncEnabled = 'auto_sync_enabled';
   static const String syncInterval = 'sync_interval';
   static const String wifiOnlySync = 'wifi_only_sync';
+  static const String syncUploadedCount = 'sync_uploaded_count';
+  static const String syncDownloadedCount = 'sync_downloaded_count';
+  static const String syncErrorCount = 'sync_error_count';
   
-  // إعدادات النسخ الاحتياطي
+  // إعدادات النسخ الاحتياطي (Google Drive)
   static const String lastBackupTime = 'last_backup_time';
+  static const String lastBackupFileId = 'last_backup_file_id';
   static const String autoBackupEnabled = 'auto_backup_enabled';
   static const String backupInterval = 'backup_interval';
   static const String backupLocation = 'backup_location';
+  static const String googleDriveSignedIn = 'google_drive_signed_in';
+  static const String googleDriveEmail = 'google_drive_email';
   
   // إعدادات الإشعارات
   static const String notificationsEnabled = 'notifications_enabled';

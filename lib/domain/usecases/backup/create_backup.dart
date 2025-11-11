@@ -1,5 +1,9 @@
 /// حالة استخدام إنشاء نسخة احتياطية
-/// تجمع جميع البيانات وتضغطها وتشفرها وترفعها للسحابة
+/// 
+/// ⚠️ ملاحظة: هذه الدالة للنسخ الاحتياطي الكامل (JSON)
+/// للرفع إلى Google Drive، استخدم backup_service.createBackupToDrive()
+/// 
+/// تجمع جميع البيانات وتضغطها وتشفرها وتحفظها محلياً
 
 import 'dart:convert';
 import 'dart:io';
@@ -13,6 +17,7 @@ import '../../repositories/supplier_repository.dart';
 import '../../repositories/debt_repository.dart';
 import '../../repositories/expense_repository.dart';
 import '../base/base_usecase.dart';
+import '../../../core/services/logger_service.dart';
 
 /// حالة استخدام إنشاء نسخة احتياطية
 class CreateBackup implements UseCase<String, CreateBackupParams> {
@@ -23,6 +28,7 @@ class CreateBackup implements UseCase<String, CreateBackupParams> {
   final SupplierRepository supplierRepo;
   final DebtRepository debtRepo;
   final ExpenseRepository expenseRepo;
+  final LoggerService _logger = LoggerService();
   
   CreateBackup(
     this.backupRepo,
@@ -68,7 +74,9 @@ class CreateBackup implements UseCase<String, CreateBackupParams> {
       // رفع للسحابة
       String? cloudPath;
       if (params.uploadToCloud) {
-        cloudPath = await backupRepo.uploadToCloud(finalFile.path);
+        // ⚠️ تحذير: لرفع إلى Google Drive، استخدم backup_service.createBackupToDrive()
+        // هذا الكود يحفظ محلياً فقط
+        _logger.warning('uploadToCloud غير مدعوم في هذه الدالة - استخدم createBackupToDrive()');
       }
       
       // حذف الملفات المؤقتة
