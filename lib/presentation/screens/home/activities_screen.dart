@@ -301,30 +301,37 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
         Tab(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.dashboard_rounded, size: 18),
-              SizedBox(width: 8),
-              Text('الكل'),
+              SizedBox(width: 6),
+              Flexible(child: Text('الكل', overflow: TextOverflow.ellipsis)),
             ],
           ),
         ),
         Tab(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.trending_up_rounded, size: 18),
-              SizedBox(width: 8),
-              Text('المبيعات'),
+              SizedBox(width: 6),
+              Flexible(
+                child: Text('المبيعات', overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
         ),
         Tab(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.shopping_cart_rounded, size: 18),
-              SizedBox(width: 8),
-              Text('المشتريات'),
+              SizedBox(width: 6),
+              Flexible(
+                child: Text('المشتريات', overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
         ),
@@ -640,9 +647,9 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
             duration: Duration(milliseconds: 300 + (index * 50)),
             curve: Curves.easeOutBack,
             builder: (context, value, child) => Transform.scale(
-              scale: value,
+              scale: value.clamp(0.0, 1.0),
               child: Opacity(
-                opacity: value,
+                opacity: value.clamp(0.0, 1.0),
                 child: _ModernActivityCard(
                   activity: activity,
                   onTap: () => _showActivityDetails(activity),

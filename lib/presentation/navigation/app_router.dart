@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/home/activities_screen.dart';
 import 'route_names.dart';
 import '../screens/suppliers/suppliers_screen.dart';
 import '../screens/customers/customers_screen.dart';
@@ -37,23 +38,26 @@ import '../screens/reports/custom_report_screen.dart';
 class AppRouter {
   /// حالة المصادقة
   static bool _isAuthenticated = false;
-  
+
   /// تعيين حالة المصادقة
   static void setAuthenticated(bool value) {
     _isAuthenticated = value;
   }
+
   /// توليد المسارات مع حماية
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     // التحقق من المصادقة للمسارات المحمية
     if (_requiresAuth(settings.name) && !_isAuthenticated) {
       return MaterialPageRoute(builder: (_) => const SplashScreen());
     }
-    
+
     switch (settings.name) {
       case RouteNames.splash:
         return _buildRoute(const SplashScreen());
       case RouteNames.home:
         return _buildRoute(const HomeScreen());
+      case RouteNames.activities:
+        return _buildRoute(const ActivitiesScreen());
       case RouteNames.suppliers:
         return _buildRoute(const SuppliersScreen());
       case RouteNames.customers:
@@ -119,7 +123,7 @@ class AppRouter {
         return _buildRoute(const SplashScreen());
     }
   }
-  
+
   /// بناء المسار مع انتقال مخصص
   static Route<dynamic> _buildRoute(Widget screen, {bool fade = false}) {
     if (fade) {
@@ -132,13 +136,13 @@ class AppRouter {
     }
     return MaterialPageRoute(builder: (_) => screen);
   }
-  
+
   /// التحقق من أن المسار يتطلب مصادقة
   static bool _requiresAuth(String? routeName) {
     const publicRoutes = [RouteNames.splash];
     return !publicRoutes.contains(routeName);
   }
-  
+
   /// معالجة Deep Links
   static Route<dynamic>? handleDeepLink(Uri uri) {
     // TODO: تطبيق معالجة Deep Links

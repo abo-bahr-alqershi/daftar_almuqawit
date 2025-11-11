@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen>
                               activities: activities,
                               onViewAll: () => _navigateWithAnimation(
                                 context,
-                                RouteNames.statistics,
+                                RouteNames.activities,
                               ),
                             );
                           }
