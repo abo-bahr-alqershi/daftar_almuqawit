@@ -582,7 +582,7 @@ class _ModernStatCard extends StatelessWidget {
                   ),
               ],
             ),
-            
+
             const Spacer(),
 
             Column(
@@ -610,7 +610,7 @@ class _ModernStatCard extends StatelessWidget {
                           color: AppColors.textPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          height: 1.0,
+                          height: 1,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -624,7 +624,7 @@ class _ModernStatCard extends StatelessWidget {
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 9,
-                          height: 1.0,
+                          height: 1,
                         ),
                       ),
                     ),

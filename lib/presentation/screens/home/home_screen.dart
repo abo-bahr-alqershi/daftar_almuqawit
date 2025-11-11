@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../domain/entities/sale.dart';
+import '../../../domain/entities/purchase.dart';
 import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/home/dashboard_event.dart';
 import '../../blocs/home/dashboard_state.dart';
@@ -169,7 +171,24 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(height: 32),
 
                           // النشاطات الأخيرة
-                          const RecentActivities(activities: []),
+                          BlocBuilder<DashboardBloc, DashboardState>(
+                            builder: (context, state) {
+                              if (state is DashboardLoaded) {
+                                final activities = _buildActivitiesFromData(
+                                  state.todaySales,
+                                  state.todayPurchases,
+                                );
+                                return RecentActivities(
+                                  activities: activities,
+                                  onViewAll: () => _navigateWithAnimation(
+                                    context,
+                                    RouteNames.statistics,
+                                  ),
+                                );
+                              }
+                              return const RecentActivities(activities: []);
+                            },
+                          ),
 
                           const SizedBox(height: 100),
                         ],
@@ -443,6 +462,94 @@ class _HomeScreenState extends State<HomeScreen>
   void _showSyncBottomSheet(BuildContext context) {
     HapticFeedback.lightImpact();
     // عرض تفاصيل المزامنة
+  }
+
+  List<ActivityItem> _buildActivitiesFromData(
+    List<Sale> sales,
+    List<Purchase> purchases,
+  ) {
+    final activities = <ActivityItem>[];
+    
+    for (final sale in sales.take(5)) {
+      activities.add(
+        ActivityItem(
+          title: 'بيع ${sale.qatTypeName ?? "قات"} - ${sale.quantity} ${sale.unit}',
+          time: _formatTime(sale.time),
+          icon: Icons.point_of_sale_rounded,
+          color: AppColors.success,
+          amount: '${sale.totalAmount.toStringAsFixed(0)} ريال',
+          status: sale.paymentStatus,
+        ),
+      );
+    }
+    
+    for (final purchase in purchases.take(5)) {
+      activities.add(
+        ActivityItem(
+          title: 'شراء ${purchase.qatTypeName ?? "قات"} - ${purchase.quantity} ${purchase.unit}',
+          time: _formatTime(purchase.time),
+          icon: Icons.shopping_cart_rounded,
+          color: AppColors.info,
+          amount: '${purchase.totalAmount.toStringAsFixed(0)} ريال',
+          status: purchase.paymentStatus,
+        ),
+      );
+    }
+    
+    activities.sort((a, b) {
+      final aTime = _parseTime(a.time);
+      final bTime = _parseTime(b.time);
+      return bTime.compareTo(aTime);
+    });
+    
+    return activities.take(10).toList();
+  }
+
+  String _formatTime(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        final now = DateTime.now();
+        final time = DateTime(now.year, now.month, now.day, hour, minute);
+        final diff = now.difference(time);
+        
+        if (diff.inMinutes < 1) {
+          return 'الآن';
+        } else if (diff.inMinutes < 60) {
+          return 'منذ ${diff.inMinutes} دقيقة';
+        } else if (diff.inHours < 24) {
+          return 'منذ ${diff.inHours} ساعة';
+        } else {
+          return timeStr;
+        }
+      }
+      return timeStr;
+    } catch (e) {
+      return timeStr;
+    }
+  }
+
+  DateTime _parseTime(String timeStr) {
+    try {
+      if (timeStr.contains('الآن')) {
+        return DateTime.now();
+      } else if (timeStr.contains('منذ')) {
+        final parts = timeStr.split(' ');
+        if (parts.length >= 2) {
+          final value = int.tryParse(parts[1]) ?? 0;
+          if (timeStr.contains('دقيقة')) {
+            return DateTime.now().subtract(Duration(minutes: value));
+          } else if (timeStr.contains('ساعة')) {
+            return DateTime.now().subtract(Duration(hours: value));
+          }
+        }
+      }
+      return DateTime.now();
+    } catch (e) {
+      return DateTime.now();
+    }
   }
 }
 

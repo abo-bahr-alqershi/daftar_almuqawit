@@ -172,8 +172,8 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
     child: Column(
       children: [
         // Header with view toggle
@@ -184,9 +184,9 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.05,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            childAspectRatio: 0.95,
           ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
