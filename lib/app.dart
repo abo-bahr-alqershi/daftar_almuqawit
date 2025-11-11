@@ -31,6 +31,7 @@ import 'presentation/blocs/statistics/statistics_bloc.dart';
 import 'presentation/blocs/statistics/reports_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart';
 import 'presentation/blocs/debts/payment_bloc.dart';
+import 'presentation/blocs/accounting/accounting_bloc.dart';
 
 /// ملف التطبيق الرئيسي App
 /// يحتوي على التهيئة العامة للتطبيق، السمات، التوجيه، والتعريب.
@@ -39,99 +40,95 @@ class App extends StatelessWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        // Core Blocs
-        BlocProvider<AppBloc>(create: (_) => sl<AppBloc>()..add(AppStarted())),
-        BlocProvider<AppSettingsBloc>(create: (_) => sl<AppSettingsBloc>()),
-        BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
-        BlocProvider<SyncBloc>(create: (_) => sl<SyncBloc>()),
-        
-        // Screen Blocs
-        BlocProvider<SplashBloc>(create: (_) => sl<SplashBloc>()),
-        BlocProvider<HomeBloc>(create: (_) => sl<HomeBloc>()),
-        BlocProvider<DashboardBloc>(create: (_) => sl<DashboardBloc>()),
-        
-        // Business Blocs
-        BlocProvider<SuppliersBloc>(create: (_) => sl<SuppliersBloc>()),
-        BlocProvider<CustomersBloc>(create: (_) => sl<CustomersBloc>()),
-        BlocProvider<CustomerFormBloc>(create: (_) => sl<CustomerFormBloc>()),
-        BlocProvider<QatTypesBloc>(create: (_) => sl<QatTypesBloc>()),
-        BlocProvider<SalesBloc>(create: (_) => sl<SalesBloc>()),
-        BlocProvider<QuickSaleBloc>(create: (_) => sl<QuickSaleBloc>()),
-        BlocProvider<PurchasesBloc>(create: (_) => sl<PurchasesBloc>()),
-        BlocProvider<DebtsBloc>(create: (_) => sl<DebtsBloc>()),
-        BlocProvider<PaymentBloc>(create: (_) => sl<PaymentBloc>()),
-        BlocProvider<ExpensesBloc>(create: (_) => sl<ExpensesBloc>()),
-        BlocProvider<StatisticsBloc>(create: (_) => sl<StatisticsBloc>()),
-        BlocProvider<ReportsBloc>(create: (_) => sl<ReportsBloc>()),
-        BlocProvider<SettingsBloc>(create: (_) => sl<SettingsBloc>()),
-      ],
-      child: BlocBuilder<AppSettingsBloc, AppSettingsState>(
-        builder: (context, settingsState) {
-          return BlocBuilder<AppBloc, AppState>(
-            builder: (context, appState) {
-              return MaterialApp(
-                debugShowCheckedModeBanner: false,
-                title: 'دفتر المقوت',
-                
-                // Theme configuration based on user settings
-                theme: AppTheme.light,
-                darkTheme: AppTheme.dark,
-                themeMode: settingsState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-                
-                // Localization configuration
-                locale: Locale(settingsState.languageCode),
-                supportedLocales: const [
-                  Locale('ar', 'SA'),  // العربية
-                  Locale('en', 'US'),  // English
-                ],
-                localizationsDelegates: [
-                  AppLocalizations.delegate,  // Custom localizations
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                localeResolutionCallback: (locale, supportedLocales) {
-                  // Default to Arabic if locale is not supported
-                  return supportedLocales.firstWhere(
-                    (supportedLocale) => supportedLocale.languageCode == locale?.languageCode,
-                    orElse: () => const Locale('ar', 'SA'),
-                  );
-                },
-                
-                // Routing configuration
-                onGenerateRoute: AppRouter.onGenerateRoute,
-                initialRoute: RouteNames.splash,
-                
-                // Navigation observers for analytics and debugging
-                navigatorObservers: [
-                  AppRouteObservers.routeObserver,
-                  AppRouteObservers.analyticsObserver,
-                  AppRouteObservers.loggingObserver,
-                ],
-                
-                // App-wide configuration
-                builder: (context, child) {
-                  return GestureDetector(
-                    // Hide keyboard when tapping outside text fields
-                    onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                    child: MediaQuery(
-                      // Disable text scaling for consistency
-                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                      child: child!,
-                    ),
-                  );
-                },
-                
-                // Performance optimization
-                restorationScopeId: 'daftar_almuqawit',
-              );
-            },
-          );
-        },
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      // Core Blocs
+      BlocProvider<AppBloc>(create: (_) => sl<AppBloc>()..add(AppStarted())),
+      BlocProvider<AppSettingsBloc>(create: (_) => sl<AppSettingsBloc>()),
+      BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
+      BlocProvider<SyncBloc>(create: (_) => sl<SyncBloc>()),
+
+      // Screen Blocs
+      BlocProvider<SplashBloc>(create: (_) => sl<SplashBloc>()),
+      BlocProvider<HomeBloc>(create: (_) => sl<HomeBloc>()),
+      BlocProvider<DashboardBloc>(create: (_) => sl<DashboardBloc>()),
+
+      // Business Blocs
+      BlocProvider<SuppliersBloc>(create: (_) => sl<SuppliersBloc>()),
+      BlocProvider<CustomersBloc>(create: (_) => sl<CustomersBloc>()),
+      BlocProvider<CustomerFormBloc>(create: (_) => sl<CustomerFormBloc>()),
+      BlocProvider<QatTypesBloc>(create: (_) => sl<QatTypesBloc>()),
+      BlocProvider<SalesBloc>(create: (_) => sl<SalesBloc>()),
+      BlocProvider<QuickSaleBloc>(create: (_) => sl<QuickSaleBloc>()),
+      BlocProvider<PurchasesBloc>(create: (_) => sl<PurchasesBloc>()),
+      BlocProvider<DebtsBloc>(create: (_) => sl<DebtsBloc>()),
+      BlocProvider<PaymentBloc>(create: (_) => sl<PaymentBloc>()),
+      BlocProvider<ExpensesBloc>(create: (_) => sl<ExpensesBloc>()),
+      BlocProvider<AccountingBloc>(create: (_) => sl<AccountingBloc>()),
+      BlocProvider<StatisticsBloc>(create: (_) => sl<StatisticsBloc>()),
+      BlocProvider<ReportsBloc>(create: (_) => sl<ReportsBloc>()),
+      BlocProvider<SettingsBloc>(create: (_) => sl<SettingsBloc>()),
+    ],
+    child: BlocBuilder<AppSettingsBloc, AppSettingsState>(
+      builder: (context, settingsState) => BlocBuilder<AppBloc, AppState>(
+        builder: (context, appState) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'دفتر المقوت',
+
+          // Theme configuration based on user settings
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: settingsState.isDarkMode
+              ? ThemeMode.dark
+              : ThemeMode.light,
+
+          // Localization configuration
+          locale: Locale(settingsState.languageCode),
+          supportedLocales: const [
+            Locale('ar', 'SA'), // العربية
+            Locale('en', 'US'), // English
+          ],
+          localizationsDelegates: const [
+            AppLocalizations.delegate, // Custom localizations
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          localeResolutionCallback: (locale, supportedLocales) {
+            // Default to Arabic if locale is not supported
+            return supportedLocales.firstWhere(
+              (supportedLocale) =>
+                  supportedLocale.languageCode == locale?.languageCode,
+              orElse: () => const Locale('ar', 'SA'),
+            );
+          },
+
+          // Routing configuration
+          onGenerateRoute: AppRouter.onGenerateRoute,
+          initialRoute: RouteNames.splash,
+
+          // Navigation observers for analytics and debugging
+          navigatorObservers: [
+            AppRouteObservers.routeObserver,
+            AppRouteObservers.analyticsObserver,
+            AppRouteObservers.loggingObserver,
+          ],
+
+          // App-wide configuration
+          builder: (context, child) => GestureDetector(
+            // Hide keyboard when tapping outside text fields
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: MediaQuery(
+              // Disable text scaling for consistency
+              data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+              child: child!,
+            ),
+          ),
+
+          // Performance optimization
+          restorationScopeId: 'daftar_almuqawit',
+        ),
       ),
-    );
-  }
+    ),
+  );
 }
