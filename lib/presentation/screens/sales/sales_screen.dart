@@ -286,64 +286,100 @@ class _SalesScreenState extends State<SalesScreen> {
                 );
               }
 
-              return Column(
-                children: [
-                  // شريط البحث
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.paddingM),
-                    color: AppColors.surface,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'البحث عن عميل، نوع قات، أو رقم فاتورة...',
-                        hintStyle: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                        prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.clear, color: AppColors.textSecondary),
-                                onPressed: () {
-                                  setState(() {
-                                    _searchQuery = '';
-                                  });
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.paddingM,
-                          vertical: AppDimensions.paddingS,
+              return RefreshIndicator(
+                onRefresh: () async => _loadSales(),
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // شريط البحث
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.paddingM),
+                        color: AppColors.surface,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'البحث عن عميل، نوع قات، أو رقم فاتورة...',
+                            hintStyle: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                                    onPressed: () {
+                                      setState(() {
+                                        _searchQuery = '';
+                                      });
+                                    },
+                                  )
+                                : null,
+                            filled: true,
+                            fillColor: AppColors.background,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppDimensions.paddingM,
+                              vertical: AppDimensions.paddingS,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                            });
+                          },
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                    ),
-                  ),
 
-                  // ملخص المبيعات
-                  SaleSummary(
-                    totalAmount: _calculateTotalAmount(filteredSales),
-                    totalProfit: _calculateTotalProfit(filteredSales),
-                    totalPaid: _calculateTotalPaid(filteredSales),
-                    totalRemaining: _calculateTotalRemaining(filteredSales),
-                    salesCount: filteredSales.length,
-                  ),
+                      // ملخص المبيعات
+                      SaleSummary(
+                        totalAmount: _calculateTotalAmount(filteredSales),
+                        totalProfit: _calculateTotalProfit(filteredSales),
+                        totalPaid: _calculateTotalPaid(filteredSales),
+                        totalRemaining: _calculateTotalRemaining(filteredSales),
+                        salesCount: filteredSales.length,
+                      ),
 
-                  // قائمة المبيعات
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () async => _loadSales(),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(AppDimensions.paddingM),
+                      // عنوان القائمة
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimensions.paddingL,
+                          AppDimensions.paddingM,
+                          AppDimensions.paddingL,
+                          AppDimensions.paddingS,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'قائمة المبيعات',
+                              style: AppTextStyles.titleLarge.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${filteredSales.length} عملية',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // قائمة المبيعات
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingL,
+                          vertical: AppDimensions.paddingS,
+                        ),
                         itemCount: filteredSales.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final sale = filteredSales[index];
                           return SaleItemCard(
@@ -356,9 +392,12 @@ class _SalesScreenState extends State<SalesScreen> {
                           );
                         },
                       ),
-                    ),
+                      
+                      // مساحة إضافية في الأسفل
+                      const SizedBox(height: AppDimensions.paddingXL),
+                    ],
                   ),
-                ],
+                ),
               );
             }
 
