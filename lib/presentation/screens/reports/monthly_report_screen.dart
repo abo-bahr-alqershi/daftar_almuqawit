@@ -212,9 +212,9 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   /// بناء بطاقة الربح
   Widget _buildProfitCard(Map<String, dynamic> data) {
-    var totalSales = 0;
-    var totalPurchases = 0;
-    var totalExpenses = 0;
+    double totalSales = 0.0;
+    double totalPurchases = 0.0;
+    double totalExpenses = 0.0;
 
     final statistics = data['statistics'] as List<dynamic>? ?? [];
 
@@ -239,10 +239,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   /// بناء الإحصائيات التفصيلية
   Widget _buildDetailedStats(Map<String, dynamic> data) {
-    var totalSales = 0;
-    var totalPurchases = 0;
-    var totalExpenses = 0;
-    var cashBalance = 0;
+    double totalSales = 0.0;
+    double totalPurchases = 0.0;
+    double totalExpenses = 0.0;
+    double cashBalance = 0.0;
 
     final statistics = data['statistics'] as List<dynamic>? ?? [];
 
@@ -325,9 +325,9 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   /// بناء المخططات البيانية
   Widget _buildCharts(Map<String, dynamic> data) {
-    var totalSales = 0;
-    var totalPurchases = 0;
-    var totalExpenses = 0;
+    double totalSales = 0.0;
+    double totalPurchases = 0.0;
+    double totalExpenses = 0.0;
 
     final statistics = data['statistics'] as List<dynamic>? ?? [];
 

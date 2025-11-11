@@ -36,18 +36,17 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
   late Animation<double> _contentFadeAnimation;
   late Animation<double> _totalScaleAnimation;
   late Animation<double> _successBounceAnimation;
-
+  
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _priceController = TextEditingController();
-  final bool _isCalculating = false;
+  bool _isCalculating = false;
   bool _showSuccess = false;
-
-  double _quantity = 1;
-  double _price = 0;
+  
+  double _quantity = 1.0;
+  double _price = 0.0;
   String? _selectedQatTypeId;
   String? _selectedUnit;
   String _paymentMethod = 'نقدي';
-
+  
   List<String> _availableUnits = [];
   Map<String, double?> _unitSellPrices = {};
 
@@ -57,56 +56,60 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
     _initializeAnimations();
     context.read<QatTypesBloc>().add(LoadQatTypes());
   }
-
+  
   void _initializeAnimations() {
     _headerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-
+    
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
+    
     _totalAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-
+    
     _successAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-
-    _headerSlideAnimation = Tween<double>(begin: -100, end: 0).animate(
-      CurvedAnimation(
-        parent: _headerAnimationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    _contentFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _contentAnimationController,
-        curve: Curves.easeIn,
-      ),
-    );
-
-    _totalScaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
-      CurvedAnimation(
-        parent: _totalAnimationController,
-        curve: Curves.elasticOut,
-      ),
-    );
-
-    _successBounceAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _successAnimationController,
-        curve: Curves.elasticOut,
-      ),
-    );
-
+    
+    _headerSlideAnimation = Tween<double>(
+      begin: -100,
+      end: 0,
+    ).animate(CurvedAnimation(
+      parent: _headerAnimationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _contentFadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _contentAnimationController,
+      curve: Curves.easeIn,
+    ));
+    
+    _totalScaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _totalAnimationController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _successBounceAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _successAnimationController,
+      curve: Curves.elasticOut,
+    ));
+    
     _headerAnimationController.forward();
     _contentAnimationController.forward();
   }
@@ -118,10 +121,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
     _totalAnimationController.dispose();
     _successAnimationController.dispose();
     _scrollController.dispose();
-    _priceController.dispose();
     super.dispose();
   }
-
+  
   void _onQatTypeChanged(String? qatTypeId, List<dynamic> qatTypes) {
     setState(() {
       _selectedQatTypeId = qatTypeId;
@@ -129,37 +131,34 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
       _availableUnits = [];
       _unitSellPrices = {};
       _price = 0.0;
-
-      if (qatTypeId != null && qatTypes.isNotEmpty) {
-        try {
-          final selectedQatType = qatTypes.firstWhere(
-            (qt) => qt.id.toString() == qatTypeId,
-          );
-
-          if (selectedQatType.availableUnits != null) {
-            _availableUnits = List<String>.from(selectedQatType.availableUnits);
-
-            if (selectedQatType.unitPrices != null) {
-              for (final unit in _availableUnits) {
-                final unitPrice = selectedQatType.unitPrices[unit];
-                _unitSellPrices[unit] = unitPrice?.sellPrice;
-              }
-            }
-
-            if (_availableUnits.isNotEmpty) {
-              _selectedUnit = _availableUnits.first;
-              _onUnitChanged(_selectedUnit);
+      
+      if (qatTypeId != null) {
+        final selectedQatType = qatTypes.firstWhere(
+          (qt) => qt.id.toString() == qatTypeId,
+          orElse: () => null,
+        );
+        
+        if (selectedQatType != null && selectedQatType.availableUnits != null) {
+          _availableUnits = List<String>.from(selectedQatType.availableUnits);
+          
+          if (selectedQatType.unitPrices != null) {
+            for (var unit in _availableUnits) {
+              final unitPrice = selectedQatType.unitPrices[unit];
+              _unitSellPrices[unit] = unitPrice?.sellPrice;
             }
           }
-        } catch (e) {
-          // QatType not found, ignore
+          
+          if (_availableUnits.isNotEmpty) {
+            _selectedUnit = _availableUnits.first;
+            _onUnitChanged(_selectedUnit);
+          }
         }
       }
     });
-
+    
     _totalAnimationController.forward(from: 0);
   }
-
+  
   void _onUnitChanged(String? unit) {
     setState(() {
       _selectedUnit = unit;
@@ -167,958 +166,791 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
         final defaultPrice = _unitSellPrices[unit];
         if (defaultPrice != null && defaultPrice > 0) {
           _price = defaultPrice;
-          _priceController.text = defaultPrice.toStringAsFixed(2);
         }
       }
     });
-
+    
     _totalAnimationController.forward(from: 0);
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Stack(
-      children: [
-        // خلفية ديناميكية
-        _buildAnimatedBackground(),
-
-        // المحتوى الرئيسي
-        CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // AppBar مخصص
-            _buildModernAppBar(),
-
-            // المحتوى
-            SliverToBoxAdapter(
-              child: BlocConsumer<QuickSaleBloc, QuickSaleState>(
-                listener: (context, state) {
-                  if (state is QuickSaleSuccess) {
-                    _showSuccessAnimation();
-                  } else if (state is QuickSaleError) {
-                    _showErrorMessage(state.message);
-                  }
-                },
-                builder: (context, quickSaleState) =>
-                    BlocBuilder<QatTypesBloc, QatTypesState>(
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // خلفية ديناميكية
+          _buildAnimatedBackground(),
+          
+          // المحتوى الرئيسي
+          CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // AppBar مخصص
+              _buildModernAppBar(),
+              
+              // المحتوى
+              SliverToBoxAdapter(
+                child: BlocConsumer<QuickSaleBloc, QuickSaleState>(
+                  listener: (context, state) {
+                    if (state is QuickSaleSuccess) {
+                      _showSuccessAnimation();
+                    } else if (state is QuickSaleError) {
+                      _showErrorMessage(state.message);
+                    }
+                  },
+                  builder: (context, quickSaleState) {
+                    return BlocBuilder<QatTypesBloc, QatTypesState>(
                       builder: (context, qatTypesState) {
                         if (qatTypesState is QatTypesLoading) {
                           return _buildLoadingState();
                         }
 
                         if (qatTypesState is QatTypesLoaded) {
-                          final qatTypeOptions = qatTypesState.qatTypes
-                              .map(
-                                (qt) => QatTypeOption(
-                                  id: qt.id.toString(),
-                                  name: qt.name,
-                                  price: qt.defaultSellPrice,
-                                ),
-                              )
-                              .toList();
+                          final qatTypeOptions = qatTypesState.qatTypes.map((qt) => 
+                            QatTypeOption(
+                              id: qt.id.toString(),
+                              name: qt.name,
+                              price: qt.defaultSellPrice,
+                            )
+                          ).toList();
 
                           return AnimatedBuilder(
                             animation: _contentFadeAnimation,
-                            builder: (context, child) => FadeTransition(
-                              opacity: _contentFadeAnimation,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  // بطاقة الترحيب المتحركة
-                                  _buildAnimatedWelcomeCard(),
-
-                                  const SizedBox(height: 24),
-
-                                  // اختيار نوع القات
-                                  _buildQatTypeSection(
-                                    qatTypeOptions,
-                                    qatTypesState.qatTypes,
-                                  ),
-
-                                  if (_selectedQatTypeId != null) ...[
+                            builder: (context, child) {
+                              return FadeTransition(
+                                opacity: _contentFadeAnimation,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    // بطاقة الترحيب المتحركة
+                                    _buildAnimatedWelcomeCard(),
+                                    
                                     const SizedBox(height: 24),
 
-                                    // اختيار الوحدة
-                                    if (_availableUnits.isNotEmpty)
-                                      _buildUnitSelector(),
-
-                                    const SizedBox(height: 24),
-
-                                    // إدخال الكمية
-                                    _buildQuantitySection(),
-
-                                    const SizedBox(height: 24),
-
-                                    // إدخال السعر
-                                    _buildPriceSection(),
-
-                                    const SizedBox(height: 24),
-
-                                    // بطاقة السعر المتحركة
-                                    _buildAnimatedPriceCard(),
-
-                                    const SizedBox(height: 24),
-
-                                    // أزرار الدفع
-                                    _buildPaymentSection(quickSaleState),
+                                    // اختيار نوع القات
+                                    _buildQatTypeSection(qatTypeOptions, qatTypesState.qatTypes),
+                                    
+                                    if (_selectedQatTypeId != null) ...[
+                                      const SizedBox(height: 24),
+                                      
+                                      // اختيار الوحدة
+                                      if (_availableUnits.isNotEmpty)
+                                        _buildUnitSelector(),
+                                      
+                                      const SizedBox(height: 24),
+                                      
+                                      // إدخال الكمية
+                                      _buildQuantitySection(),
+                                      
+                                      const SizedBox(height: 24),
+                                      
+                                      // بطاقة السعر المتحركة
+                                      _buildAnimatedPriceCard(),
+                                      
+                                      const SizedBox(height: 24),
+                                      
+                                      // أزرار الدفع
+                                      _buildPaymentSection(quickSaleState),
+                                    ],
+                                    
+                                    const SizedBox(height: 100),
                                   ],
-
-                                  const SizedBox(height: 100),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           );
                         }
 
                         return _buildErrorState();
                       },
-                    ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-
-        // Success Overlay
-        if (_showSuccess) _buildSuccessOverlay(),
-      ],
-    ),
-  );
-
-  Widget _buildAnimatedBackground() => Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.success.withOpacity(0.05),
-          AppColors.primary.withOpacity(0.02),
-          AppColors.background,
+            ],
+          ),
+          
+          // Success Overlay
+          if (_showSuccess) _buildSuccessOverlay(),
         ],
       ),
-    ),
-    child: BackdropFilter(
-      filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-      child: Container(
-        color: Colors.transparent,
-        child: CustomPaint(painter: _QuickSaleBackgroundPainter()),
-      ),
-    ),
-  );
+    );
+  }
 
-  Widget _buildModernAppBar() => SliverAppBar(
-    expandedHeight: 200,
-    pinned: true,
-    backgroundColor: Colors.transparent,
-    flexibleSpace: AnimatedBuilder(
-      animation: _headerSlideAnimation,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0, _headerSlideAnimation.value),
+  Widget _buildAnimatedBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.success.withOpacity(0.05),
+            AppColors.primary.withOpacity(0.02),
+            AppColors.background,
+          ],
+        ),
+      ),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.success.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: FlexibleSpaceBar(
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: const Duration(milliseconds: 800),
-                  builder: (context, value, child) => Transform.rotate(
-                    angle: value * 2 * math.pi,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.flash_on,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'بيع سريع',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            background: _buildAppBarBackground(),
-          ),
-        ),
-      ),
-    ),
-    leading: _buildBackButton(),
-    actions: [
-      _buildActionButton(Icons.history, onPressed: _showRecentSales),
-      _buildActionButton(Icons.help_outline, onPressed: _showHelp),
-      const SizedBox(width: 8),
-    ],
-  );
-
-  Widget _buildBackButton() => Container(
-    margin: const EdgeInsets.all(8),
-    decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.2),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: IconButton(
-      icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-      onPressed: () {
-        HapticFeedback.lightImpact();
-        Navigator.pop(context);
-      },
-    ),
-  );
-
-  Widget _buildActionButton(IconData icon, {required VoidCallback onPressed}) =>
-      Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: Icon(icon, color: Colors.white, size: 22),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            onPressed();
-          },
-        ),
-      );
-
-  Widget _buildAppBarBackground() => Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Colors.white.withOpacity(0.1), Colors.transparent],
-      ),
-    ),
-    child: Stack(
-      children: [
-        // Animated Lightning Bolts
-        ...List.generate(
-          3,
-          (index) => Positioned(
-            left: 50.0 + (index * 100),
-            top: 80.0 + (index * 20),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 1000 + (index * 200)),
-              builder: (context, value, child) => Opacity(
-                opacity: value * 0.3,
-                child: Transform.scale(
-                  scale: 0.5 + (value * 0.5),
-                  child: const Icon(
-                    Icons.flash_on,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildAnimatedWelcomeCard() => TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0, end: 1),
-    duration: const Duration(milliseconds: 800),
-    curve: Curves.easeOutBack,
-    builder: (context, value, child) => Transform.scale(
-      scale: 0.9 + (value * 0.1),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.success.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(Icons.flash_on, color: Colors.white, size: 36),
-                  // Pulse animation
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.8, end: 1.2),
-                    duration: const Duration(seconds: 2),
-                    builder: (context, value, child) => Transform.scale(
-                      scale: value,
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'عملية بيع سريعة',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'أكمل البيع في خطوات بسيطة',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _buildQatTypeSection(
-    List<QatTypeOption> options,
-    List<dynamic> qatTypes,
-  ) => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withOpacity(0.1),
-                    AppColors.accent.withOpacity(0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.grass,
-                color: AppColors.primary,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'اختر نوع القات',
-              style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.danger,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'مطلوب',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        QatTypeSelector(
-          selectedQatTypeId: _selectedQatTypeId,
-          onChanged: (id) => _onQatTypeChanged(id, qatTypes),
-          qatTypes: options,
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildUnitSelector() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.border.withOpacity(0.2)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.straighten, color: AppColors.primary, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'اختر الوحدة',
-              style: AppTextStyles.titleMedium.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: _availableUnits.map((unit) {
-            final isSelected = _selectedUnit == unit;
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: isSelected ? 1 : 0),
-              duration: const Duration(milliseconds: 300),
-              builder: (context, value, child) => GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  _onUnitChanged(unit);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(
-                            colors: [
-                              AppColors.success,
-                              AppColors.success.withOpacity(0.8),
-                            ],
-                          )
-                        : null,
-                    color: isSelected ? null : AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.success
-                          : AppColors.border.withOpacity(0.3),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.success.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getUnitIcon(unit),
-                        size: 20,
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.textPrimary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        unit,
-                        style: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                      if (_unitSellPrices[unit] != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.white.withOpacity(0.2)
-                                : AppColors.success.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${_unitSellPrices[unit]} ريال',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.success,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildQuantitySection() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    child: QuantityInput(
-      value: _quantity,
-      onChanged: (value) {
-        setState(() => _quantity = value);
-        _totalAnimationController.forward(from: 0);
-      },
-      label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
-    ),
-  );
-
-  Widget _buildPriceSection() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [AppColors.surface, AppColors.surface.withValues(alpha: 0.5)],
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-      ),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: AppColors.primary.withValues(alpha: 0.2),
-        width: 1.5,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.primary.withValues(alpha: 0.08),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.attach_money,
-                color: AppColors.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _selectedUnit != null ? 'سعر $_selectedUnit' : 'السعر',
-              style: AppTextStyles.titleMedium.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 20,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.border.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _priceController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: '0.00',
-                          hintStyle: TextStyle(color: AppColors.textHint),
-                        ),
-                        onChanged: (value) {
-                          final price = double.tryParse(value);
-                          if (price != null) {
-                            setState(() {
-                              _price = price;
-                            });
-                            _totalAnimationController.forward(from: 0);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'ريال',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              children: [
-                _buildPriceButton(
-                  icon: Icons.add,
-                  onPressed: () {
-                    setState(() {
-                      _price += 10;
-                      _priceController.text = _price.toStringAsFixed(2);
-                    });
-                    _totalAnimationController.forward(from: 0);
-                  },
-                ),
-                const SizedBox(height: 8),
-                _buildPriceButton(
-                  icon: Icons.remove,
-                  onPressed: () {
-                    setState(() {
-                      if (_price > 10) _price -= 10;
-                      _priceController.text = _price.toStringAsFixed(2);
-                    });
-                    _totalAnimationController.forward(from: 0);
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-        if (_unitSellPrices[_selectedUnit] != null &&
-            _unitSellPrices[_selectedUnit]! > 0)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: AppColors.info,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'السعر الافتراضي: ${_unitSellPrices[_selectedUnit]} ريال',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.info,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _price = _unitSellPrices[_selectedUnit]!;
-                        _priceController.text = _price.toStringAsFixed(2);
-                      });
-                      _totalAnimationController.forward(from: 0);
-                    },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text(
-                      'استخدام',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-
-  Widget _buildPriceButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) => Material(
-    color: AppColors.primary,
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onPressed();
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
-        width: 48,
-        height: 48,
-        child: Icon(icon, color: Colors.white, size: 24),
-      ),
-    ),
-  );
-
-  Widget _buildAnimatedPriceCard() {
-    final total = _quantity * _price;
-
-    return AnimatedBuilder(
-      animation: _totalScaleAnimation,
-      builder: (context, child) => Transform.scale(
-        scale: _totalScaleAnimation.value,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.05),
-                AppColors.success.withOpacity(0.03),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.success.withOpacity(0.2),
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _selectedUnit != null ? 'سعر $_selectedUnit' : 'السعر',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _price.toStringAsFixed(2),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Text(
-                    '×',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 24,
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'الكمية',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _quantity.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.success,
-                      AppColors.success.withOpacity(0.9),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'الإجمالي',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: total),
-                      duration: const Duration(milliseconds: 500),
-                      builder: (context, value, child) => Text(
-                        '${value.toStringAsFixed(2)} ريال',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          color: Colors.transparent,
+          child: CustomPaint(
+            painter: _QuickSaleBackgroundPainter(),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPaymentSection(QuickSaleState state) => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    child: Column(
-      children: [
-        // Payment Method Selector
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border.withOpacity(0.2)),
+  Widget _buildModernAppBar() {
+    return SliverAppBar(
+      expandedHeight: 200,
+      floating: false,
+      pinned: true,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: AnimatedBuilder(
+        animation: _headerSlideAnimation,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _headerSlideAnimation.value),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.success,
+                    AppColors.success.withOpacity(0.8),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.success.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: FlexibleSpaceBar(
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 800),
+                      builder: (context, value, child) {
+                        return Transform.rotate(
+                          angle: value * 2 * math.pi,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.flash_on,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'بيع سريع',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                background: _buildAppBarBackground(),
+              ),
+            ),
+          );
+        },
+      ),
+      leading: _buildBackButton(),
+      actions: [
+        _buildActionButton(
+          Icons.history,
+          onPressed: () => _showRecentSales(),
+        ),
+        _buildActionButton(
+          Icons.help_outline,
+          onPressed: () => _showHelp(),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, {required VoidCallback onPressed}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white, size: 22),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          onPressed();
+        },
+      ),
+    );
+  }
+
+  Widget _buildAppBarBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withOpacity(0.1),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Animated Lightning Bolts
+          ...List.generate(3, (index) {
+            return Positioned(
+              left: 50.0 + (index * 100),
+              top: 80.0 + (index * 20),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: Duration(milliseconds: 1000 + (index * 200)),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value * 0.3,
+                    child: Transform.scale(
+                      scale: 0.5 + (value * 0.5),
+                      child: Icon(
+                        Icons.flash_on,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedWelcomeCard() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.9 + (value * 0.1),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.success,
+                  AppColors.success.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.flash_on,
+                        color: Colors.white,
+                        size: 36,
+                      ),
+                      // Pulse animation
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.8, end: 1.2),
+                        duration: const Duration(seconds: 2),
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'عملية بيع سريعة',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'أكمل البيع في خطوات بسيطة',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        );
+      },
+    );
+  }
+
+  Widget _buildQatTypeSection(List<QatTypeOption> options, List<dynamic> qatTypes) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              _buildPaymentOption('نقدي', Icons.money, AppColors.success),
-              _buildPaymentOption('آجل', Icons.schedule, AppColors.warning),
-              _buildPaymentOption('تحويل', Icons.swap_horiz, AppColors.info),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.1),
+                      AppColors.accent.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.grass,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'اختر نوع القات',
+                style: AppTextStyles.h3.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.danger,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'مطلوب',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          QatTypeSelector(
+            selectedQatTypeId: _selectedQatTypeId,
+            onChanged: (id) => _onQatTypeChanged(id, qatTypes),
+            qatTypes: options,
+          ),
+        ],
+      ),
+    );
+  }
 
-        const SizedBox(height: 24),
+  Widget _buildUnitSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.straighten, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'اختر الوحدة',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: _availableUnits.map((unit) {
+              final isSelected = _selectedUnit == unit;
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: isSelected ? 1 : 0),
+                duration: const Duration(milliseconds: 300),
+                builder: (context, value, child) {
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _onUnitChanged(unit);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                            ? LinearGradient(
+                                colors: [
+                                  AppColors.success,
+                                  AppColors.success.withOpacity(0.8),
+                                ],
+                              )
+                            : null,
+                        color: isSelected ? null : AppColors.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.success
+                              : AppColors.border.withOpacity(0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.success.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getUnitIcon(unit),
+                            size: 20,
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            unit,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                          if (_unitSellPrices[unit] != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.white.withOpacity(0.2)
+                                    : AppColors.success.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${_unitSellPrices[unit]} ريال',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.success,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
-        // Confirm Button
-        AppButton.primary(
-          text: 'تأكيد البيع',
-          fullWidth: true,
-          isLoading: state is QuickSaleLoading,
-          onPressed: () => _handleQuickSale(_paymentMethod),
-          icon: Icons.check_circle,
-        ),
-      ],
-    ),
-  );
+  Widget _buildQuantitySection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: QuantityInput(
+        value: _quantity,
+        onChanged: (value) {
+          setState(() => _quantity = value);
+          _totalAnimationController.forward(from: 0);
+        },
+        label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
+      ),
+    );
+  }
+
+  Widget _buildAnimatedPriceCard() {
+    final total = _quantity * _price;
+
+    return AnimatedBuilder(
+      animation: _totalScaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _totalScaleAnimation.value,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.05),
+                  AppColors.success.withOpacity(0.03),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.success.withOpacity(0.2),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedUnit != null ? 'سعر $_selectedUnit' : 'السعر',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_price.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '×',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 24,
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'الكمية',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_quantity.toStringAsFixed(1)}',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 20),
+                
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.success,
+                        AppColors.success.withOpacity(0.9),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.success.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'الإجمالي',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: total),
+                        duration: const Duration(milliseconds: 500),
+                        builder: (context, value, child) {
+                          return Text(
+                            '${value.toStringAsFixed(2)} ريال',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentSection(QuickSaleState state) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          // Payment Method Selector
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.border.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildPaymentOption('نقدي', Icons.money, AppColors.success),
+                _buildPaymentOption('آجل', Icons.schedule, AppColors.warning),
+                _buildPaymentOption('تحويل', Icons.swap_horiz, AppColors.info),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Confirm Button
+          AppButton.primary(
+            text: 'تأكيد البيع',
+            fullWidth: true,
+            isLoading: state is QuickSaleLoading,
+            onPressed: () => _handleQuickSale(_paymentMethod),
+            icon: Icons.check_circle,
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildPaymentOption(String label, IconData icon, Color color) {
     final isSelected = _paymentMethod == label;
-
+    
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -1136,7 +968,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? Colors.white : color, size: 24),
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : color,
+              size: 24,
+            ),
             const SizedBox(height: 4),
             Text(
               label,
@@ -1151,138 +987,161 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
     );
   }
 
-  Widget _buildSuccessOverlay() => AnimatedBuilder(
-    animation: _successBounceAnimation,
-    builder: (context, child) => Container(
-      color: Colors.black.withOpacity(0.8),
-      child: Center(
-        child: Transform.scale(
-          scale: _successBounceAnimation.value,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: AppColors.success,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.success.withOpacity(0.5),
-                  blurRadius: 30,
-                  spreadRadius: 10,
+  Widget _buildSuccessOverlay() {
+    return AnimatedBuilder(
+      animation: _successBounceAnimation,
+      builder: (context, child) {
+        return Container(
+          color: Colors.black.withOpacity(0.8),
+          child: Center(
+            child: Transform.scale(
+              scale: _successBounceAnimation.value,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: AppColors.success,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.success.withOpacity(0.5),
+                      blurRadius: 30,
+                      spreadRadius: 10,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 80),
-                SizedBox(height: 16),
-                Text(
-                  'تم البيع بنجاح',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 80,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'تم البيع بنجاح',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(seconds: 1),
+              builder: (context, value, child) {
+                return Transform.rotate(
+                  angle: value * 2 * math.pi,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.success.withOpacity(0.2),
+                          AppColors.primary.withOpacity(0.1),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.flash_on,
+                        color: AppColors.success,
+                        size: 50,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'جاري التحميل...',
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _buildLoadingState() => Center(
-    child: Container(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(seconds: 1),
-            builder: (context, value, child) => Transform.rotate(
-              angle: value * 2 * math.pi,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.success.withOpacity(0.2),
-                      AppColors.primary.withOpacity(0.1),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.flash_on,
-                    color: AppColors.success,
-                    size: 50,
-                  ),
-                ),
+  Widget _buildErrorState() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 80,
+              color: AppColors.danger,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'حدث خطأ',
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'جاري التحميل...',
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildErrorState() => Center(
-    child: Container(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 80, color: AppColors.danger),
-          const SizedBox(height: 24),
-          Text(
-            'حدث خطأ',
-            style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'تعذر تحميل البيانات',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: () {
-              context.read<QatTypesBloc>().add(LoadQatTypes());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 12),
+            Text(
+              'تعذر تحميل البيانات',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
-            icon: const Icon(Icons.refresh),
-            label: const Text('إعادة المحاولة'),
-          ),
-        ],
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<QatTypesBloc>().add(LoadQatTypes());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   void _handleQuickSale(String paymentMethod) {
     if (_selectedQatTypeId == null) {
       _showErrorMessage('الرجاء اختيار نوع القات');
       return;
     }
-
+    
     if (_selectedUnit == null) {
       _showErrorMessage('الرجاء اختيار الوحدة');
       return;
@@ -1299,47 +1158,52 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
     }
 
     context.read<QuickSaleBloc>().add(
-      SubmitQuickSale(quantity: _quantity, price: _price),
+      SubmitQuickSale(
+        quantity: _quantity,
+        price: _price,
+      ),
     );
   }
-
+  
   void _showSuccessAnimation() {
     setState(() => _showSuccess = true);
     _successAnimationController.forward();
-
+    
     HapticFeedback.heavyImpact();
-
+    
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context);
     });
   }
-
+  
   void _showErrorMessage(String message) {
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error, color: Colors.white),
+            Icon(Icons.error, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
         ),
         backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
-
+  
   void _showRecentSales() {
     // عرض المبيعات الأخيرة
   }
-
+  
   void _showHelp() {
     // عرض المساعدة
   }
-
+  
   IconData _getUnitIcon(String unit) {
     switch (unit) {
       case 'ربطة':
@@ -1358,18 +1222,22 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
 class _QuickSaleBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
+    final paint = Paint()
+      ..style = PaintingStyle.fill;
+    
     // رسم الدوائر
-    for (var i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
       paint.color = AppColors.success.withOpacity(0.02 - (i * 0.003));
       canvas.drawCircle(
-        Offset(size.width * (0.1 + i * 0.2), size.height * (0.2 + i * 0.15)),
+        Offset(
+          size.width * (0.1 + i * 0.2),
+          size.height * (0.2 + i * 0.15),
+        ),
         60 + (i * 20).toDouble(),
         paint,
       );
     }
-
+    
     // رسم خطوط البرق
     paint.color = AppColors.success.withOpacity(0.03);
     final path = Path();

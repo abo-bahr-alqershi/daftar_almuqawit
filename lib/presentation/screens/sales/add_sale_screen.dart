@@ -154,7 +154,7 @@ class _AddSaleScreenState extends State<AddSaleScreen>
                                     qatTypes: qatTypesState.qatTypes,
                                     onSubmit: _handleSubmit,
                                     onCancel: _handleCancel,
-                                    onProgressChanged: _updateProgress,
+                                    // onProgressChanged: _updateProgress,
                                   ),
                                 ),
                               );
