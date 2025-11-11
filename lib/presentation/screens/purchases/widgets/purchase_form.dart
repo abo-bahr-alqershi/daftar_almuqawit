@@ -48,7 +48,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
   double _remainingAmount = 0;
 
   final List<String> _units = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
-  final List<String> _paymentMethods = ['نقد', 'آجل', 'شيك', 'تحويل'];
+  final List<String> _paymentMethods = ['نقد', 'آجل', 'حوالة', 'تحويل'];
   final List<String> _paymentStatuses = ['مدفوع', 'مدفوع جزئياً', 'غير مدفوع'];
 
   @override

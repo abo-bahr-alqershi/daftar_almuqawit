@@ -125,7 +125,7 @@
     "payment_method": "طريقة الدفع",
     "cash": "نقدي",
     "credit": "آجل",
-    "bank_transfer": "تحويل بنكي",
+    "bank_transfer": "محفظة",
     "partial_payment": "دفع جزئي",
     "paid_amount": "المبلغ المدفوع",
     "remaining_amount": "المبلغ المتبقي",

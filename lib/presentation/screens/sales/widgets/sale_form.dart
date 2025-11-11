@@ -218,43 +218,118 @@ class _SaleFormState extends State<SaleForm> {
 
   Widget _buildQuantityPriceSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surface,
+            AppColors.surface.withOpacity(0.5),
+          ],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'الكمية والسعر',
-            style: AppTextStyles.titleMedium.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: QuantityInput(
-                  value: double.tryParse(_quantityController.text) ?? 0.0,
-                  onChanged: (value) {
-                    _quantityController.text = value.toString();
-                  },
-                  label: 'الكمية (كيس)',
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.shopping_basket,
+                  color: AppColors.primary,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: AppTextField.currency(
-                  controller: _priceController,
-                  label: 'السعر (ريال)',
-                  validator: (val) => val?.isEmpty == true ? 'مطلوب' : null,
+              const SizedBox(width: 12),
+              Text(
+                'الكمية والسعر',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          
+          // حقل الكمية - صف كامل
+          QuantityInput(
+            value: double.tryParse(_quantityController.text) ?? 0.0,
+            onChanged: (value) {
+              _quantityController.text = value.toString();
+            },
+            label: 'الكمية (كيس)',
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // حقل السعر - صف كامل
+          AppTextField.currency(
+            controller: _priceController,
+            label: 'السعر للكيس الواحد (ريال)',
+            hint: 'أدخل السعر',
+            validator: (val) => val?.isEmpty == true ? 'مطلوب' : null,
+          ),
+          
+          // عرض الإجمالي الفوري
+          if (_quantityController.text.isNotEmpty && _priceController.text.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.success.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calculate,
+                          color: AppColors.success,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'المجموع الفرعي',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${((double.tryParse(_quantityController.text) ?? 0) * (double.tryParse(_priceController.text) ?? 0)).toStringAsFixed(2)} ريال',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

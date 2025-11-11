@@ -31,14 +31,14 @@ class PaymentMethodSelector extends StatelessWidget {
       color: AppColors.warning,
     ),
     PaymentMethodOption(
-      value: 'شيك',
-      label: 'شيك',
+      value: 'حوالة',
+      label: 'حوالة',
       icon: Icons.receipt,
       color: AppColors.info,
     ),
     PaymentMethodOption(
-      value: 'تحويل بنكي',
-      label: 'تحويل بنكي',
+      value: 'محفظة',
+      label: 'محفظة',
       icon: Icons.account_balance,
       color: AppColors.primary,
     ),

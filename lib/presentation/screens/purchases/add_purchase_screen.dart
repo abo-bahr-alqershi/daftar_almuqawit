@@ -402,8 +402,8 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                   items: const [
                     DropdownMenuItem(value: 'نقدي', child: Text('نقدي')),
                     DropdownMenuItem(value: 'آجل', child: Text('آجل')),
-                    DropdownMenuItem(value: 'شيك', child: Text('شيك')),
-                    DropdownMenuItem(value: 'تحويل بنكي', child: Text('تحويل بنكي')),
+                    DropdownMenuItem(value: 'حوالة', child: Text('حوالة')),
+                    DropdownMenuItem(value: 'محفظة', child: Text('محفظة')),
                   ],
                   onChanged: (value) {
                     setState(() {

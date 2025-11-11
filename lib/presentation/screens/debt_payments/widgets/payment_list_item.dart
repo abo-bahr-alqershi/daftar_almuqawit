@@ -235,7 +235,7 @@ class PaymentListItem extends StatelessWidget {
         return AppColors.success;
       case 'تحويل':
         return AppColors.info;
-      case 'شيك':
+      case 'حوالة':
         return AppColors.warning;
       default:
         return AppColors.textSecondary;
@@ -249,7 +249,7 @@ class PaymentListItem extends StatelessWidget {
         return Icons.money;
       case 'تحويل':
         return Icons.account_balance;
-      case 'شيك':
+      case 'حوالة':
         return Icons.receipt_long;
       default:
         return Icons.payment;

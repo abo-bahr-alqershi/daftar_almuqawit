@@ -125,10 +125,10 @@ class PaymentFilters extends StatelessWidget {
                 onTap: () => onPaymentMethodChanged?.call('تحويل'),
               ),
               _FilterChip(
-                label: 'شيك',
+                label: 'حوالة',
                 icon: Icons.receipt_long,
-                isSelected: selectedPaymentMethod == 'شيك',
-                onTap: () => onPaymentMethodChanged?.call('شيك'),
+                isSelected: selectedPaymentMethod == 'حوالة',
+                onTap: () => onPaymentMethodChanged?.call('حوالة'),
               ),
             ],
           ),

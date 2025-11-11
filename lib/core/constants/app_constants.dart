@@ -162,7 +162,7 @@ class AppConstants {
   /// آجل
   static const String paymentCredit = 'credit';
   
-  /// تحويل بنكي
+  /// محفظة
   static const String paymentTransfer = 'transfer';
   
   /// قائمة أنواع الدفع

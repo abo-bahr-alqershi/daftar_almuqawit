@@ -146,9 +146,9 @@ class PaymentHistory extends StatelessWidget {
     switch (method) {
       case 'نقدي':
         return Icons.money;
-      case 'شيك':
+      case 'حوالة':
         return Icons.receipt;
-      case 'تحويل بنكي':
+      case 'محفظة':
         return Icons.account_balance;
       default:
         return Icons.payment;

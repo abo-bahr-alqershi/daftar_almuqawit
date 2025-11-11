@@ -192,7 +192,7 @@ class Formatters {
       case AppConstants.paymentCredit:
         return 'آجل';
       case AppConstants.paymentTransfer:
-        return 'تحويل بنكي';
+        return 'محفظة';
       default:
         return status;
     }

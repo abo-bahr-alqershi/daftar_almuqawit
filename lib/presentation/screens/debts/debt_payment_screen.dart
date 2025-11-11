@@ -222,8 +222,8 @@ class _DebtPaymentScreenState extends State<DebtPaymentScreen> {
                   runSpacing: 12,
                   children: [
                     _buildPaymentMethodChip('نقدي', Icons.money, AppColors.success),
-                    _buildPaymentMethodChip('شيك', Icons.receipt, AppColors.info),
-                    _buildPaymentMethodChip('تحويل بنكي', Icons.account_balance, AppColors.primary),
+                    _buildPaymentMethodChip('حوالة', Icons.receipt, AppColors.info),
+                    _buildPaymentMethodChip('محفظة', Icons.account_balance, AppColors.primary),
                   ],
                 ),
                 const SizedBox(height: 24),

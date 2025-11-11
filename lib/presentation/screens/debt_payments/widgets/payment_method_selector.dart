@@ -3,7 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 /// ويدجت اختيار طريقة الدفع
-/// يعرض خيارات طرق الدفع المختلفة (نقد، تحويل، شيك)
+/// يعرض خيارات طرق الدفع المختلفة (نقد، تحويل، حوالة)
 class PaymentMethodSelector extends StatelessWidget {
   /// طريقة الدفع المختارة حالياً
   final String selectedMethod;
@@ -31,13 +31,13 @@ class PaymentMethodSelector extends StatelessWidget {
     ),
     PaymentMethodOption(
       value: 'تحويل',
-      label: 'تحويل بنكي',
+      label: 'محفظة',
       icon: Icons.account_balance,
       color: AppColors.info,
     ),
     PaymentMethodOption(
-      value: 'شيك',
-      label: 'شيك',
+      value: 'حوالة',
+      label: 'حوالة',
       icon: Icons.receipt_long,
       color: AppColors.warning,
     ),
