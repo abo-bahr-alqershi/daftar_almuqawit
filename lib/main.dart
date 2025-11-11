@@ -10,7 +10,7 @@ import 'data/database/database_helper.dart';
 import 'firebase_options.dart';
 
 /// نقطة الدخول الرئيسية للتطبيق
-/// 
+///
 /// يقوم بتهيئة:
 /// - Firebase للخدمات السحابية
 /// - قاعدة البيانات المحلية SQLite
@@ -36,10 +36,12 @@ Future<void> main() async {
         DeviceOrientation.portraitDown,
       ]);
 
-      // تهيئة Firebase
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
+      // تهيئة Firebase (مع التحقق من عدم التهيئة المسبقة)
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
 
       // تهيئة قاعدة البيانات المحلية
       await DatabaseHelper.init();

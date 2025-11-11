@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../app.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_dimensions.dart';
@@ -472,7 +473,14 @@ class _BackupScreenState extends State<BackupScreen> {
 
       // إعادة تشغيل التطبيق
       await Future.delayed(const Duration(seconds: 3));
-      // يمكن إضافة كود إعادة التشغيل هنا
+
+      if (!mounted) return;
+
+      // إعادة تشغيل التطبيق من الصفر
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const App()),
+        (route) => false,
+      );
     } catch (e) {
       _logger.error('فشلت الاستعادة من Google Drive', error: e);
 

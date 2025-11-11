@@ -16,26 +16,53 @@ import '../../../data/datasources/remote/journal_entry_details_remote_datasource
 import '../../../data/datasources/remote/daily_stats_remote_datasource.dart';
 import '../../../data/datasources/remote/backup_remote_datasource.dart';
 import '../../../data/datasources/remote/sync_remote_datasource.dart';
-import '../../services/firebase/firestore_service.dart';
 
 class FirebaseModule {
   static Future<void> register(GetIt sl) async {
-    // Ensure Firestore is available
-    sl<FirestoreService>();
+    // Firebase is already initialized in main.dart
+    // FirestoreService will be accessed via lazy singleton when needed
 
-    sl.registerLazySingleton<SuppliersRemoteDataSource>(() => SuppliersRemoteDataSource(sl()));
-    sl.registerLazySingleton<CustomersRemoteDataSource>(() => CustomersRemoteDataSource(sl()));
-    sl.registerLazySingleton<QatTypesRemoteDataSource>(() => QatTypesRemoteDataSource(sl()));
-    sl.registerLazySingleton<PurchasesRemoteDataSource>(() => PurchasesRemoteDataSource(sl()));
-    sl.registerLazySingleton<SalesRemoteDataSource>(() => SalesRemoteDataSource(sl()));
-    sl.registerLazySingleton<DebtsRemoteDataSource>(() => DebtsRemoteDataSource(sl()));
-    sl.registerLazySingleton<DebtPaymentsRemoteDataSource>(() => DebtPaymentsRemoteDataSource(sl()));
-    sl.registerLazySingleton<ExpensesRemoteDataSource>(() => ExpensesRemoteDataSource(sl()));
-    sl.registerLazySingleton<AccountsRemoteDataSource>(() => AccountsRemoteDataSource(sl()));
-    sl.registerLazySingleton<JournalEntriesRemoteDataSource>(() => JournalEntriesRemoteDataSource(sl()));
-    sl.registerLazySingleton<JournalEntryDetailsRemoteDataSource>(() => JournalEntryDetailsRemoteDataSource(sl()));
-    sl.registerLazySingleton<DailyStatsRemoteDataSource>(() => DailyStatsRemoteDataSource(sl()));
-    sl.registerLazySingleton<BackupRemoteDataSource>(() => BackupRemoteDataSource(sl()));
-    sl.registerLazySingleton<SyncRemoteDataSource>(() => SyncRemoteDataSource(sl()));
+    sl.registerLazySingleton<SuppliersRemoteDataSource>(
+      () => SuppliersRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<CustomersRemoteDataSource>(
+      () => CustomersRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<QatTypesRemoteDataSource>(
+      () => QatTypesRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<PurchasesRemoteDataSource>(
+      () => PurchasesRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<SalesRemoteDataSource>(
+      () => SalesRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<DebtsRemoteDataSource>(
+      () => DebtsRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<DebtPaymentsRemoteDataSource>(
+      () => DebtPaymentsRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<ExpensesRemoteDataSource>(
+      () => ExpensesRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<AccountsRemoteDataSource>(
+      () => AccountsRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<JournalEntriesRemoteDataSource>(
+      () => JournalEntriesRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<JournalEntryDetailsRemoteDataSource>(
+      () => JournalEntryDetailsRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<DailyStatsRemoteDataSource>(
+      () => DailyStatsRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<BackupRemoteDataSource>(
+      () => BackupRemoteDataSource(sl()),
+    );
+    sl.registerLazySingleton<SyncRemoteDataSource>(
+      () => SyncRemoteDataSource(sl()),
+    );
   }
 }
