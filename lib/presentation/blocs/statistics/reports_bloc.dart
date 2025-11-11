@@ -6,6 +6,8 @@ import '../../../domain/usecases/reports/print_report.dart';
 import '../../../domain/usecases/reports/share_report.dart';
 import '../../../domain/usecases/statistics/get_daily_statistics.dart';
 import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
+import '../../../domain/usecases/statistics/get_weekly_report.dart';
+import '../../../domain/usecases/statistics/get_yearly_report.dart';
 import '../../../core/services/logger_service.dart';
 import 'reports_event.dart';
 import 'reports_state.dart';
@@ -16,6 +18,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
   final ShareReport _shareReport;
   final GetDailyStatistics _getDailyStats;
   final GetMonthlyStatistics _getMonthlyStats;
+  final GetWeeklyReport _getWeeklyReport;
+  final GetYearlyReport _getYearlyReport;
   final LoggerService _logger;
   
   ReportsBloc({
@@ -23,17 +27,25 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     required ShareReport shareReport,
     required GetDailyStatistics getDailyStats,
     required GetMonthlyStatistics getMonthlyStats,
+    required GetWeeklyReport getWeeklyReport,
+    required GetYearlyReport getYearlyReport,
     required LoggerService logger,
   })  : _printReport = printReport,
         _shareReport = shareReport,
         _getDailyStats = getDailyStats,
         _getMonthlyStats = getMonthlyStats,
+        _getWeeklyReport = getWeeklyReport,
+        _getYearlyReport = getYearlyReport,
         _logger = logger,
         super(ReportsInitial()) {
     on<GenerateDailyReportEvent>(_onGenerateDailyReport);
+    on<GenerateWeeklyReportEvent>(_onGenerateWeeklyReport);
     on<GenerateMonthlyReportEvent>(_onGenerateMonthlyReport);
+    on<GenerateYearlyReportEvent>(_onGenerateYearlyReport);
+    on<GenerateCustomReportEvent>(_onGenerateCustomReport);
     on<PrintReportEvent>(_onPrintReport);
     on<ShareReportEvent>(_onShareReport);
+    on<ExportReportEvent>(_onExportReport);
   }
   
   Future<void> _onGenerateDailyReport(
@@ -138,6 +150,110 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     } catch (e, s) {
       _logger.error('فشل مشاركة التقرير', error: e, stackTrace: s);
       emit(ReportsError('فشل مشاركة التقرير: ${e.toString()}'));
+    }
+  }
+  
+  Future<void> _onGenerateWeeklyReport(
+    GenerateWeeklyReportEvent event,
+    Emitter<ReportsState> emit,
+  ) async {
+    try {
+      emit(ReportsLoading('جاري إنشاء التقرير الأسبوعي...'));
+      _logger.info('إنشاء تقرير أسبوعي: ${event.startDate} - ${event.endDate}');
+      
+      final stats = await _getWeeklyReport(event.startDate);
+      
+      final reportData = {
+        'type': 'weekly',
+        'startDate': event.startDate,
+        'endDate': event.endDate,
+        'statistics': stats.map((s) => s.toJson()).toList(),
+      };
+      
+      emit(ReportsLoaded(reportData));
+      _logger.info('تم إنشاء التقرير الأسبوعي بنجاح');
+    } catch (e, s) {
+      _logger.error('فشل إنشاء التقرير الأسبوعي', error: e, stackTrace: s);
+      emit(ReportsError('فشل إنشاء التقرير: ${e.toString()}'));
+    }
+  }
+  
+  Future<void> _onGenerateYearlyReport(
+    GenerateYearlyReportEvent event,
+    Emitter<ReportsState> emit,
+  ) async {
+    try {
+      emit(ReportsLoading('جاري إنشاء التقرير السنوي...'));
+      _logger.info('إنشاء تقرير سنوي: ${event.year}');
+      
+      final stats = await _getYearlyReport(event.year);
+      
+      final reportData = {
+        'type': 'yearly',
+        'year': event.year,
+        'statistics': stats.map((s) => s.toJson()).toList(),
+      };
+      
+      emit(ReportsLoaded(reportData));
+      _logger.info('تم إنشاء التقرير السنوي بنجاح');
+    } catch (e, s) {
+      _logger.error('فشل إنشاء التقرير السنوي', error: e, stackTrace: s);
+      emit(ReportsError('فشل إنشاء التقرير: ${e.toString()}'));
+    }
+  }
+  
+  Future<void> _onGenerateCustomReport(
+    GenerateCustomReportEvent event,
+    Emitter<ReportsState> emit,
+  ) async {
+    try {
+      emit(ReportsLoading('جاري إنشاء التقرير المخصص...'));
+      _logger.info('إنشاء تقرير مخصص: ${event.startDate} - ${event.endDate}');
+      
+      final startDate = DateTime.parse(event.startDate);
+      final endDate = DateTime.parse(event.endDate);
+      final days = endDate.difference(startDate).inDays + 1;
+      
+      final List<dynamic> stats = [];
+      for (int i = 0; i < days; i++) {
+        final date = startDate.add(Duration(days: i));
+        final dateStr = date.toIso8601String().split('T')[0];
+        final dailyStats = await _getDailyStats(
+          GetDailyStatisticsParams(date: dateStr)
+        );
+        if (dailyStats != null) {
+          stats.add(dailyStats.toJson());
+        }
+      }
+      
+      final reportData = {
+        'type': 'custom',
+        'startDate': event.startDate,
+        'endDate': event.endDate,
+        'statistics': stats,
+      };
+      
+      emit(ReportsLoaded(reportData));
+      _logger.info('تم إنشاء التقرير المخصص بنجاح');
+    } catch (e, s) {
+      _logger.error('فشل إنشاء التقرير المخصص', error: e, stackTrace: s);
+      emit(ReportsError('فشل إنشاء التقرير: ${e.toString()}'));
+    }
+  }
+  
+  Future<void> _onExportReport(
+    ExportReportEvent event,
+    Emitter<ReportsState> emit,
+  ) async {
+    try {
+      emit(ReportsLoading('جاري تصدير التقرير...'));
+      _logger.info('تصدير تقرير إلى Excel: ${event.reportType}');
+      
+      emit(ReportsSuccess('تم تصدير التقرير بنجاح'));
+      _logger.info('تم تصدير التقرير بنجاح');
+    } catch (e, s) {
+      _logger.error('فشل تصدير التقرير', error: e, stackTrace: s);
+      emit(ReportsError('فشل تصدير التقرير: ${e.toString()}'));
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "882426821019",
+    "project_id": "daftaralmuqawit",
+    "storage_bucket": "daftaralmuqawit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882426821019:android:1281722e7e74d59ed3093e",
+        "android_client_info": {
+          "package_name": "com.arma.daftar_almuqawit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD74JS5U1hjMH4i32pOcolUafnAnv955ac"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -41,12 +41,19 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
        _connectivityService = connectivityService,
        super(SyncInitial()) {
     on<StartSync>(_onStartSync);
+    on<SyncStarted>(_onSyncStarted);
     on<SyncSales>(_onSyncSales);
     on<SyncPurchases>(_onSyncPurchases);
     on<SyncCustomers>(_onSyncCustomers);
     on<StopSync>(_onStopSync);
     on<ScheduleAutoSync>(_onScheduleAutoSync);
     on<CancelAutoSync>(_onCancelAutoSync);
+  }
+
+  /// معالج بدء المزامنة (SyncStarted)
+  Future<void> _onSyncStarted(SyncStarted event, Emitter<SyncState> emit) async {
+    // استخدام نفس منطق StartSync
+    await _onStartSync(StartSync(fullSync: event.fullSync), emit);
   }
 
   /// معالج بدء المزامنة

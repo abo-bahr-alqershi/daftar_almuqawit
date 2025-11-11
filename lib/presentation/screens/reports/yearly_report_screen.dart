@@ -1,6 +1,7 @@
 /// شاشة التقرير السنوي
 /// تعرض تقرير مفصل عن سنة محددة
 
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -41,7 +42,7 @@ class _YearlyReportScreenState extends State<YearlyReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -790,7 +791,7 @@ class _YearPickerDialogState extends State<_YearPickerDialog> {
     );
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: AlertDialog(
         title: const Text('اختر السنة'),
         content: SizedBox(

@@ -1,6 +1,7 @@
 /// شاشة التقرير الأسبوعي
 /// تعرض تقرير مفصل عن أسبوع محدد
 
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -62,7 +63,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(

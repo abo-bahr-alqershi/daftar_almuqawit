@@ -27,6 +27,7 @@ import '../../../domain/usecases/reports/share_report.dart';
 import '../../../domain/usecases/sales/get_today_sales.dart';
 import '../../../domain/usecases/statistics/get_daily_statistics.dart';
 import '../../../domain/usecases/statistics/get_monthly_statistics.dart';
+import '../../../domain/usecases/statistics/get_weekly_report.dart';
 import '../../../domain/usecases/statistics/get_yearly_report.dart';
 import '../../../domain/usecases/sync/check_sync_status.dart';
 import '../../../domain/usecases/sync/queue_offline_operation.dart';
@@ -58,6 +59,7 @@ import '../../../presentation/blocs/statistics/reports_bloc.dart';
 import '../../../presentation/blocs/statistics/statistics_bloc.dart';
 import '../../../presentation/blocs/suppliers/supplier_form_bloc.dart';
 import '../../../presentation/blocs/suppliers/suppliers_bloc.dart';
+import '../../../presentation/blocs/qat_types/qat_types_bloc.dart';
 import '../../../presentation/blocs/sync/sync_bloc.dart';
 import '../../services/local/shared_preferences_service.dart';
 import '../../services/logger_service.dart';
@@ -123,6 +125,14 @@ class BlocModule {
     ));
     
     sl.registerFactory<CustomerSearchBloc>(CustomerSearchBloc.new);
+    
+    sl.registerFactory<QatTypesBloc>(() => QatTypesBloc(
+      getQatTypes: sl(),
+      getQatTypeById: sl(),
+      addQatType: sl(),
+      updateQatType: sl(),
+      deleteQatType: sl(),
+    ));
     
     sl.registerFactory<SalesBloc>(() => SalesBloc(
       getSales: sl(),
@@ -204,6 +214,8 @@ class BlocModule {
       shareReport: sl<ShareReport>(),
       getDailyStats: sl<GetDailyStatistics>(),
       getMonthlyStats: sl<GetMonthlyStatistics>(),
+      getWeeklyReport: sl<GetWeeklyReport>(),
+      getYearlyReport: sl<GetYearlyReport>(),
       logger: sl<LoggerService>(),
     ));
     

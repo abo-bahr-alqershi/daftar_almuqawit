@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -50,7 +51,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
           title: Text('الديون', style: AppTextStyles.title),
@@ -370,7 +371,7 @@ class DebtSearchDelegate extends SearchDelegate<dynamic> {
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: results.length,
@@ -409,7 +410,7 @@ class DebtSearchDelegate extends SearchDelegate<dynamic> {
     }).toList();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: ListView.builder(
         itemCount: suggestions.length > 5 ? 5 : suggestions.length,
         itemBuilder: (context, index) {

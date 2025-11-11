@@ -33,12 +33,28 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
     required this.cancelPurchase,
   }) : super(PurchasesInitial()) {
     on<LoadPurchases>(_onLoadPurchases);
+    on<LoadPurchaseById>(_onLoadPurchaseById);
     on<LoadTodayPurchases>(_onLoadTodayPurchases);
     on<LoadPurchasesBySupplier>(_onLoadPurchasesBySupplier);
     on<AddPurchaseEvent>(_onAddPurchase);
     on<UpdatePurchaseEvent>(_onUpdatePurchase);
     on<DeletePurchaseEvent>(_onDeletePurchase);
     on<CancelPurchaseEvent>(_onCancelPurchase);
+  }
+
+  /// معالج تحميل مشترى معين بالمعرف
+  Future<void> _onLoadPurchaseById(LoadPurchaseById event, Emitter<PurchasesState> emit) async {
+    try {
+      emit(PurchasesLoading());
+      final purchases = await getPurchases(NoParams());
+      final purchase = purchases.firstWhere(
+        (p) => p.id.toString() == event.purchaseId,
+        orElse: () => throw Exception('Purchase not found'),
+      );
+      emit(PurchaseLoaded(purchase));
+    } catch (e) {
+      emit(PurchasesError('فشل تحميل تفاصيل المشترى: ${e.toString()}'));
+    }
   }
 
   /// معالج تحميل جميع المشتريات

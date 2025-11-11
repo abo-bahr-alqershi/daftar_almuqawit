@@ -5,9 +5,14 @@ import '../../../domain/entities/sale.dart';
 import '../../blocs/sales/sales_bloc.dart';
 import '../../blocs/sales/sales_event.dart';
 import '../../blocs/sales/sales_state.dart';
-import '../../widgets/common/app_button.dart';
-import '../../widgets/common/app_text_field.dart';
-import '../../widgets/common/app_date_picker.dart';
+import '../../blocs/customers/customers_bloc.dart';
+import '../../blocs/customers/customers_event.dart';
+import '../../blocs/customers/customers_state.dart';
+import '../../blocs/qat_types/qat_types_bloc.dart';
+import '../../blocs/qat_types/qat_types_event.dart';
+import '../../blocs/qat_types/qat_types_state.dart';
+import '../../widgets/common/loading_widget.dart';
+import 'widgets/sale_form.dart';
 
 /// شاشة إضافة عملية بيع
 class AddSaleScreen extends StatefulWidget {
@@ -18,14 +23,13 @@ class AddSaleScreen extends StatefulWidget {
 }
 
 class _AddSaleScreenState extends State<AddSaleScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _quantityController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _notesController = TextEditingController();
-  DateTime? _selectedDate;
-  String? _selectedCustomer;
-  String? _selectedQatType;
-  String _paymentMethod = 'نقدي';
+  @override
+  void initState() {
+    super.initState();
+    // تحميل البيانات المطلوبة
+    context.read<CustomersBloc>().add(LoadCustomers());
+    context.read<QatTypesBloc>().add(LoadQatTypes());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,66 +41,54 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
       body: BlocConsumer<SalesBloc, SalesState>(
         listener: (context, state) {
           if (state is SalesSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('تمت إضافة البيع بنجاح')),
+            );
             Navigator.of(context).pop();
+          } else if (state is SalesError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
         },
-        builder: (context, state) {
-          return Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                AppDatePicker(
-                  label: 'تاريخ البيع',
-                  selectedDate: _selectedDate,
-                  onDateSelected: (date) => setState(() => _selectedDate = date),
-                ),
-                const SizedBox(height: 16),
-                AppTextField.number(
-                  controller: _quantityController,
-                  label: 'الكمية',
-                  validator: (val) => val?.isEmpty == true ? 'مطلوب' : null,
-                ),
-                const SizedBox(height: 16),
-                AppTextField.currency(
-                  controller: _priceController,
-                  label: 'السعر',
-                  validator: (val) => val?.isEmpty == true ? 'مطلوب' : null,
-                ),
-                const SizedBox(height: 16),
-                AppTextField.multiline(
-                  controller: _notesController,
-                  label: 'ملاحظات',
-                  hint: 'أضف أي ملاحظات',
-                ),
-                const SizedBox(height: 24),
-                AppButton.primary(
-                  text: 'حفظ',
-                  fullWidth: true,
-                  isLoading: state is SalesLoading,
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      final quantity = double.parse(_quantityController.text);
-                      final price = double.parse(_priceController.text);
-                      
-                      context.read<SalesBloc>().add(AddSaleEvent(
-                        Sale(
-                          date: (_selectedDate ?? DateTime.now()).toString().split(' ')[0],
-                          time: TimeOfDay.now().format(context),
-                          customerId: _selectedCustomer != null ? int.tryParse(_selectedCustomer!) : null,
-                          qatTypeId: _selectedQatType != null ? int.tryParse(_selectedQatType!) : null,
-                          quantity: quantity,
-                          unitPrice: price,
-                          totalAmount: quantity * price,
-                          paymentMethod: _paymentMethod,
-                          notes: _notesController.text,
-                        ),
-                      ));
-                    }
-                  },
-                ),
-              ],
-            ),
+        builder: (context, salesState) {
+          if (salesState is SalesLoading) {
+            return const LoadingWidget();
+          }
+
+          return BlocBuilder<CustomersBloc, CustomersState>(
+            builder: (context, customersState) {
+              return BlocBuilder<QatTypesBloc, QatTypesState>(
+                builder: (context, qatTypesState) {
+                  if (customersState is CustomersLoaded && 
+                      qatTypesState is QatTypesLoaded) {
+                    return SaleForm(
+                      customers: customersState.customers,
+                      qatTypes: qatTypesState.qatTypes,
+                      onSubmit: (data) {
+                        context.read<SalesBloc>().add(AddSaleEvent(
+                          Sale(
+                            date: data['date'],
+                            time: data['time'],
+                            customerId: data['customerId'],
+                            qatTypeId: data['qatTypeId'],
+                            quantity: data['quantity'],
+                            unitPrice: data['unitPrice'],
+                            totalAmount: data['totalAmount'],
+                            discount: data['discount'],
+                            paymentMethod: data['paymentMethod'],
+                            notes: data['notes'],
+                          ),
+                        ));
+                      },
+                      onCancel: () => Navigator.of(context).pop(),
+                    );
+                  }
+
+                  return const LoadingWidget();
+                },
+              );
+            },
           );
         },
       ),

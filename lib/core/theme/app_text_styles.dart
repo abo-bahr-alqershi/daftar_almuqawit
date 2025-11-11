@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// أنماط النصوص المستخدمة في التطبيق
@@ -9,13 +8,14 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  // الخط الأساسي
+  // الخط الأساسي - استخدام الخط الافتراضي للنظام
   static const String _fontFamily = 'Cairo';
 
   // ========== العناوين الرئيسية ==========
 
   /// عنوان كبير جداً (Display)
-  static TextStyle get displayLarge => GoogleFonts.cairo(
+  static TextStyle get displayLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
@@ -24,7 +24,8 @@ class AppTextStyles {
       );
 
   /// عنوان كبير
-  static TextStyle get displayMedium => GoogleFonts.cairo(
+  static TextStyle get displayMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
@@ -32,7 +33,8 @@ class AppTextStyles {
       );
 
   /// عنوان صغير
-  static TextStyle get displaySmall => GoogleFonts.cairo(
+  static TextStyle get displaySmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -42,7 +44,8 @@ class AppTextStyles {
   // ========== العناوين ==========
 
   /// عنوان رئيسي كبير
-  static TextStyle get headlineLarge => GoogleFonts.cairo(
+  static TextStyle get headlineLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 22,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
@@ -50,7 +53,8 @@ class AppTextStyles {
       );
 
   /// عنوان رئيسي متوسط
-  static TextStyle get headlineMedium => GoogleFonts.cairo(
+  static TextStyle get headlineMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -58,7 +62,8 @@ class AppTextStyles {
       );
 
   /// عنوان رئيسي صغير
-  static TextStyle get headlineSmall => GoogleFonts.cairo(
+  static TextStyle get headlineSmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -68,7 +73,8 @@ class AppTextStyles {
   // ========== العناوين الفرعية ==========
 
   /// عنوان كبير
-  static TextStyle get titleLarge => GoogleFonts.cairo(
+  static TextStyle get titleLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -76,7 +82,8 @@ class AppTextStyles {
       );
 
   /// عنوان متوسط
-  static TextStyle get titleMedium => GoogleFonts.cairo(
+  static TextStyle get titleMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -84,7 +91,8 @@ class AppTextStyles {
       );
 
   /// عنوان صغير
-  static TextStyle get titleSmall => GoogleFonts.cairo(
+  static TextStyle get titleSmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -94,7 +102,8 @@ class AppTextStyles {
   // ========== النصوص الأساسية ==========
 
   /// نص كبير
-  static TextStyle get bodyLarge => GoogleFonts.cairo(
+  static TextStyle get bodyLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
@@ -102,7 +111,8 @@ class AppTextStyles {
       );
 
   /// نص متوسط
-  static TextStyle get bodyMedium => GoogleFonts.cairo(
+  static TextStyle get bodyMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
@@ -110,7 +120,8 @@ class AppTextStyles {
       );
 
   /// نص صغير
-  static TextStyle get bodySmall => GoogleFonts.cairo(
+  static TextStyle get bodySmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
@@ -120,7 +131,8 @@ class AppTextStyles {
   // ========== التسميات التوضيحية ==========
 
   /// تسمية كبيرة
-  static TextStyle get labelLarge => GoogleFonts.cairo(
+  static TextStyle get labelLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -129,7 +141,8 @@ class AppTextStyles {
       );
 
   /// تسمية متوسطة
-  static TextStyle get labelMedium => GoogleFonts.cairo(
+  static TextStyle get labelMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -138,7 +151,8 @@ class AppTextStyles {
       );
 
   /// تسمية صغيرة
-  static TextStyle get labelSmall => GoogleFonts.cairo(
+  static TextStyle get labelSmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 10,
         fontWeight: FontWeight.w600,
         color: AppColors.textSecondary,
@@ -149,7 +163,8 @@ class AppTextStyles {
   // ========== أنماط خاصة ==========
 
   /// نص الأزرار
-  static TextStyle get button => GoogleFonts.cairo(
+  static TextStyle get button => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textOnDark,
@@ -158,7 +173,8 @@ class AppTextStyles {
       );
 
   /// نص الأزرار الصغيرة
-  static TextStyle get buttonSmall => GoogleFonts.cairo(
+  static TextStyle get buttonSmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textOnDark,
@@ -167,7 +183,8 @@ class AppTextStyles {
       );
 
   /// نص حقول الإدخال
-  static TextStyle get input => GoogleFonts.cairo(
+  static TextStyle get input => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
@@ -175,7 +192,8 @@ class AppTextStyles {
       );
 
   /// نص التلميحات في حقول الإدخال
-  static TextStyle get inputHint => GoogleFonts.cairo(
+  static TextStyle get inputHint => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: AppColors.textTertiary,
@@ -183,7 +201,8 @@ class AppTextStyles {
       );
 
   /// نص رسائل الخطأ
-  static TextStyle get error => GoogleFonts.cairo(
+  static TextStyle get error => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: AppColors.danger,
@@ -191,7 +210,8 @@ class AppTextStyles {
       );
 
   /// نص التوضيحات
-  static TextStyle get caption => GoogleFonts.cairo(
+  static TextStyle get caption => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: AppColors.textTertiary,
@@ -199,7 +219,8 @@ class AppTextStyles {
       );
 
   /// نص صغير جداً
-  static TextStyle get overline => GoogleFonts.cairo(
+  static TextStyle get overline => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 10,
         fontWeight: FontWeight.w500,
         color: AppColors.textTertiary,
@@ -210,7 +231,8 @@ class AppTextStyles {
   // ========== أنماط الأرقام ==========
 
   /// أرقام كبيرة (للإحصائيات)
-  static TextStyle get numberLarge => GoogleFonts.cairo(
+  static TextStyle get numberLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
@@ -219,7 +241,8 @@ class AppTextStyles {
       );
 
   /// أرقام متوسطة
-  static TextStyle get numberMedium => GoogleFonts.cairo(
+  static TextStyle get numberMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -228,7 +251,8 @@ class AppTextStyles {
       );
 
   /// أرقام صغيرة
-  static TextStyle get numberSmall => GoogleFonts.cairo(
+  static TextStyle get numberSmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -239,7 +263,8 @@ class AppTextStyles {
   // ========== أنماط المبالغ المالية ==========
 
   /// مبلغ مالي كبير
-  static TextStyle get currencyLarge => GoogleFonts.cairo(
+  static TextStyle get currencyLarge => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: AppColors.primary,
@@ -248,7 +273,8 @@ class AppTextStyles {
       );
 
   /// مبلغ مالي متوسط
-  static TextStyle get currencyMedium => GoogleFonts.cairo(
+  static TextStyle get currencyMedium => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: AppColors.primary,
@@ -257,7 +283,8 @@ class AppTextStyles {
       );
 
   /// مبلغ مالي صغير
-  static TextStyle get currencySmall => GoogleFonts.cairo(
+  static TextStyle get currencySmall => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -268,7 +295,8 @@ class AppTextStyles {
   // ========== أنماط الحالات ==========
 
   /// نص النجاح
-  static TextStyle get success => GoogleFonts.cairo(
+  static TextStyle get success => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.success,
@@ -276,7 +304,8 @@ class AppTextStyles {
       );
 
   /// نص التحذير
-  static TextStyle get warning => GoogleFonts.cairo(
+  static TextStyle get warning => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.warning,
@@ -284,7 +313,8 @@ class AppTextStyles {
       );
 
   /// نص الخطر
-  static TextStyle get danger => GoogleFonts.cairo(
+  static TextStyle get danger => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.danger,
@@ -292,7 +322,8 @@ class AppTextStyles {
       );
 
   /// نص المعلومات
-  static TextStyle get info => GoogleFonts.cairo(
+  static TextStyle get info => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.info,
@@ -302,7 +333,8 @@ class AppTextStyles {
   // ========== أنماط خاصة بالتطبيق ==========
 
   /// نص الدين
-  static TextStyle get debt => GoogleFonts.cairo(
+  static TextStyle get debt => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: AppColors.debt,
@@ -311,7 +343,8 @@ class AppTextStyles {
       );
 
   /// نص الربح
-  static TextStyle get profit => GoogleFonts.cairo(
+  static TextStyle get profit => const TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: AppColors.profit,

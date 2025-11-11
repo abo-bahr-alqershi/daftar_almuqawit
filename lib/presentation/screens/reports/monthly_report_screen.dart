@@ -1,6 +1,7 @@
 /// شاشة التقرير الشهري
 /// تعرض تقرير مفصل عن شهر محدد
 
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -43,7 +44,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -706,7 +707,7 @@ class _MonthPickerDialogState extends State<_MonthPickerDialog> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: AlertDialog(
         title: const Text('اختر الشهر'),
         content: Column(

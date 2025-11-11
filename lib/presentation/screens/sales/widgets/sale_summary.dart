@@ -1,154 +1,196 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/utils/formatters.dart';
 
-/// ملخص عملية البيع
+/// ويدجت ملخص المبيعات
 /// 
-/// يعرض ملخص تفاصيل عملية البيع قبل التأكيد
+/// يعرض ملخص إحصائي للمبيعات المعروضة في القائمة
 class SaleSummary extends StatelessWidget {
-  final String? qatTypeName;
-  final double quantity;
-  final double pricePerUnit;
-  final double? discount;
-  final String paymentMethod;
-  final String? customerName;
   final double totalAmount;
+  final double totalProfit;
+  final double totalPaid;
+  final double totalRemaining;
+  final int salesCount;
 
   const SaleSummary({
     super.key,
-    this.qatTypeName,
-    required this.quantity,
-    required this.pricePerUnit,
-    this.discount,
-    required this.paymentMethod,
-    this.customerName,
     required this.totalAmount,
+    required this.totalProfit,
+    required this.totalPaid,
+    required this.totalRemaining,
+    required this.salesCount,
   });
 
   @override
   Widget build(BuildContext context) {
-    final subtotal = quantity * pricePerUnit;
-    final discountAmount = discount ?? 0;
-    final finalTotal = subtotal - discountAmount;
-
     return Container(
+      margin: const EdgeInsets.all(AppDimensions.paddingMedium),
+      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1.5),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary,
+            AppColors.primary.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // العنوان
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(14),
+          // الصف الأول: عدد المبيعات والإجمالي
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.receipt_long,
+                  label: 'عدد المبيعات',
+                  value: salesCount.toString(),
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.paddingMedium),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.monetization_on,
+                  label: 'الإجمالي',
+                  value: Formatters.currency(totalAmount),
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: AppDimensions.paddingMedium),
+          
+          // الصف الثاني: الربح والمدفوع
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.trending_up,
+                  label: 'إجمالي الربح',
+                  value: Formatters.currency(totalProfit),
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.paddingMedium),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.check_circle,
+                  label: 'المدفوع',
+                  value: Formatters.currency(totalPaid),
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          
+          // عرض المتبقي إذا كان هناك مبالغ غير مدفوعة
+          if (totalRemaining > 0) ...[
+            const SizedBox(height: AppDimensions.paddingMedium),
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'المبلغ المتبقي: ',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  Text(
+                    Formatters.currency(totalRemaining),
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.receipt_long,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'ملخص العملية',
-                  style: AppTextStyles.headlineSmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // التفاصيل
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                if (customerName != null)
-                  _buildRow('العميل', customerName!, Icons.person),
-                if (qatTypeName != null)
-                  _buildRow('نوع القات', qatTypeName!, Icons.grass),
-                _buildRow('الكمية', '$quantity كيس', Icons.inventory),
-                _buildRow('السعر', '${pricePerUnit.toStringAsFixed(2)} ريال', Icons.attach_money),
-                
-                const Divider(height: 24),
-                
-                _buildRow('المجموع الفرعي', '${subtotal.toStringAsFixed(2)} ريال', null, isBold: false),
-                
-                if (discountAmount > 0) ...[
-                  _buildRow('الخصم', '- ${discountAmount.toStringAsFixed(2)} ريال', Icons.local_offer, valueColor: AppColors.success),
-                  const Divider(height: 24),
-                ],
-                
-                _buildRow('المجموع الكلي', '${finalTotal.toStringAsFixed(2)} ريال', null, isBold: true, isTotal: true),
-                
-                const Divider(height: 24),
-                
-                _buildRow('طريقة الدفع', paymentMethod, Icons.payment),
-              ],
-            ),
-          ),
+          ],
         ],
       ),
     );
   }
+}
 
-  Widget _buildRow(
-    String label,
-    String value,
-    IconData? icon, {
-    bool isBold = false,
-    bool isTotal = false,
-    Color? valueColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+/// بطاقة إحصائية صغيرة
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
         children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 20,
-              color: AppColors.textSecondary,
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
+          Icon(
+            icon,
+            color: color,
+            size: 28,
           ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: color.withOpacity(0.9),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
           Text(
             value,
-            style: isTotal
-                ? AppTextStyles.headlineMedium.copyWith(
-                    color: valueColor ?? AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  )
-                : AppTextStyles.bodyMedium.copyWith(
-                    color: valueColor ?? AppColors.textPrimary,
-                    fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-                  ),
+            style: AppTextStyles.h3.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

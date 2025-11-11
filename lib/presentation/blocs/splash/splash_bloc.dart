@@ -4,6 +4,7 @@
 import 'package:bloc/bloc.dart';
 import 'splash_event.dart';
 import 'splash_state.dart';
+import '../../navigation/app_router.dart';
 
 /// Bloc شاشة البداية
 class SplashBloc extends Bloc<SplashEvent, SplashState> {
@@ -14,6 +15,10 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   /// معالج بدء شاشة البداية
   Future<void> _onSplashStarted(SplashStarted event, Emitter<SplashState> emit) async {
     await Future.delayed(const Duration(milliseconds: 600));
+    
+    // تعيين حالة المصادقة إلى true للسماح بالوصول إلى الشاشات
+    AppRouter.setAuthenticated(true);
+    
     emit(SplashNavigateToHome());
   }
 }

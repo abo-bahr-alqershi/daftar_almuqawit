@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -5,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
 import '../../blocs/qat_types/qat_types_state.dart';
+import '../../navigation/route_names.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_widget.dart';
 import '../../widgets/common/error_widget.dart' as custom_error;
@@ -57,7 +59,7 @@ class _QatTypesScreenState extends State<QatTypesScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
           title: Text('أنواع القات', style: AppTextStyles.title),
@@ -173,14 +175,14 @@ class _QatTypesScreenState extends State<QatTypesScreen> {
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/qat-type-details',
+                                      RouteNames.qatTypeDetails,
                                       arguments: qatType.id,
                                     );
                                   },
                                   onEdit: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/edit-qat-type',
+                                      RouteNames.editQatType,
                                       arguments: qatType,
                                     );
                                   },
@@ -204,7 +206,7 @@ class _QatTypesScreenState extends State<QatTypesScreen> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            Navigator.pushNamed(context, '/add-qat-type');
+            Navigator.pushNamed(context, RouteNames.addQatType);
           },
           backgroundColor: AppColors.primary,
           icon: const Icon(Icons.add),

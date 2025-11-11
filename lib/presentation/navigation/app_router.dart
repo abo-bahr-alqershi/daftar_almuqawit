@@ -8,8 +8,18 @@ import 'route_names.dart';
 import '../screens/suppliers/suppliers_screen.dart';
 import '../screens/customers/customers_screen.dart';
 import '../screens/qat_types/qat_types_screen.dart';
+import '../screens/qat_types/add_qat_type_screen.dart';
+import '../screens/qat_types/edit_qat_type_screen.dart';
+import '../screens/qat_types/qat_type_details_screen.dart';
 import '../screens/purchases/purchases_screen.dart';
+import '../screens/purchases/add_purchase_screen.dart';
+import '../screens/purchases/edit_purchase_screen.dart';
+import '../screens/purchases/purchase_details_screen.dart';
 import '../screens/sales/sales_screen.dart';
+import '../screens/sales/add_sale_screen.dart';
+import '../screens/sales/quick_sale_screen.dart';
+import '../screens/sales/sale_details_screen.dart';
+import '../screens/sales/today_sales_screen.dart';
 import '../screens/debts/debts_screen.dart';
 import '../screens/debt_payments/debt_payments_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
@@ -50,10 +60,35 @@ class AppRouter {
         return _buildRoute(const CustomersScreen());
       case RouteNames.qatTypes:
         return _buildRoute(const QatTypesScreen());
+      case RouteNames.addQatType:
+        return _buildRoute(const AddQatTypeScreen());
+      case RouteNames.editQatType:
+        final qatType = settings.arguments as dynamic;
+        return _buildRoute(EditQatTypeScreen(qatType: qatType));
+      case RouteNames.qatTypeDetails:
+        final qatTypeId = settings.arguments as int;
+        return _buildRoute(QatTypeDetailsScreen(qatTypeId: qatTypeId));
       case RouteNames.purchases:
         return _buildRoute(const PurchasesScreen());
+      case RouteNames.addPurchase:
+        return _buildRoute(const AddPurchaseScreen());
+      case RouteNames.editPurchase:
+        final purchaseId = settings.arguments as String;
+        return _buildRoute(EditPurchaseScreen(purchaseId: purchaseId));
+      case RouteNames.purchaseDetails:
+        final purchase = settings.arguments as dynamic;
+        return _buildRoute(PurchaseDetailsScreen(purchase: purchase));
       case RouteNames.sales:
         return _buildRoute(const SalesScreen());
+      case RouteNames.addSale:
+        return _buildRoute(const AddSaleScreen());
+      case RouteNames.quickSale:
+        return _buildRoute(const QuickSaleScreen());
+      case RouteNames.saleDetails:
+        final sale = settings.arguments as dynamic;
+        return _buildRoute(SaleDetailsScreen(sale: sale));
+      case RouteNames.todaySales:
+        return _buildRoute(const TodaySalesScreen());
       case RouteNames.debts:
         return _buildRoute(const DebtsScreen());
       case RouteNames.debtPayments:

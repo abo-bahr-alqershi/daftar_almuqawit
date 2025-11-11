@@ -20,12 +20,17 @@ import 'presentation/blocs/sync/sync_bloc.dart';
 import 'presentation/blocs/home/dashboard_bloc.dart';
 import 'presentation/blocs/suppliers/suppliers_bloc.dart';
 import 'presentation/blocs/customers/customers_bloc.dart';
+import 'presentation/blocs/customers/customer_form_bloc.dart';
+import 'presentation/blocs/qat_types/qat_types_bloc.dart';
 import 'presentation/blocs/sales/sales_bloc.dart';
+import 'presentation/blocs/sales/quick_sale/quick_sale_bloc.dart';
 import 'presentation/blocs/purchases/purchases_bloc.dart';
 import 'presentation/blocs/debts/debts_bloc.dart';
 import 'presentation/blocs/expenses/expenses_bloc.dart';
 import 'presentation/blocs/statistics/statistics_bloc.dart';
+import 'presentation/blocs/statistics/reports_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart';
+import 'presentation/blocs/debts/payment_bloc.dart';
 
 /// ملف التطبيق الرئيسي App
 /// يحتوي على التهيئة العامة للتطبيق، السمات، التوجيه، والتعريب.
@@ -51,11 +56,16 @@ class App extends StatelessWidget {
         // Business Blocs
         BlocProvider<SuppliersBloc>(create: (_) => sl<SuppliersBloc>()),
         BlocProvider<CustomersBloc>(create: (_) => sl<CustomersBloc>()),
+        BlocProvider<CustomerFormBloc>(create: (_) => sl<CustomerFormBloc>()),
+        BlocProvider<QatTypesBloc>(create: (_) => sl<QatTypesBloc>()),
         BlocProvider<SalesBloc>(create: (_) => sl<SalesBloc>()),
+        BlocProvider<QuickSaleBloc>(create: (_) => sl<QuickSaleBloc>()),
         BlocProvider<PurchasesBloc>(create: (_) => sl<PurchasesBloc>()),
         BlocProvider<DebtsBloc>(create: (_) => sl<DebtsBloc>()),
+        BlocProvider<PaymentBloc>(create: (_) => sl<PaymentBloc>()),
         BlocProvider<ExpensesBloc>(create: (_) => sl<ExpensesBloc>()),
         BlocProvider<StatisticsBloc>(create: (_) => sl<StatisticsBloc>()),
+        BlocProvider<ReportsBloc>(create: (_) => sl<ReportsBloc>()),
         BlocProvider<SettingsBloc>(create: (_) => sl<SettingsBloc>()),
       ],
       child: BlocBuilder<AppSettingsBloc, AppSettingsState>(
@@ -93,9 +103,7 @@ class App extends StatelessWidget {
                 
                 // Routing configuration
                 onGenerateRoute: AppRouter.onGenerateRoute,
-                initialRoute: appState is AppAuthenticated 
-                  ? RouteNames.home 
-                  : RouteNames.splash,
+                initialRoute: RouteNames.splash,
                 
                 // Navigation observers for analytics and debugging
                 navigatorObservers: [

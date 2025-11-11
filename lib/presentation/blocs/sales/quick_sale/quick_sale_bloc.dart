@@ -17,6 +17,7 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
     on<SelectPaymentMethod>(_onSelectPaymentMethod);
     on<SetPaidAmount>(_onSetPaidAmount);
     on<CompleteSale>(_onCompleteSale);
+    on<SubmitQuickSale>(_onSubmitQuickSale);
     on<CancelSale>(_onCancelSale);
   }
 
@@ -125,7 +126,7 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
     try {
       final params = QuickSaleParams(
         customerId: event.customerId,
-        qatTypeId: 1, // سيتم تحديثه لاحقاً
+        qatTypeId: 1,
         quantity: currentState.items.first.quantity,
         unit: 'كيلو',
         unitPrice: currentState.items.first.price,
@@ -135,6 +136,32 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
 
       final saleId = await quickSaleUseCase(params);
       emit(QuickSaleCompleted('تم إتمام البيع بنجاح', saleId));
+    } catch (e) {
+      emit(QuickSaleError('فشل إتمام البيع: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onSubmitQuickSale(SubmitQuickSale event, Emitter<QuickSaleState> emit) async {
+    if (event.quantity <= 0 || event.price <= 0) {
+      emit(QuickSaleError('الكمية والسعر يجب أن يكونا أكبر من صفر'));
+      return;
+    }
+
+    try {
+      emit(QuickSaleLoading());
+      
+      final params = QuickSaleParams(
+        customerId: event.customerId,
+        qatTypeId: 1,
+        quantity: event.quantity,
+        unit: 'كيس',
+        unitPrice: event.price,
+        paidAmount: event.quantity * event.price,
+        notes: null,
+      );
+
+      final saleId = await quickSaleUseCase(params);
+      emit(QuickSaleSuccess('تم إتمام البيع بنجاح', saleId));
     } catch (e) {
       emit(QuickSaleError('فشل إتمام البيع: ${e.toString()}'));
     }

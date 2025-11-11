@@ -27,10 +27,12 @@ class QuickSaleLoading extends QuickSaleState {}
 
 class QuickSaleSuccess extends QuickSaleState {
   final String message;
-  QuickSaleSuccess(this.message);
+  final int? saleId;
+  
+  QuickSaleSuccess(this.message, [this.saleId]);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, saleId];
 }
 
 class QuickSaleInProgress extends QuickSaleState {

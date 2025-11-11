@@ -145,33 +145,44 @@ class CostCalculator extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: isLarge ? 22 : 18,
-              color: color,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: (isLarge
-                      ? AppTextStyles.titleMedium
-                      : AppTextStyles.bodyMedium)
-                  .copyWith(
-                color: AppColors.textSecondary,
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: isLarge ? 22 : 18,
+                color: color,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: (isLarge
+                          ? AppTextStyles.titleMedium
+                          : AppTextStyles.bodyMedium)
+                      .copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
-        Text(
-          value,
-          style: (isLarge
-                  ? AppTextStyles.headlineSmall
-                  : AppTextStyles.titleMedium)
-              .copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: (isLarge
+                    ? AppTextStyles.headlineSmall
+                    : AppTextStyles.titleMedium)
+                .copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
           ),
         ),
       ],

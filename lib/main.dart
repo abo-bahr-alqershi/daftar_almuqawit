@@ -18,25 +18,24 @@ import 'firebase_options.dart';
 /// - معالجة الأخطاء على مستوى التطبيق
 /// - إعدادات النظام الأساسية
 Future<void> main() async {
-  // التأكد من تهيئة Flutter binding
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // تعيين اتجاه الشاشة للوضع العمودي فقط
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
   // تهيئة معالج الأخطاء العام
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    // يمكن إضافة تسجيل الأخطاء هنا لاحقاً
     debugPrint('Flutter Error: ${details.exception}');
   };
 
   // معالجة الأخطاء خارج Flutter framework
-  runZonedGuarded(
+  await runZonedGuarded(
     () async {
+      // التأكد من تهيئة Flutter binding
+      WidgetsFlutterBinding.ensureInitialized();
+
+      // تعيين اتجاه الشاشة للوضع العمودي فقط
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+
       // تهيئة Firebase
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -52,7 +51,6 @@ Future<void> main() async {
       runApp(const App());
     },
     (error, stackTrace) {
-      // يمكن إضافة تسجيل الأخطاء هنا لاحقاً
       debugPrint('Uncaught Error: $error');
       debugPrint('Stack Trace: $stackTrace');
     },

@@ -44,7 +44,6 @@ dependencies:
   
   # Icons & Fonts
   flutter_svg: ^2.0.9
-  google_fonts: ^6.1.0
   font_awesome_flutter: ^10.6.0
   
   # Others
@@ -91,3 +90,10 @@ flutter:
     - assets/icons/
     - assets/sounds/
     - assets/translations/
+  
+  # استخدام خط النظام الافتراضي بدلاً من تحميل خطوط خارجية
+  # يمكن إضافة خطوط محلية هنا إذا لزم الأمر
+  # fonts:
+  #   - family: Cairo
+  #     fonts:
+  #       - asset: assets/fonts/Cairo-Regular.ttf

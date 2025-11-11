@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
@@ -31,7 +32,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: ui.TextDirection.rtl,
         child: AlertDialog(
           title: const Text('تأكيد الحذف'),
           content: Text('هل أنت متأكد من حذف المورد "${widget.supplier.name}"؟'),
@@ -73,7 +74,7 @@ class _SupplierDetailsScreenState extends State<SupplierDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(

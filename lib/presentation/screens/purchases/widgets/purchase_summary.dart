@@ -140,33 +140,44 @@ class PurchaseSummary extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: isLarge ? 24 : 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: (isLarge
-                      ? AppTextStyles.titleMedium
-                      : AppTextStyles.bodyMedium)
-                  .copyWith(
-                color: Colors.white.withOpacity(0.9),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: isLarge ? 24 : 20,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: (isLarge
+                          ? AppTextStyles.titleMedium
+                          : AppTextStyles.bodyMedium)
+                      .copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
-        Text(
-          value,
-          style: (isLarge
-                  ? AppTextStyles.headlineMedium
-                  : AppTextStyles.titleMedium)
-              .copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: (isLarge
+                    ? AppTextStyles.headlineMedium
+                    : AppTextStyles.titleMedium)
+                .copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
           ),
         ),
       ],
