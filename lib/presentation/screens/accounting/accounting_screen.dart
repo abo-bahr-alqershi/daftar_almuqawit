@@ -294,6 +294,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingL),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
@@ -309,20 +310,26 @@ class _AccountingScreenState extends State<AccountingScreen> {
                 ),
               ),
               const SizedBox(height: AppDimensions.spaceM),
-              Text(
-                module.title,
-                style: AppTextStyles.titleSmall,
-                textAlign: TextAlign.center,
+              Flexible(
+                child: Text(
+                  module.title,
+                  style: AppTextStyles.titleSmall,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(height: AppDimensions.spaceS),
-              Text(
-                module.subtitle,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+              Flexible(
+                child: Text(
+                  module.subtitle,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

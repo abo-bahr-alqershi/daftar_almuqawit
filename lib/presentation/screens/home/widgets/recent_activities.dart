@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -117,23 +116,27 @@ class _RecentActivitiesState extends State<RecentActivities>
 
                   return AnimatedBuilder(
                     animation: _itemAnimations[index],
-                    builder: (context, child) => Transform.translate(
-                      offset: Offset(
-                        50 * (1 - _itemAnimations[index].value),
-                        0,
-                      ),
-                      child: Opacity(
-                        opacity: _itemAnimations[index].value,
-                        child: Transform.scale(
-                          scale: 0.95 + (_itemAnimations[index].value * 0.05),
-                          child: _ModernActivityCard(
-                            activity: activity,
-                            onTap: () => _showActivityDetails(activity),
-                            index: index,
+                    builder: (context, child) {
+                      // تأكد من أن قيمة opacity في النطاق الصحيح
+                      final opacityValue = _itemAnimations[index].value.clamp(0.0, 1.0);
+                      final scaleValue = (0.95 + (opacityValue * 0.05)).clamp(0.0, 1.0);
+                      final translateValue = 50 * (1 - opacityValue);
+                      
+                      return Transform.translate(
+                        offset: Offset(translateValue, 0),
+                        child: Opacity(
+                          opacity: opacityValue,
+                          child: Transform.scale(
+                            scale: scaleValue,
+                            child: _ModernActivityCard(
+                              activity: activity,
+                              onTap: () => _showActivityDetails(activity),
+                              index: index,
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   );
                 }),
 
