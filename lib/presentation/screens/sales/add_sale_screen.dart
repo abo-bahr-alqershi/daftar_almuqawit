@@ -73,6 +73,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                             customerId: data['customerId'],
                             qatTypeId: data['qatTypeId'],
                             quantity: data['quantity'],
+                            unit: data['unit'] ?? 'كيس',
                             unitPrice: data['unitPrice'],
                             totalAmount: data['totalAmount'],
                             discount: data['discount'],

@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import 'migration_v1.dart';
 import 'migration_v2.dart';
 import 'migration_v3.dart';
+import 'migration_v4.dart';
 
 class MigrationManager {
   static Future<void> upgrade(Database db, int oldVersion, int newVersion) async {
@@ -15,6 +16,8 @@ class MigrationManager {
         await MigrationV2.apply(db);
       } else if (v == 3) {
         await MigrationV3.apply(db);
+      } else if (v == 4) {
+        await MigrationV4.apply(db);
       }
     }
   }

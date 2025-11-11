@@ -8,7 +8,7 @@ class DatabaseConfig {
   DatabaseConfig._();
 
   static const String dbName = 'daftar_almuqawit.db';
-  static const int dbVersion = 1; // الإصدار الأول يحتوي على كل الجداول الأساسية
+  static const int dbVersion = 4; // الإصدار 4: إضافة دعم الوحدات المتعددة والأسعار الافتراضية
 
   /// مسار ملف قاعدة البيانات
   static Future<String> get databasePath async {

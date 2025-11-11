@@ -12,6 +12,8 @@ class QatTypesTable {
   static const String cDefaultSellPrice = 'default_sell_price';
   static const String cColor = 'color';
   static const String cIcon = 'icon';
+  static const String cAvailableUnits = 'available_units';
+  static const String cUnitPrices = 'unit_prices';
 
   static const String create = '''
 CREATE TABLE $table (
@@ -21,7 +23,9 @@ CREATE TABLE $table (
   $cDefaultBuyPrice REAL,
   $cDefaultSellPrice REAL,
   $cColor TEXT,
-  $cIcon TEXT
+  $cIcon TEXT,
+  $cAvailableUnits TEXT,
+  $cUnitPrices TEXT
 );
 ''';
 }

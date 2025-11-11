@@ -44,8 +44,12 @@ class _SaleFormState extends State<SaleForm> {
   DateTime _selectedDate = DateTime.now();
   String? _selectedCustomerId;
   String? _selectedQatTypeId;
+  String? _selectedUnit;
   String _paymentMethod = 'نقدي';
   double _totalAmount = 0.0;
+  
+  List<String> _availableUnits = [];
+  Map<String, double?> _unitSellPrices = {};
 
   @override
   void initState() {
@@ -65,6 +69,7 @@ class _SaleFormState extends State<SaleForm> {
       _notesController.text = data['notes'] ?? '';
       _selectedCustomerId = data['customerId']?.toString();
       _selectedQatTypeId = data['qatTypeId']?.toString();
+      _selectedUnit = data['unit'] ?? null;
       _paymentMethod = data['paymentMethod'] ?? 'نقدي';
     } else {
       _discountController.text = '0';
@@ -78,6 +83,51 @@ class _SaleFormState extends State<SaleForm> {
     
     setState(() {
       _totalAmount = (quantity * price) - discount;
+    });
+  }
+  
+  void _onQatTypeChanged(String? qatTypeId) {
+    setState(() {
+      _selectedQatTypeId = qatTypeId;
+      _selectedUnit = null;
+      _availableUnits = [];
+      _unitSellPrices = {};
+      _priceController.clear();
+      
+      if (qatTypeId != null) {
+        final selectedQatType = widget.qatTypes.firstWhere(
+          (qt) => qt.id.toString() == qatTypeId,
+          orElse: () => widget.qatTypes.first,
+        );
+        
+        if (selectedQatType.availableUnits != null && selectedQatType.availableUnits!.isNotEmpty) {
+          _availableUnits = List<String>.from(selectedQatType.availableUnits!);
+          
+          if (selectedQatType.unitPrices != null) {
+            for (var unit in _availableUnits) {
+              final unitPrice = selectedQatType.unitPrices![unit];
+              _unitSellPrices[unit] = unitPrice?.sellPrice;
+            }
+          }
+          
+          if (_availableUnits.isNotEmpty) {
+            _selectedUnit = _availableUnits.first;
+            _onUnitChanged(_selectedUnit);
+          }
+        }
+      }
+    });
+  }
+  
+  void _onUnitChanged(String? unit) {
+    setState(() {
+      _selectedUnit = unit;
+      if (unit != null && _unitSellPrices.containsKey(unit)) {
+        final defaultPrice = _unitSellPrices[unit];
+        if (defaultPrice != null && defaultPrice > 0) {
+          _priceController.text = defaultPrice.toString();
+        }
+      }
     });
   }
 
@@ -197,22 +247,78 @@ class _SaleFormState extends State<SaleForm> {
       price: qt.defaultSellPrice,
     )).toList();
 
-    return QatTypeSelector(
-      selectedQatTypeId: _selectedQatTypeId,
-      onChanged: (qatTypeId) {
-        setState(() {
-          _selectedQatTypeId = qatTypeId;
-          // تعيين السعر الافتراضي
-          final qatType = widget.qatTypes.firstWhere(
-            (qt) => qt.id.toString() == qatTypeId,
-            orElse: () => widget.qatTypes.first,
-          );
-          if (qatType.defaultSellPrice != null && _priceController.text.isEmpty) {
-            _priceController.text = qatType.defaultSellPrice.toString();
-          }
-        });
-      },
-      qatTypes: qatTypeOptions,
+    return Column(
+      children: [
+        QatTypeSelector(
+          selectedQatTypeId: _selectedQatTypeId,
+          onChanged: _onQatTypeChanged,
+          qatTypes: qatTypeOptions,
+        ),
+        
+        if (_availableUnits.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.straighten, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'اختر الوحدة',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _availableUnits.map((unit) {
+                    final isSelected = _selectedUnit == unit;
+                    return ChoiceChip(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getUnitIcon(unit),
+                            size: 18,
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(unit),
+                        ],
+                      ),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          _onUnitChanged(unit);
+                        }
+                      },
+                      backgroundColor: AppColors.surface,
+                      selectedColor: AppColors.primary,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -267,26 +373,23 @@ class _SaleFormState extends State<SaleForm> {
           ),
           const SizedBox(height: 20),
           
-          // حقل الكمية - صف كامل
           QuantityInput(
             value: double.tryParse(_quantityController.text) ?? 0.0,
             onChanged: (value) {
               _quantityController.text = value.toString();
             },
-            label: 'الكمية (كيس)',
+            label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
           ),
           
           const SizedBox(height: 16),
           
-          // حقل السعر - صف كامل
           AppTextField.currency(
             controller: _priceController,
-            label: 'السعر للكيس الواحد (ريال)',
+            label: _selectedUnit != null ? 'السعر لكل $_selectedUnit (ريال)' : 'السعر (ريال)',
             hint: 'أدخل السعر',
             validator: (val) => val?.isEmpty == true ? 'مطلوب' : null,
           ),
           
-          // عرض الإجمالي الفوري
           if (_quantityController.text.isNotEmpty && _priceController.text.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -446,6 +549,13 @@ class _SaleFormState extends State<SaleForm> {
         );
         return;
       }
+      
+      if (_selectedUnit == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('الرجاء اختيار الوحدة')),
+        );
+        return;
+      }
 
       final quantity = double.parse(_quantityController.text);
       final price = double.parse(_priceController.text);
@@ -457,12 +567,26 @@ class _SaleFormState extends State<SaleForm> {
         'customerId': _selectedCustomerId != null ? int.tryParse(_selectedCustomerId!) : null,
         'qatTypeId': int.parse(_selectedQatTypeId!),
         'quantity': quantity,
+        'unit': _selectedUnit,
         'unitPrice': price,
         'totalAmount': (quantity * price) - discount,
         'discount': discount,
         'paymentMethod': _paymentMethod,
         'notes': _notesController.text.isEmpty ? null : _notesController.text,
       });
+    }
+  }
+  
+  IconData _getUnitIcon(String unit) {
+    switch (unit) {
+      case 'ربطة':
+        return Icons.shopping_bag;
+      case 'كيس':
+        return Icons.inventory_2;
+      case 'كيلو':
+        return Icons.scale;
+      default:
+        return Icons.category;
     }
   }
 }

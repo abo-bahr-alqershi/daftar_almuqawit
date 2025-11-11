@@ -40,13 +40,16 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
   DateTime? _selectedDate;
   String? _selectedSupplier;
   String? _selectedQatType;
+  String? _selectedUnit;
   String _paymentMethod = 'نقدي';
   bool _isPaid = false;
+  
+  List<String> _availableUnits = [];
+  Map<String, double?> _unitBuyPrices = {};
 
   @override
   void initState() {
     super.initState();
-    // تحميل الموردين وأنواع القات عند فتح الشاشة
     context.read<SuppliersBloc>().add(LoadSuppliers());
     context.read<QatTypesBloc>().add(LoadQatTypes());
   }
@@ -65,6 +68,51 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
     final price = double.tryParse(_priceController.text) ?? 0;
     final total = quantity * price;
     setState(() {});
+  }
+  
+  void _onQatTypeChanged(String? qatTypeId, List<dynamic> qatTypes) {
+    setState(() {
+      _selectedQatType = qatTypeId;
+      _selectedUnit = null;
+      _availableUnits = [];
+      _unitBuyPrices = {};
+      _priceController.clear();
+      
+      if (qatTypeId != null) {
+        final selectedQatType = qatTypes.firstWhere(
+          (qt) => qt.id.toString() == qatTypeId,
+          orElse: () => null,
+        );
+        
+        if (selectedQatType != null && selectedQatType.availableUnits != null) {
+          _availableUnits = List<String>.from(selectedQatType.availableUnits);
+          
+          if (selectedQatType.unitPrices != null) {
+            for (var unit in _availableUnits) {
+              final unitPrice = selectedQatType.unitPrices[unit];
+              _unitBuyPrices[unit] = unitPrice?.buyPrice;
+            }
+          }
+          
+          if (_availableUnits.isNotEmpty) {
+            _selectedUnit = _availableUnits.first;
+            _onUnitChanged(_selectedUnit);
+          }
+        }
+      }
+    });
+  }
+  
+  void _onUnitChanged(String? unit) {
+    setState(() {
+      _selectedUnit = unit;
+      if (unit != null && _unitBuyPrices.containsKey(unit)) {
+        final defaultPrice = _unitBuyPrices[unit];
+        if (defaultPrice != null && defaultPrice > 0) {
+          _priceController.text = defaultPrice.toString();
+        }
+      }
+    });
   }
 
   Future<void> _submitPurchase() async {
@@ -87,6 +135,14 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
       );
       return;
     }
+    
+    if (_selectedUnit == null) {
+      SnackbarWidget.showError(
+        context: context,
+        message: 'يرجى اختيار الوحدة',
+      );
+      return;
+    }
 
     final quantity = double.parse(_quantityController.text);
     final price = double.parse(_priceController.text);
@@ -99,6 +155,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
           supplierId: int.tryParse(_selectedSupplier ?? '0'),
           qatTypeId: int.tryParse(_selectedQatType ?? '0'),
           quantity: quantity,
+          unit: _selectedUnit!,
           unitPrice: price,
           totalAmount: quantity * price,
           paymentMethod: _paymentMethod,
@@ -293,22 +350,45 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                         );
                       }
                       
-                      return AppDropdownField<String>(
-                        label: 'نوع القات',
-                        hint: 'اختر نوع القات',
-                        value: _selectedQatType,
-                        items: qatTypes.map((qatType) {
-                          return DropdownMenuItem<String>(
-                            value: qatType.id.toString(),
-                            child: Text(qatType.name),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedQatType = value;
-                          });
-                        },
-                        prefixIcon: Icons.grass,
+                      return Column(
+                        children: [
+                          AppDropdownField<String>(
+                            label: 'نوع القات',
+                            hint: 'اختر نوع القات',
+                            value: _selectedQatType,
+                            items: qatTypes.map((qatType) {
+                              return DropdownMenuItem<String>(
+                                value: qatType.id.toString(),
+                                child: Text(qatType.name),
+                              );
+                            }).toList(),
+                            onChanged: (value) => _onQatTypeChanged(value, qatTypes),
+                            prefixIcon: Icons.grass,
+                          ),
+                          
+                          if (_availableUnits.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            AppDropdownField<String>(
+                              label: 'الوحدة',
+                              hint: 'اختر الوحدة',
+                              value: _selectedUnit,
+                              items: _availableUnits.map((unit) {
+                                return DropdownMenuItem<String>(
+                                  value: unit,
+                                  child: Row(
+                                    children: [
+                                      Icon(_getUnitIcon(unit), size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(unit),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: _onUnitChanged,
+                              prefixIcon: Icons.straighten,
+                            ),
+                          ],
+                        ],
                       );
                     }
                     
@@ -326,8 +406,8 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
 
                 AppTextField.number(
                   controller: _quantityController,
-                  label: 'الكمية (كيس)',
-                  hint: 'أدخل عدد الأكياس',
+                  label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
+                  hint: 'أدخل الكمية',
                   prefixIcon: Icons.inventory,
                   onChanged: (_) => _calculateTotal(),
                   validator: (value) {
@@ -345,7 +425,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
 
                 AppTextField.currency(
                   controller: _priceController,
-                  label: 'سعر الكيس الواحد',
+                  label: _selectedUnit != null ? 'سعر $_selectedUnit الواحد' : 'السعر',
                   hint: 'أدخل السعر',
                   onChanged: (_) => _calculateTotal(),
                   validator: (value) {
@@ -513,5 +593,18 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
         ),
       ],
     );
+  }
+  
+  IconData _getUnitIcon(String unit) {
+    switch (unit) {
+      case 'ربطة':
+        return Icons.shopping_bag;
+      case 'كيس':
+        return Icons.inventory_2;
+      case 'كيلو':
+        return Icons.scale;
+      default:
+        return Icons.category;
+    }
   }
 }

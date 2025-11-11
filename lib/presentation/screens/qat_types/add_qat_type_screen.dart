@@ -39,6 +39,8 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen> {
           defaultBuyPrice: formData['defaultBuyPrice'],
           defaultSellPrice: formData['defaultSellPrice'],
           icon: formData['icon'],
+          availableUnits: formData['availableUnits'],
+          unitPrices: formData['unitPrices'],
         ),
       ),
     );

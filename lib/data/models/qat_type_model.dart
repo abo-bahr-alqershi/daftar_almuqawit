@@ -1,7 +1,9 @@
 // ignore_for_file: public_member_api_docs
 
+import 'dart:convert';
 import 'base/base_model.dart';
 import '../database/tables/qat_types_table.dart';
+import '../../domain/entities/qat_type.dart';
 
 class QatTypeModel extends BaseModel {
   final int? id;
@@ -11,6 +13,8 @@ class QatTypeModel extends BaseModel {
   final double? defaultSellPrice;
   final String? color;
   final String? icon;
+  final List<String>? availableUnits;
+  final Map<String, UnitPrice>? unitPrices;
 
   const QatTypeModel({
     this.id,
@@ -20,17 +24,38 @@ class QatTypeModel extends BaseModel {
     this.defaultSellPrice,
     this.color,
     this.icon,
+    this.availableUnits,
+    this.unitPrices,
   });
 
-  factory QatTypeModel.fromMap(Map<String, Object?> map) => QatTypeModel(
-        id: map[QatTypesTable.cId] as int?,
-        name: map[QatTypesTable.cName] as String,
-        qualityGrade: map[QatTypesTable.cQualityGrade] as String?,
-        defaultBuyPrice: (map[QatTypesTable.cDefaultBuyPrice] as num?)?.toDouble(),
-        defaultSellPrice: (map[QatTypesTable.cDefaultSellPrice] as num?)?.toDouble(),
-        color: map[QatTypesTable.cColor] as String?,
-        icon: map[QatTypesTable.cIcon] as String?,
+  factory QatTypeModel.fromMap(Map<String, Object?> map) {
+    List<String>? units;
+    if (map[QatTypesTable.cAvailableUnits] != null) {
+      final unitsStr = map[QatTypesTable.cAvailableUnits] as String;
+      units = unitsStr.split(',').where((u) => u.isNotEmpty).toList();
+    }
+
+    Map<String, UnitPrice>? prices;
+    if (map[QatTypesTable.cUnitPrices] != null) {
+      final pricesStr = map[QatTypesTable.cUnitPrices] as String;
+      final pricesJson = json.decode(pricesStr) as Map<String, dynamic>;
+      prices = pricesJson.map(
+        (key, value) => MapEntry(key, UnitPrice.fromJson(value as Map<String, dynamic>)),
       );
+    }
+
+    return QatTypeModel(
+      id: map[QatTypesTable.cId] as int?,
+      name: map[QatTypesTable.cName] as String,
+      qualityGrade: map[QatTypesTable.cQualityGrade] as String?,
+      defaultBuyPrice: (map[QatTypesTable.cDefaultBuyPrice] as num?)?.toDouble(),
+      defaultSellPrice: (map[QatTypesTable.cDefaultSellPrice] as num?)?.toDouble(),
+      color: map[QatTypesTable.cColor] as String?,
+      icon: map[QatTypesTable.cIcon] as String?,
+      availableUnits: units,
+      unitPrices: prices,
+    );
+  }
 
   @override
   Map<String, Object?> toMap() => {
@@ -41,6 +66,10 @@ class QatTypeModel extends BaseModel {
         QatTypesTable.cDefaultSellPrice: defaultSellPrice,
         QatTypesTable.cColor: color,
         QatTypesTable.cIcon: icon,
+        QatTypesTable.cAvailableUnits: availableUnits?.join(','),
+        QatTypesTable.cUnitPrices: unitPrices != null
+            ? json.encode(unitPrices!.map((key, value) => MapEntry(key, value.toJson())))
+            : null,
       };
 
   @override
@@ -52,6 +81,8 @@ class QatTypeModel extends BaseModel {
         'defaultSellPrice': defaultSellPrice,
         'color': color,
         'icon': icon,
+        'availableUnits': availableUnits,
+        'unitPrices': unitPrices?.map((key, value) => MapEntry(key, value.toJson())),
       };
 
   @override
@@ -63,6 +94,8 @@ class QatTypeModel extends BaseModel {
     double? defaultSellPrice,
     String? color,
     String? icon,
+    List<String>? availableUnits,
+    Map<String, UnitPrice>? unitPrices,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? firebaseId,
@@ -76,8 +109,10 @@ class QatTypeModel extends BaseModel {
         defaultSellPrice: defaultSellPrice ?? this.defaultSellPrice,
         color: color ?? this.color,
         icon: icon ?? this.icon,
+        availableUnits: availableUnits ?? this.availableUnits,
+        unitPrices: unitPrices ?? this.unitPrices,
       );
 
   @override
-  List<Object?> get props => [id, name, qualityGrade, defaultBuyPrice, defaultSellPrice, color, icon];
+  List<Object?> get props => [id, name, qualityGrade, defaultBuyPrice, defaultSellPrice, color, icon, availableUnits, unitPrices];
 }
