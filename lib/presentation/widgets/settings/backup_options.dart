@@ -9,6 +9,7 @@ import '../../../core/theme/app_dimensions.dart';
 class BackupOptions extends StatelessWidget {
   final VoidCallback? onBackupNow;
   final VoidCallback? onBackupToDrive;
+  final VoidCallback? onRestoreFromDrive;
   final VoidCallback? onRestore;
   final VoidCallback? onAutoBackup;
   final VoidCallback? onExportData;
@@ -19,6 +20,7 @@ class BackupOptions extends StatelessWidget {
     super.key,
     this.onBackupNow,
     this.onBackupToDrive,
+    this.onRestoreFromDrive,
     this.onRestore,
     this.onAutoBackup,
     this.onExportData,
@@ -93,6 +95,17 @@ class BackupOptions extends StatelessWidget {
           iconColor: const Color(0xFF4285F4), // Google Blue
           iconBackgroundColor: const Color(0xFF4285F4).withOpacity(0.1),
           onTap: onBackupToDrive,
+        ),
+        const SizedBox(height: AppDimensions.spaceM),
+
+        // خيار الاستعادة من Google Drive
+        _BackupOptionTile(
+          icon: Icons.cloud_download,
+          title: 'استعادة من Google Drive',
+          description: 'استرجاع نسخة احتياطية من حسابك على Drive',
+          iconColor: const Color(0xFF34A853), // Google Green
+          iconBackgroundColor: const Color(0xFF34A853).withOpacity(0.1),
+          onTap: onRestoreFromDrive,
         ),
         const SizedBox(height: AppDimensions.spaceM),
 

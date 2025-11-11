@@ -357,6 +357,139 @@ class _BackupScreenState extends State<BackupScreen> {
     }
   }
 
+  /// استعادة من Google Drive
+  Future<void> _restoreFromDrive() async {
+    // التحقق من تسجيل الدخول أولاً
+    if (!_backupService.isSignedInToDrive) {
+      final signedIn = await _backupService.signInToGoogleDrive();
+
+      if (!signedIn) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يجب تسجيل الدخول إلى Google Drive أولاً'),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // جلب قائمة النسخ من Drive
+      final backups = await _backupService.getDriveBackups();
+
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+
+      if (backups.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا توجد نسخ احتياطية في Google Drive'),
+            backgroundColor: AppColors.info,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      // عرض قائمة النسخ المتاحة
+      final selectedBackup = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('اختر نسخة احتياطية'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: backups.length,
+              itemBuilder: (context, index) {
+                final backup = backups[index];
+                return ListTile(
+                  leading: const Icon(Icons.cloud, color: Color(0xFF4285F4)),
+                  title: Text(backup.name),
+                  subtitle: Text(backup.timeAgo),
+                  trailing: Text(backup.sizeFormatted),
+                  onTap: () => Navigator.pop(context, backup.id),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+          ],
+        ),
+      );
+
+      if (selectedBackup == null) return;
+
+      // تأكيد الاستعادة
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => const ConfirmDialog(
+          title: 'استعادة من Google Drive',
+          message:
+              'هل تريد استعادة البيانات من هذه النسخة؟\n\n⚠️ سيتم استبدال جميع البيانات الحالية',
+          confirmText: 'نعم، استعد',
+          cancelText: 'إلغاء',
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      setState(() => _isRestoring = true);
+
+      _logger.info('بدء الاستعادة من Google Drive...');
+
+      await _backupService.restoreFromDrive(
+        selectedBackup,
+        onDownloadProgress: (progress) {
+          _logger.info('تقدم التحميل: ${(progress * 100).toStringAsFixed(0)}%');
+        },
+      );
+
+      _logger.info('تمت الاستعادة من Google Drive بنجاح!');
+
+      setState(() => _isRestoring = false);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ تمت الاستعادة بنجاح! سيتم إعادة تشغيل التطبيق...'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // إعادة تشغيل التطبيق
+      await Future.delayed(const Duration(seconds: 3));
+      // يمكن إضافة كود إعادة التشغيل هنا
+    } catch (e) {
+      _logger.error('فشلت الاستعادة من Google Drive', error: e);
+
+      setState(() => _isRestoring = false);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشلت الاستعادة من Google Drive: $e'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -444,6 +577,7 @@ class _BackupScreenState extends State<BackupScreen> {
                   BackupOptions(
                     onBackupNow: _backupNow,
                     onBackupToDrive: _backupToDrive,
+                    onRestoreFromDrive: _restoreFromDrive,
                     onRestore: _restore,
                     onAutoBackup: _toggleAutoBackup,
                     onExportData: _exportData,
