@@ -7,7 +7,7 @@ class AppConstants {
   // ========== معلومات التطبيق ==========
   
   /// اسم التطبيق
-  static const String appName = 'دفتر المقاوت';
+  static const String appName = 'دفتر المقوت';
   
   /// اسم التطبيق بالإنجليزية
   static const String appNameEn = 'Daftar AlMuqawit';

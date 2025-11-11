@@ -13,6 +13,6 @@ void main() {
   testWidgets('App builds and shows splash', (WidgetTester tester) async {
     await tester.pumpWidget(const App());
     // Should show splash title in Arabic
-    expect(find.text('دفتر المقاوت'), findsOneWidget);
+    expect(find.text('دفتر المقوت'), findsOneWidget);
   });
 }

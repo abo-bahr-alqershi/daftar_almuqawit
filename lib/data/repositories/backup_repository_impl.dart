@@ -25,7 +25,7 @@ class BackupRepositoryImpl implements BackupRepository {
     // تحضير البيانات للتصدير
     return await exportService.toExcel(
       dateRange,
-      title: 'تقرير دفتر المقاوت',
+      title: 'تقرير دفتر المقوت',
       headers: ['التاريخ', 'النوع', 'المبلغ', 'التفاصيل'],
       data: [], // سيتم ملؤها لاحقاً
     );

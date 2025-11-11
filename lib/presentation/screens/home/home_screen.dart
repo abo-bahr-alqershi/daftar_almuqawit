@@ -10,10 +10,8 @@ import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/home/dashboard_event.dart';
 import '../../blocs/home/dashboard_state.dart';
 import '../../blocs/sync/sync_bloc.dart';
-import '../../blocs/sync/sync_event.dart';
 import '../../blocs/sync/sync_state.dart';
 import '../../navigation/route_names.dart';
-import '../../widgets/common/loading_widget.dart';
 import 'widgets/menu_grid.dart';
 import 'widgets/quick_stats_widget.dart';
 import 'widgets/sync_indicator.dart';
@@ -31,8 +29,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
 
@@ -43,19 +39,6 @@ class _HomeScreenState extends State<HomeScreen>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0, 0.6, curve: Curves.easeOut),
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: const Interval(0.2, 1, curve: Curves.easeOutCubic),
-          ),
-        );
 
     _animationController.forward();
 
@@ -80,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Directionality(
@@ -104,96 +86,88 @@ class _HomeScreenState extends State<HomeScreen>
 
                 // محتوى الشاشة
                 SliverToBoxAdapter(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
 
-                          // الإحصائيات السريعة
-                          BlocBuilder<DashboardBloc, DashboardState>(
-                            builder: (context, state) {
-                              if (state is DashboardLoading) {
-                                return _buildShimmerStats();
-                              }
-                              if (state is DashboardLoaded) {
-                                return Hero(
-                                  tag: 'quick-stats',
-                                  child: QuickStatsWidget(
-                                    stats: state.dailyStats,
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // عنوان الاختصارات مع تأثير
-                          _buildSectionTitle('اختصارات سريعة', Icons.flash_on),
-
-                          const SizedBox(height: 16),
-
-                          // شريط الاختصارات
-                          ShortcutsBar(
-                            onQuickSale: () => _navigateWithAnimation(
-                              context,
-                              RouteNames.quickSale,
-                            ),
-                            onAddPurchase: () => _navigateWithAnimation(
-                              context,
-                              RouteNames.purchases,
-                            ),
-                            onAddExpense: () => _navigateWithAnimation(
-                              context,
-                              RouteNames.expenses,
-                            ),
-                            onViewReports: () => _navigateWithAnimation(
-                              context,
-                              RouteNames.statistics,
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // عنوان القائمة الرئيسية
-                          _buildSectionTitle('القائمة الرئيسية', Icons.apps),
-
-                          const SizedBox(height: 16),
-
-                          // شبكة القوائم
-                          const MenuGrid(),
-
-                          const SizedBox(height: 32),
-
-                          // النشاطات الأخيرة
-                          BlocBuilder<DashboardBloc, DashboardState>(
-                            builder: (context, state) {
-                              if (state is DashboardLoaded) {
-                                final activities = _buildActivitiesFromData(
-                                  state.todaySales,
-                                  state.todayPurchases,
-                                );
-                                return RecentActivities(
-                                  activities: activities,
-                                  onViewAll: () => _navigateWithAnimation(
-                                    context,
-                                    RouteNames.statistics,
-                                  ),
-                                );
-                              }
-                              return const RecentActivities(activities: []);
-                            },
-                          ),
-
-                          const SizedBox(height: 100),
-                        ],
+                      // الإحصائيات السريعة
+                      BlocBuilder<DashboardBloc, DashboardState>(
+                        builder: (context, state) {
+                          if (state is DashboardLoading) {
+                            return _buildShimmerStats();
+                          }
+                          if (state is DashboardLoaded) {
+                            return Hero(
+                              tag: 'quick-stats',
+                              child: QuickStatsWidget(stats: state.dailyStats),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
                       ),
-                    ),
+
+                      const SizedBox(height: 32),
+
+                      // عنوان الاختصارات مع تأثير
+                      _buildSectionTitle('اختصارات سريعة', Icons.flash_on),
+
+                      const SizedBox(height: 16),
+
+                      // شريط الاختصارات
+                      ShortcutsBar(
+                        onQuickSale: () => _navigateWithAnimation(
+                          context,
+                          RouteNames.quickSale,
+                        ),
+                        onAddPurchase: () => _navigateWithAnimation(
+                          context,
+                          RouteNames.purchases,
+                        ),
+                        onAddExpense: () => _navigateWithAnimation(
+                          context,
+                          RouteNames.expenses,
+                        ),
+                        onViewReports: () => _navigateWithAnimation(
+                          context,
+                          RouteNames.statistics,
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // عنوان القائمة الرئيسية
+                      _buildSectionTitle('القائمة الرئيسية', Icons.apps),
+
+                      const SizedBox(height: 16),
+
+                      // شبكة القوائم
+                      const MenuGrid(),
+
+                      const SizedBox(height: 32),
+
+                      // النشاطات الأخيرة
+                      BlocBuilder<DashboardBloc, DashboardState>(
+                        builder: (context, state) {
+                          if (state is DashboardLoaded) {
+                            final activities = _buildActivitiesFromData(
+                              state.todaySales,
+                              state.todayPurchases,
+                            );
+                            return RecentActivities(
+                              activities: activities,
+                              onViewAll: () => _navigateWithAnimation(
+                                context,
+                                RouteNames.statistics,
+                              ),
+                            );
+                          }
+                          return const RecentActivities(activities: []);
+                        },
+                      ),
+
+                      const SizedBox(height: 100),
+                    ],
                   ),
                 ),
               ],
@@ -278,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'دفتر المقاولات',
+                              'دفتر المقوت',
                               style: AppTextStyles.h2.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -469,11 +443,12 @@ class _HomeScreenState extends State<HomeScreen>
     List<Purchase> purchases,
   ) {
     final activities = <ActivityItem>[];
-    
+
     for (final sale in sales.take(5)) {
       activities.add(
         ActivityItem(
-          title: 'بيع ${sale.qatTypeName ?? "قات"} - ${sale.quantity} ${sale.unit}',
+          title:
+              'بيع ${sale.qatTypeName ?? "قات"} - ${sale.quantity} ${sale.unit}',
           time: _formatTime(sale.time),
           icon: Icons.point_of_sale_rounded,
           color: AppColors.success,
@@ -482,11 +457,12 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
     }
-    
+
     for (final purchase in purchases.take(5)) {
       activities.add(
         ActivityItem(
-          title: 'شراء ${purchase.qatTypeName ?? "قات"} - ${purchase.quantity} ${purchase.unit}',
+          title:
+              'شراء ${purchase.qatTypeName ?? "قات"} - ${purchase.quantity} ${purchase.unit}',
           time: _formatTime(purchase.time),
           icon: Icons.shopping_cart_rounded,
           color: AppColors.info,
@@ -495,13 +471,13 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
     }
-    
+
     activities.sort((a, b) {
       final aTime = _parseTime(a.time);
       final bTime = _parseTime(b.time);
       return bTime.compareTo(aTime);
     });
-    
+
     return activities.take(10).toList();
   }
 
@@ -514,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen>
         final now = DateTime.now();
         final time = DateTime(now.year, now.month, now.day, hour, minute);
         final diff = now.difference(time);
-        
+
         if (diff.inMinutes < 1) {
           return 'الآن';
         } else if (diff.inMinutes < 60) {

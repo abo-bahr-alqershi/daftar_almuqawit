@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 const SizedBox(height: 32),
                 
                 Text(
-                  'دفتر المقاوت',
+                  'دفتر المقوت',
                   style: AppTextStyles.h1.copyWith(
                     color: AppColors.textOnDark,
                     fontSize: 36,

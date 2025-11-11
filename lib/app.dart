@@ -35,7 +35,7 @@ import 'presentation/blocs/debts/payment_bloc.dart';
 /// ملف التطبيق الرئيسي App
 /// يحتوي على التهيئة العامة للتطبيق، السمات، التوجيه، والتعريب.
 class App extends StatelessWidget {
-  /// تطبيق دفتر المقاوت
+  /// تطبيق دفتر المقوت
   const App({super.key});
 
   @override
@@ -74,7 +74,7 @@ class App extends StatelessWidget {
             builder: (context, appState) {
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
-                title: 'دفتر المقاوت',
+                title: 'دفتر المقوت',
                 
                 // Theme configuration based on user settings
                 theme: AppTheme.light,

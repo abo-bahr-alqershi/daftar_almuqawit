@@ -29,7 +29,7 @@ class AboutScreen extends StatelessWidget {
             children: [
               // بطاقة الإصدار
               AppVersionCard(
-                appName: 'دفتر المقاوت',
+                appName: 'دفتر المقوت',
                 version: '1.0.0',
                 buildNumber: '1',
                 buildDate: '2024-01-15',
@@ -61,7 +61,7 @@ class AboutScreen extends StatelessWidget {
                 iconColor: AppColors.info,
                 title: 'نبذة عن التطبيق',
                 content:
-                    'دفتر المقاوت هو نظام محاسبي متكامل مصمم خصيصاً لإدارة تجارة القات. يوفر التطبيق أدوات شاملة لتتبع المبيعات والمشتريات والديون والمصروفات، مع إمكانية المزامنة السحابية والنسخ الاحتياطي التلقائي.',
+                    'دفتر المقوت هو نظام محاسبي متكامل مصمم خصيصاً لإدارة تجارة القات. يوفر التطبيق أدوات شاملة لتتبع المبيعات والمشتريات والديون والمصروفات، مع إمكانية المزامنة السحابية والنسخ الاحتياطي التلقائي.',
               ),
 
               const SizedBox(height: AppDimensions.spaceL),
@@ -138,7 +138,7 @@ class AboutScreen extends StatelessWidget {
                 onPressed: () {
                   showLicensePage(
                     context: context,
-                    applicationName: 'دفتر المقاوت',
+                    applicationName: 'دفتر المقوت',
                     applicationVersion: '1.0.0',
                     applicationLegalese: '© 2024 جميع الحقوق محفوظة',
                   );
@@ -163,7 +163,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimensions.spaceM),
                     Text(
-                      'شكراً لاستخدامك دفتر المقاوت',
+                      'شكراً لاستخدامك دفتر المقوت',
                       style: AppTextStyles.titleLarge.copyWith(
                         color: AppColors.textOnDark,
                         fontWeight: FontWeight.bold,
@@ -229,7 +229,7 @@ class AboutScreen extends StatelessWidget {
           title: const Text('شروط الاستخدام'),
           content: const SingleChildScrollView(
             child: Text(
-              '''باستخدامك لتطبيق دفتر المقاوت، فإنك توافق على الشروط التالية:
+              '''باستخدامك لتطبيق دفتر المقوت، فإنك توافق على الشروط التالية:
 
 1. الاستخدام المشروع: يجب استخدام التطبيق للأغراض المشروعة فقط
 2. الدقة: أنت مسؤول عن دقة البيانات المدخلة

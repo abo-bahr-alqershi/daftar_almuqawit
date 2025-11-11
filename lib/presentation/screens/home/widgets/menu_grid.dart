@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
 import 'menu_card.dart';
 import '../../../navigation/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -173,47 +172,54 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+    padding: const EdgeInsets.only(left: 20, right: 20),
     child: Column(
       children: [
         // Header with view toggle
         // _buildHeader(),
         const SizedBox(height: 16),
 
-        // Grid View
-        GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 14,
-            childAspectRatio: 0.95,
-          ),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: menuItems.length,
-          itemBuilder: (context, index) {
+        // Grid View (precise two-column layout using Wrap)
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: List.generate(menuItems.length, (index) {
             final item = menuItems[index];
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                // Calculate the width for each card (2 columns)
+                final screenWidth = MediaQuery.of(context).size.width;
+                const horizontalPadding = 40.0; // 20 left + 20 right
+                const spacing = 16.0;
+                final tileWidth =
+                    (screenWidth - horizontalPadding - spacing) / 2;
 
-            return AnimatedBuilder(
-              animation: _controllers[index],
-              builder: (context, child) => Transform.scale(
-                scale: _scaleAnimations[index].value,
-                child: FadeTransition(
-                  opacity: _fadeAnimations[index],
-                  child: MenuCard(
-                    title: item.title,
-                    icon: item.icon,
-                    color: item.color,
-                    subtitle: item.subtitle,
-                    badge: item.badge,
-                    isNew: item.isNew,
-                    isPremium: item.isPremium,
-                    onTap: () => _navigateToRoute(context, item.route),
+                return SizedBox(
+                  width: tileWidth,
+                  height: 140, // Fixed height for consistency
+                  child: AnimatedBuilder(
+                    animation: _controllers[index],
+                    builder: (context, child) => FadeTransition(
+                      opacity: _fadeAnimations[index],
+                      child: ScaleTransition(
+                        scale: _scaleAnimations[index],
+                        child: MenuCard(
+                          title: item.title,
+                          icon: item.icon,
+                          color: item.color,
+                          subtitle: item.subtitle,
+                          badge: item.badge,
+                          isNew: item.isNew,
+                          isPremium: item.isPremium,
+                          onTap: () => _navigateToRoute(context, item.route),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             );
-          },
+          }),
         ),
 
         // Quick Access Section
@@ -221,65 +227,6 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         _buildQuickAccessSection(),
       ],
     ),
-  );
-
-  Widget _buildHeader() => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withOpacity(0.1),
-                  AppColors.accent.withOpacity(0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.apps_rounded,
-              size: 20,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'الخدمات',
-            style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-
-      // View Options
-      Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            _ViewOptionButton(
-              icon: Icons.grid_view_rounded,
-              isSelected: true,
-              onTap: () {},
-            ),
-            _ViewOptionButton(
-              icon: Icons.list_rounded,
-              isSelected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
-    ],
   );
 
   Widget _buildQuickAccessSection() => Container(
@@ -374,41 +321,6 @@ class _MenuItemData {
   final String? badge;
   final bool isNew;
   final bool isPremium;
-}
-
-// زر خيارات العرض
-class _ViewOptionButton extends StatelessWidget {
-  const _ViewOptionButton({
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: () {
-      HapticFeedback.selectionClick();
-      onTap();
-    },
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: isSelected ? AppColors.primary : AppColors.textHint,
-      ),
-    ),
-  );
 }
 
 // زر الوصول السريع

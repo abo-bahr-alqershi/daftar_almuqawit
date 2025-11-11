@@ -184,7 +184,7 @@ class _SetupScreenState extends State<SetupScreen> {
         
         // رسالة الترحيب
         Text(
-          'مرحباً بك في دفتر المقاوت',
+          'مرحباً بك في دفتر المقوت',
           style: AppTextStyles.h1.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
