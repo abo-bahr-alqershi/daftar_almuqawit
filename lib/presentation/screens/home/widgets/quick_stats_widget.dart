@@ -339,7 +339,7 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.6,
+        childAspectRatio: 1.7,
       ),
       itemCount: statsList.length,
       itemBuilder: (context, index) {
@@ -501,10 +501,10 @@ class _ModernStatCard extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
                 ? data.color.withOpacity(0.3)
@@ -528,40 +528,41 @@ class _ModernStatCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: data.color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(data.icon, color: data.color, size: 20),
+                  child: Icon(data.icon, color: data.color, size: 18),
                 ),
 
                 // Trend Indicator
                 if (data.trend != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: 5,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: data.trend! > 0
                           ? AppColors.success.withOpacity(0.1)
                           : AppColors.danger.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           data.trend! > 0
                               ? Icons.arrow_upward_rounded
                               : Icons.arrow_downward_rounded,
-                          size: 12,
+                          size: 10,
                           color: data.trend! > 0
                               ? AppColors.success
                               : AppColors.danger,
@@ -572,7 +573,7 @@ class _ModernStatCard extends StatelessWidget {
                             color: data.trend! > 0
                                 ? AppColors.success
                                 : AppColors.danger,
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -581,37 +582,49 @@ class _ModernStatCard extends StatelessWidget {
                   ),
               ],
             ),
+            
+            const Spacer(),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   data.title,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 12,
+                    fontSize: 11,
+                    height: 1.1,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      animatedValue.toStringAsFixed(0),
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                    Flexible(
+                      child: Text(
+                        animatedValue.toStringAsFixed(0),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          height: 1.0,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 2),
                     const Padding(
-                      padding: EdgeInsets.only(bottom: 2),
+                      padding: EdgeInsets.only(bottom: 0.5),
                       child: Text(
                         'ر.ي',
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 11,
+                          fontSize: 9,
+                          height: 1.0,
                         ),
                       ),
                     ),

@@ -183,19 +183,25 @@ class _SyncIndicatorState extends State<SyncIndicator>
                           ? 'تمت المزامنة!'
                           : 'تمت المزامنة',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: syncColor,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
+                        height: 1.2,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     if (!widget.isSyncing && !_showSuccessAnimation)
                       Text(
                         _getLastSyncText(),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: syncColor.withOpacity(0.7),
+                          height: 1.2,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                   ],
                 ),

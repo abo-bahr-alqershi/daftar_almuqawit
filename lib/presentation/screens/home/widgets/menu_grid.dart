@@ -177,8 +177,7 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
     child: Column(
       children: [
         // Header with view toggle
-        _buildHeader(),
-
+        // _buildHeader(),
         const SizedBox(height: 16),
 
         // Grid View

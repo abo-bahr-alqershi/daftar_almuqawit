@@ -62,6 +62,11 @@ class _HomeScreenState extends State<HomeScreen>
         _scrollOffset = _scrollController.offset;
       });
     });
+
+    // تحميل بيانات لوحة التحكم
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardBloc>().add(LoadDashboard());
+    });
   }
 
   @override
