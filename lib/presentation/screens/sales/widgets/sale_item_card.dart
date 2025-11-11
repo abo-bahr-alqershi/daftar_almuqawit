@@ -151,7 +151,7 @@ class SaleItemCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        Formatters.date(sale.date),
+                        sale.date,
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.textSecondary,
                         ),
