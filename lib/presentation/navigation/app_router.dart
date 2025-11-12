@@ -33,6 +33,7 @@ import '../screens/reports/weekly_report_screen.dart';
 import '../screens/reports/monthly_report_screen.dart';
 import '../screens/reports/yearly_report_screen.dart';
 import '../screens/reports/custom_report_screen.dart';
+import '../screens/inventory/inventory_screen.dart';
 
 /// مدير التوجيه الرئيسي للتطبيق
 class AppRouter {
@@ -93,6 +94,8 @@ class AppRouter {
         return _buildRoute(SaleDetailsScreen(sale: sale));
       case RouteNames.todaySales:
         return _buildRoute(const TodaySalesScreen());
+      case RouteNames.inventory:
+        return _buildRoute(const InventoryScreen());
       case RouteNames.debts:
         return _buildRoute(const DebtsScreen());
       case RouteNames.debtPayments:

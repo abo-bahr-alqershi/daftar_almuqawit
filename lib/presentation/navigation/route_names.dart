@@ -48,6 +48,14 @@ class RouteNames {
   static const String addSale = '/sales/add';
   static const String saleDetails = '/sales/details';
   static const String quickSale = '/sales/quick';
+
+  // ========== Inventory Routes ==========
+  static const String inventory = '/inventory';
+  static const String inventoryList = '/inventory/list';
+  static const String inventoryDetails = '/inventory/details';
+  static const String inventoryTransactions = '/inventory/transactions';
+  static const String inventoryAdjustment = '/inventory/adjustment';
+  static const String inventoryStats = '/inventory/statistics';
   static const String todaySales = '/sales/today';
 
   // ========== Debts Routes ==========

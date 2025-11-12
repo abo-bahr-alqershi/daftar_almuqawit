@@ -16,6 +16,8 @@ import 'tables/expenses_table.dart';
 import 'tables/daily_stats_table.dart';
 import 'tables/sync_queue_table.dart';
 import 'tables/metadata_table.dart';
+import 'tables/inventory_table.dart';
+import 'tables/inventory_transactions_table.dart';
 import 'migrations/migration_manager.dart';
 
 /// مساعد إدارة قاعدة البيانات المحلية
@@ -77,7 +79,19 @@ class DatabaseHelper {
     batch.execute(DailyStatsTable.create);
     batch.execute(SyncQueueTable.create);
     batch.execute(MetadataTable.create);
+    batch.execute(InventoryTable.create);
+    batch.execute(InventoryTransactionsTable.create);
     await batch.commit(noResult: true);
+    
+    // إضافة الفهارس
+    final indexBatch = db.batch();
+    for (final index in InventoryTable.indexes) {
+      indexBatch.execute(index);
+    }
+    for (final index in InventoryTransactionsTable.indexes) {
+      indexBatch.execute(index);
+    }
+    await indexBatch.commit(noResult: true);
   }
 
   FutureOr<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {

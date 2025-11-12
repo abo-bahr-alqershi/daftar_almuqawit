@@ -33,6 +33,11 @@ import '../../../domain/usecases/sync/check_sync_status.dart';
 import '../../../domain/usecases/sync/queue_offline_operation.dart';
 import '../../../domain/usecases/sync/resolve_conflicts.dart';
 import '../../../domain/usecases/sync/sync_all.dart';
+import '../../../domain/usecases/inventory/get_inventory_list.dart';
+import '../../../domain/usecases/inventory/update_inventory_item.dart';
+import '../../../domain/usecases/inventory/adjust_inventory_quantity.dart';
+import '../../../domain/usecases/inventory/get_inventory_transactions.dart';
+import '../../../domain/usecases/inventory/get_inventory_statistics.dart';
 import '../../../presentation/blocs/accounting/accounting_bloc.dart';
 import '../../../presentation/blocs/accounting/cash_management_bloc.dart';
 import '../../../presentation/blocs/app/app_bloc.dart';
@@ -61,6 +66,7 @@ import '../../../presentation/blocs/suppliers/supplier_form_bloc.dart';
 import '../../../presentation/blocs/suppliers/suppliers_bloc.dart';
 import '../../../presentation/blocs/qat_types/qat_types_bloc.dart';
 import '../../../presentation/blocs/sync/sync_bloc.dart';
+import '../../../presentation/blocs/inventory/inventory_bloc.dart';
 import '../../services/local/shared_preferences_service.dart';
 import '../../services/logger_service.dart';
 import '../../services/network/connectivity_service.dart';
@@ -238,6 +244,14 @@ class BlocModule {
       exportToExcel: sl<ExportToExcel>(),
       scheduleAutoBackup: sl<ScheduleAutoBackup>(),
       logger: sl<LoggerService>(),
+    ));
+    
+    sl.registerFactory<InventoryBloc>(() => InventoryBloc(
+      getInventoryList: sl<GetInventoryList>(),
+      getInventoryTransactions: sl<GetInventoryTransactions>(),
+      getInventoryStatistics: sl<GetInventoryStatistics>(),
+      updateInventoryItem: sl<UpdateInventoryItem>(),
+      adjustInventoryQuantity: sl<AdjustInventoryQuantity>(),
     ));
   }
 }

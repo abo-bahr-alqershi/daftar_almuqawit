@@ -2,12 +2,15 @@
 
 import '../../domain/entities/purchase.dart';
 import '../../domain/repositories/purchase_repository.dart';
+import '../../domain/repositories/inventory_repository.dart';
 import '../datasources/local/purchase_local_datasource.dart';
 import '../models/purchase_model.dart';
 
 class PurchaseRepositoryImpl implements PurchaseRepository {
   final PurchaseLocalDataSource local;
-  PurchaseRepositoryImpl(this.local);
+  final InventoryRepository? inventoryRepository;
+  
+  PurchaseRepositoryImpl(this.local, {this.inventoryRepository});
 
   Purchase _fromModel(PurchaseModel m) => Purchase(
         id: m.id,
@@ -42,7 +45,29 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
       );
 
   @override
-  Future<int> add(Purchase entity) => local.insert(_toModel(entity));
+  Future<int> add(Purchase entity) async {
+    // إضافة عملية الشراء
+    final purchaseId = await local.insert(_toModel(entity));
+    
+    // تحديث المخزون إذا كان متاحاً
+    if (inventoryRepository != null && entity.quantity > 0) {
+      try {
+        await inventoryRepository!.updateStockFromPurchase(
+          entity.qatTypeId,
+          entity.unit,
+          entity.quantity,
+          entity.unitPrice,
+          'PUR-$purchaseId',
+          purchaseId,
+        );
+      } catch (e) {
+        // في حالة فشل تحديث المخزون، نسجل الخطأ لكن لا نلغي العملية
+        print('خطأ في تحديث المخزون من الشراء: $e');
+      }
+    }
+    
+    return purchaseId;
+  }
 
   @override
   Future<void> delete(int id) => local.delete(id);

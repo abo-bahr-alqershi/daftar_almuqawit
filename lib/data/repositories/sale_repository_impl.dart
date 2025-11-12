@@ -2,15 +2,17 @@
 
 import '../../domain/entities/sale.dart';
 import '../../domain/repositories/sales_repository.dart';
+import '../../domain/repositories/inventory_repository.dart';
 import '../datasources/local/sales_local_datasource.dart';
 import '../models/sale_model.dart';
 import '../../core/services/logger_service.dart';
 
 class SaleRepositoryImpl implements SalesRepository {
   final SalesLocalDataSource local;
+  final InventoryRepository? inventoryRepository;
   final LoggerService _logger = LoggerService();
   
-  SaleRepositoryImpl(this.local);
+  SaleRepositoryImpl(this.local, {this.inventoryRepository});
 
   Sale _fromModel(SaleModel m) => Sale(
         id: m.id,
@@ -49,8 +51,43 @@ class SaleRepositoryImpl implements SalesRepository {
   @override
   Future<int> add(Sale entity) async {
     try {
+      // التحقق من توفر المخزون أولاً
+      if (inventoryRepository != null) {
+        final isAvailable = await inventoryRepository!.isStockAvailable(
+          entity.qatTypeId,
+          entity.unit,
+          entity.quantity,
+        );
+        
+        if (!isAvailable) {
+          final availableQty = await inventoryRepository!.getAvailableQuantity(
+            entity.qatTypeId,
+            entity.unit,
+          );
+          throw Exception('الكمية المتاحة ($availableQty ${entity.unit}) غير كافية للبيع');
+        }
+      }
+      
+      // إضافة عملية البيع
       final id = await local.insert(_toModel(entity));
       _logger.info('تمت إضافة بيع جديد', data: {'id': id, 'amount': entity.totalAmount});
+      
+      // تحديث المخزون إذا كان متاحاً
+      if (inventoryRepository != null && entity.quantity > 0) {
+        try {
+          await inventoryRepository!.updateStockFromSale(
+            entity.qatTypeId,
+            entity.unit,
+            entity.quantity,
+            'SAL-$id',
+            id,
+          );
+        } catch (e) {
+          _logger.error('خطأ في تحديث المخزون من البيع', error: e);
+          // لا نلغي العملية، فقط نسجل الخطأ
+        }
+      }
+      
       return id;
     } catch (e, s) {
       _logger.error('فشل إضافة البيع', error: e, stackTrace: s);

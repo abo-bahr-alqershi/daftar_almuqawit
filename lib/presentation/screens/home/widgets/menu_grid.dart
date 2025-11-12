@@ -62,6 +62,14 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         subtitle: 'عمليات الشراء',
       ),
       _MenuItemData(
+        title: 'المخزون',
+        icon: Icons.inventory_rounded,
+        color: const Color(0xFF00BCD4),
+        route: RouteNames.inventory,
+        subtitle: 'إدارة المخزون',
+        isNew: true,
+      ),
+      _MenuItemData(
         title: 'الديون',
         icon: Icons.receipt_long_rounded,
         color: AppColors.warning,

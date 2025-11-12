@@ -44,6 +44,7 @@ import '../../domain/repositories/sync_repository.dart';
 import '../../domain/repositories/backup_repository.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../../domain/repositories/supplier_repository.dart';
+import '../../domain/repositories/inventory_repository.dart';
 
 // UseCases
 // Suppliers
@@ -79,6 +80,12 @@ import '../../domain/usecases/sales/delete_sale.dart';
 import '../../domain/usecases/sales/quick_sale.dart';
 import '../../domain/usecases/sales/cancel_sale.dart';
 import '../../domain/usecases/sales/check_stock_availability.dart';
+// Inventory
+import '../../domain/usecases/inventory/get_inventory_list.dart';
+import '../../domain/usecases/inventory/update_inventory_item.dart';
+import '../../domain/usecases/inventory/adjust_inventory_quantity.dart';
+import '../../domain/usecases/inventory/get_inventory_transactions.dart';
+import '../../domain/usecases/inventory/get_inventory_statistics.dart';
 // Debts
 import '../../domain/usecases/debts/add_debt.dart';
 import '../../domain/usecases/debts/get_debts.dart';
@@ -273,6 +280,13 @@ class ServiceLocator {
     sl.registerLazySingleton<GetQatTypeById>(() => GetQatTypeById(sl()));
     sl.registerLazySingleton<UpdateQatType>(() => UpdateQatType(sl()));
     sl.registerLazySingleton<DeleteQatType>(() => DeleteQatType(sl()));
+
+    // Inventory
+    sl.registerLazySingleton<GetInventoryList>(() => GetInventoryList(sl()));
+    sl.registerLazySingleton<UpdateInventoryItem>(() => UpdateInventoryItem(sl()));
+    sl.registerLazySingleton<AdjustInventoryQuantity>(() => AdjustInventoryQuantity(sl()));
+    sl.registerLazySingleton<GetInventoryTransactions>(() => GetInventoryTransactions(sl()));
+    sl.registerLazySingleton<GetInventoryStatistics>(() => GetInventoryStatistics(sl()));
 
     // Sync
     sl.registerLazySingleton<SyncAll>(() => SyncAll(sl()));

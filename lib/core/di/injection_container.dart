@@ -10,6 +10,9 @@ export 'service_locator.dart' show setupServiceLocator;
 /// وتوفر طريقة موحدة للوصول إلى الخدمات والمستودعات والحالات
 final GetIt sl = GetIt.instance;
 
+/// اختصار لـ service locator للاستخدام في الشاشات والويدجت
+GetIt get getIt => sl;
+
 /// تهيئة جميع التبعيات في التطبيق
 /// 
 /// يتم استدعاء هذه الدالة عند بدء التطبيق وتقوم بـ:
