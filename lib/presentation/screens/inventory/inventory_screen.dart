@@ -31,24 +31,25 @@ class _InventoryScreenContent extends StatefulWidget {
   const _InventoryScreenContent();
 
   @override
-  State<_InventoryScreenContent> createState() => _InventoryScreenContentState();
+  State<_InventoryScreenContent> createState() =>
+      _InventoryScreenContentState();
 }
 
 class _InventoryScreenContentState extends State<_InventoryScreenContent>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
     // _searchController already initialized above
-    
+
     // تحميل البيانات الأولية
     context.read<InventoryBloc>().add(const LoadInventoryListEvent());
     context.read<InventoryBloc>().add(const LoadInventoryStatisticsEvent());
-    
+
     // إضافة listener للتبديل بين التبويبات
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -70,16 +71,49 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
       appBar: AppBar(
         title: const Text('المخزون'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<InventoryBloc>().add(const RefreshInventoryEvent());
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              _showAddInventoryDialog(context);
+          // أزرار حسب التبويب النشط
+          BlocBuilder<InventoryBloc, InventoryState>(
+            builder: (context, state) {
+              return AnimatedBuilder(
+                animation: _tabController,
+                builder: (builderContext, child) {
+                  final currentIndex = _tabController.index;
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (currentIndex == 3) // تبويب المردودات
+                        IconButton(
+                          icon: const Icon(Icons.keyboard_return),
+                          tooltip: 'إضافة مردود',
+                          onPressed: () => _showAddReturnDialog(context),
+                        ),
+                      if (currentIndex == 4) // تبويب التالف
+                        IconButton(
+                          icon: const Icon(Icons.broken_image),
+                          tooltip: 'تسجيل تلف',
+                          onPressed: () => _showAddDamagedItemDialog(context),
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          context.read<InventoryBloc>().add(
+                            const RefreshInventoryEvent(),
+                          );
+                        },
+                      ),
+                      if (currentIndex == 0 ||
+                          currentIndex == 1) // تبويبات المخزون
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          tooltip: 'إضافة صنف للمخزون',
+                          onPressed: () {
+                            _showAddInventoryDialog(context);
+                          },
+                        ),
+                    ],
+                  );
+                },
+              );
             },
           ),
         ],
@@ -88,7 +122,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
         children: [
           // شريط البحث والتصفية
           _buildSearchAndFilterBar(),
-          
+
           // إحصائيات المخزون
           BlocBuilder<InventoryBloc, InventoryState>(
             builder: (context, state) {
@@ -98,7 +132,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               return const SizedBox.shrink();
             },
           ),
-          
+
           // التبويبات
           TabBar(
             controller: _tabController,
@@ -111,7 +145,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               Tab(text: 'التالف'),
             ],
           ),
-          
+
           // محتوى التبويبات
           Expanded(
             child: TabBarView(
@@ -121,22 +155,22 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
                 BlocBuilder<InventoryBloc, InventoryState>(
                   builder: (context, state) => _buildInventoryContent(state),
                 ),
-                
+
                 // تبويب المخزون المنخفض
                 BlocBuilder<InventoryBloc, InventoryState>(
                   builder: (context, state) => _buildLowStockContent(state),
                 ),
-                
+
                 // تبويب الحركات
                 BlocBuilder<InventoryBloc, InventoryState>(
                   builder: (context, state) => _buildTransactionsContent(state),
                 ),
-                
+
                 // تبويب المردودات
                 BlocBuilder<InventoryBloc, InventoryState>(
                   builder: (context, state) => _buildReturnsContent(state),
                 ),
-                
+
                 // تبويب التالف
                 BlocBuilder<InventoryBloc, InventoryState>(
                   builder: (context, state) => _buildDamagedItemsContent(state),
@@ -149,58 +183,76 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
       floatingActionButton: _buildFloatingActionButtons(),
     );
   }
-  
+
   /// الأزرار العائمة حسب التبويب الحالي
   Widget _buildFloatingActionButtons() {
-    final currentIndex = _tabController.index;
-    
-    switch (currentIndex) {
-      case 0: // جميع الأصناف
-      case 1: // مخزون منخفض
-        return FloatingActionButton(
-          onPressed: () => _showAddInventoryDialog(context),
-          child: const Icon(Icons.add),
-          tooltip: 'إضافة صنف للمخزون',
+    return BlocBuilder<InventoryBloc, InventoryState>(
+      builder: (context, state) {
+        return AnimatedBuilder(
+          animation: _tabController,
+          builder: (builderContext, child) {
+            final currentIndex = _tabController.index;
+
+            switch (currentIndex) {
+              case 0: // جميع الأصناف
+              case 1: // مخزون منخفض
+                return FloatingActionButton(
+                  onPressed: () => _showAddInventoryDialog(context),
+                  child: const Icon(Icons.add),
+                  tooltip: 'إضافة صنف للمخزون',
+                  heroTag: "inventory_fab",
+                );
+
+              case 3: // المردودات
+                return FloatingActionButton.extended(
+                  onPressed: () => _showAddReturnDialog(context),
+                  icon: const Icon(Icons.keyboard_return),
+                  label: const Text('إضافة مردود'),
+                  backgroundColor: Colors.orange,
+                  heroTag: "returns_fab",
+                );
+
+              case 4: // التالف
+                return FloatingActionButton.extended(
+                  onPressed: () => _showAddDamagedItemDialog(context),
+                  icon: const Icon(Icons.broken_image),
+                  label: const Text('تسجيل تلف'),
+                  backgroundColor: Colors.red,
+                  heroTag: "damages_fab",
+                );
+
+              default:
+                return const SizedBox.shrink();
+            }
+          },
         );
-        
-      case 3: // المردودات
-        return FloatingActionButton.extended(
-          onPressed: () => _showAddReturnDialog(context),
-          icon: const Icon(Icons.keyboard_return),
-          label: const Text('إضافة مردود'),
-          backgroundColor: Colors.orange,
-        );
-        
-      case 4: // التالف
-        return FloatingActionButton.extended(
-          onPressed: () => _showAddDamagedItemDialog(context),
-          icon: const Icon(Icons.broken_image),
-          label: const Text('تسجيل تلف'),
-          backgroundColor: Colors.red,
-        );
-        
-      default:
-        return const SizedBox.shrink();
-    }
+      },
+    );
   }
-  
+
   /// عرض نافذة إضافة مردود
   void _showAddReturnDialog(BuildContext context) {
+    // حفظ مرجع للـ bloc قبل فتح الـ dialog
+    final inventoryBloc = context.read<InventoryBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => BlocProvider.value(
-        value: context.read<InventoryBloc>(),
+      builder: (dialogContext) => BlocProvider.value(
+        value: inventoryBloc,
         child: const AddReturnDialog(),
       ),
     );
   }
-  
+
   /// عرض نافذة إضافة بضاعة تالفة
   void _showAddDamagedItemDialog(BuildContext context) {
+    // حفظ مرجع للـ bloc قبل فتح الـ dialog
+    final inventoryBloc = context.read<InventoryBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => BlocProvider.value(
-        value: context.read<InventoryBloc>(),
+      builder: (dialogContext) => BlocProvider.value(
+        value: inventoryBloc,
         child: const AddDamagedItemDialog(),
       ),
     );
@@ -227,9 +279,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               },
             ),
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // زر التصفية
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -274,7 +326,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  context.read<InventoryBloc>().add(const LoadInventoryListEvent());
+                  context.read<InventoryBloc>().add(
+                    const LoadInventoryListEvent(),
+                  );
                 },
                 child: const Text('إعادة المحاولة'),
               ),
@@ -283,10 +337,8 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
         ),
       );
     }
-    
-    return const Center(
-      child: Text('لا توجد بيانات'),
-    );
+
+    return const Center(child: Text('لا توجد بيانات'));
   }
 
   /// محتوى تبويب المخزون المنخفض
@@ -295,9 +347,11 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
       builder: (context, state) {
         // تحميل المخزون المنخفض
         context.read<InventoryBloc>().add(
-          const LoadInventoryListEvent(filterType: InventoryFilterType.lowStock)
+          const LoadInventoryListEvent(
+            filterType: InventoryFilterType.lowStock,
+          ),
         );
-        
+
         if (state is InventoryLoading) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is InventoryListLoaded) {
@@ -316,7 +370,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               ),
             );
           }
-          
+
           return InventoryListWidget(
             inventory: state.inventory,
             showLowStockWarning: true,
@@ -336,7 +390,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
                 ElevatedButton(
                   onPressed: () {
                     context.read<InventoryBloc>().add(
-                      const LoadInventoryListEvent(filterType: InventoryFilterType.lowStock)
+                      const LoadInventoryListEvent(
+                        filterType: InventoryFilterType.lowStock,
+                      ),
                     );
                   },
                   child: const Text('إعادة المحاولة'),
@@ -345,7 +401,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             ),
           );
         }
-        
+
         return const Center(child: Text('لا توجد بيانات'));
       },
     );
@@ -356,8 +412,10 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
     return BlocBuilder<InventoryBloc, InventoryState>(
       builder: (context, state) {
         // تحميل حركات المخزون
-        context.read<InventoryBloc>().add(const LoadInventoryTransactionsEvent());
-        
+        context.read<InventoryBloc>().add(
+          const LoadInventoryTransactionsEvent(),
+        );
+
         if (state is InventoryLoading) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is InventoryTransactionsLoaded) {
@@ -373,7 +431,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<InventoryBloc>().add(const LoadInventoryTransactionsEvent());
+                    context.read<InventoryBloc>().add(
+                      const LoadInventoryTransactionsEvent(),
+                    );
                   },
                   child: const Text('إعادة المحاولة'),
                 ),
@@ -381,7 +441,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             ),
           );
         }
-        
+
         return const Center(child: Text('لا توجد حركات'));
       },
     );
@@ -410,7 +470,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: _getTransactionColor(transaction.transactionType),
+              backgroundColor: _getTransactionColor(
+                transaction.transactionType,
+              ),
               child: Icon(
                 _getTransactionIcon(transaction.transactionType),
                 color: Colors.white,
@@ -421,7 +483,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${transaction.transactionType} - ${transaction.unit}'),
-                Text('${transaction.transactionDate} ${transaction.transactionTime}'),
+                Text(
+                  '${transaction.transactionDate} ${transaction.transactionTime}',
+                ),
               ],
             ),
             trailing: Column(
@@ -431,7 +495,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
                 Text(
                   '${transaction.quantityChange > 0 ? '+' : ''}${transaction.quantityChange.toStringAsFixed(1)}',
                   style: TextStyle(
-                    color: transaction.quantityChange > 0 ? Colors.green : Colors.red,
+                    color: transaction.quantityChange > 0
+                        ? Colors.green
+                        : Colors.red,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -530,12 +596,16 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
         context.read<InventoryBloc>().add(const LoadInventoryListEvent());
         break;
       case 1: // مخزون منخفض
-        context.read<InventoryBloc>().add(const LoadInventoryListEvent(
-          filterType: InventoryFilterType.lowStock,
-        ));
+        context.read<InventoryBloc>().add(
+          const LoadInventoryListEvent(
+            filterType: InventoryFilterType.lowStock,
+          ),
+        );
         break;
       case 2: // الحركات
-        context.read<InventoryBloc>().add(const LoadInventoryTransactionsEvent());
+        context.read<InventoryBloc>().add(
+          const LoadInventoryTransactionsEvent(),
+        );
         break;
       case 3: // المردودات
         context.read<InventoryBloc>().add(const LoadReturnsEvent());
@@ -552,55 +622,92 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
       return const Center(child: CircularProgressIndicator());
     } else if (state is ReturnsLoadedState) {
       if (state.returns.isEmpty) {
-        return const Center(
+        return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.assignment_return, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.assignment_return, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
                 'لا توجد مردودات',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
-              SizedBox(height: 8),
-              Text(
+              const SizedBox(height: 8),
+              const Text(
                 'ستظهر المردودات هنا عند إضافتها',
                 style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => _showAddReturnDialog(context),
+                icon: const Icon(Icons.keyboard_return),
+                label: const Text('إضافة مردود جديد'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),
         );
       }
-      
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: state.returns.length,
-        itemBuilder: (context, index) {
-          final returnItem = state.returns[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: returnItem.isSalesReturn ? Colors.orange : Colors.blue,
-                child: Icon(
-                  returnItem.isSalesReturn ? Icons.keyboard_return : Icons.undo,
-                  color: Colors.white,
+
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.returns.length,
+              itemBuilder: (context, index) {
+                final returnItem = state.returns[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: returnItem.isSalesReturn
+                          ? Colors.orange
+                          : Colors.blue,
+                      child: Icon(
+                        returnItem.isSalesReturn
+                            ? Icons.keyboard_return
+                            : Icons.undo,
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: Text(returnItem.qatTypeName ?? 'صنف غير معروف'),
+                    subtitle: Text(
+                      'السبب: ${returnItem.returnReason}\n'
+                      'الكمية: ${returnItem.quantity} ${returnItem.unit}\n'
+                      'المبلغ: ${returnItem.totalAmount.toStringAsFixed(2)} ريال',
+                    ),
+                    trailing: Chip(
+                      label: Text(returnItem.status),
+                      backgroundColor: _getStatusColor(returnItem.status),
+                    ),
+                    onTap: () => _showReturnDetails(returnItem),
+                  ),
+                );
+              },
+            ),
+          ),
+          // زر إضافة مردود جديد في أسفل القائمة
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showAddReturnDialog(context),
+                icon: const Icon(Icons.add),
+                label: const Text('إضافة مردود جديد'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
-              title: Text(returnItem.qatTypeName ?? 'صنف غير معروف'),
-              subtitle: Text(
-                'السبب: ${returnItem.returnReason}\n'
-                'الكمية: ${returnItem.quantity} ${returnItem.unit}\n'
-                'المبلغ: ${returnItem.totalAmount.toStringAsFixed(2)} ريال',
-              ),
-              trailing: Chip(
-                label: Text(returnItem.status),
-                backgroundColor: _getStatusColor(returnItem.status),
-              ),
-              onTap: () => _showReturnDetails(returnItem),
             ),
-          );
-        },
+          ),
+        ],
       );
     } else if (state is InventoryError) {
       return Center(
@@ -621,7 +728,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
         ),
       );
     }
-    
+
     return const Center(child: Text('لا توجد بيانات'));
   }
 
@@ -631,56 +738,91 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
       return const Center(child: CircularProgressIndicator());
     } else if (state is DamagedItemsLoadedState) {
       if (state.damagedItems.isEmpty) {
-        return const Center(
+        return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.broken_image, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
                 'لا توجد بضاعة تالفة',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
-              SizedBox(height: 8),
-              Text(
+              const SizedBox(height: 8),
+              const Text(
                 'ستظهر البضاعة التالفة هنا عند تسجيلها',
                 style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => _showAddDamagedItemDialog(context),
+                icon: const Icon(Icons.broken_image),
+                label: const Text('تسجيل بضاعة تالفة'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),
         );
       }
-      
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: state.damagedItems.length,
-        itemBuilder: (context, index) {
-          final damagedItem = state.damagedItems[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _getSeverityColor(damagedItem.severityLevel),
-                child: Icon(
-                  _getDamageIcon(damagedItem.severityLevel),
-                  color: Colors.white,
+
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.damagedItems.length,
+              itemBuilder: (context, index) {
+                final damagedItem = state.damagedItems[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: _getSeverityColor(
+                        damagedItem.severityLevel,
+                      ),
+                      child: Icon(
+                        _getDamageIcon(damagedItem.severityLevel),
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: Text(damagedItem.qatTypeName ?? 'صنف غير معروف'),
+                    subtitle: Text(
+                      'السبب: ${damagedItem.damageReason}\n'
+                      'الكمية: ${damagedItem.quantity} ${damagedItem.unit}\n'
+                      'التكلفة: ${damagedItem.totalCost.toStringAsFixed(2)} ريال\n'
+                      'الخطورة: ${damagedItem.severityLevel}',
+                    ),
+                    trailing: Chip(
+                      label: Text(damagedItem.displayStatus),
+                      backgroundColor: _getStatusColor(damagedItem.status),
+                    ),
+                    onTap: () => _showDamageDetails(damagedItem),
+                  ),
+                );
+              },
+            ),
+          ),
+          // زر تسجيل بضاعة تالفة جديدة
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showAddDamagedItemDialog(context),
+                icon: const Icon(Icons.add),
+                label: const Text('تسجيل بضاعة تالفة جديدة'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
-              title: Text(damagedItem.qatTypeName ?? 'صنف غير معروف'),
-              subtitle: Text(
-                'السبب: ${damagedItem.damageReason}\n'
-                'الكمية: ${damagedItem.quantity} ${damagedItem.unit}\n'
-                'التكلفة: ${damagedItem.totalCost.toStringAsFixed(2)} ريال\n'
-                'الخطورة: ${damagedItem.severityLevel}',
-              ),
-              trailing: Chip(
-                label: Text(damagedItem.displayStatus),
-                backgroundColor: _getStatusColor(damagedItem.status),
-              ),
-              onTap: () => _showDamageDetails(damagedItem),
             ),
-          );
-        },
+          ),
+        ],
       );
     } else if (state is InventoryError) {
       return Center(
@@ -693,7 +835,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
+                context.read<InventoryBloc>().add(
+                  const LoadDamagedItemsEvent(),
+                );
               },
               child: const Text('إعادة المحاولة'),
             ),
@@ -701,7 +845,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
         ),
       );
     }
-    
+
     return const Center(child: Text('لا توجد بيانات'));
   }
 
@@ -772,7 +916,8 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             Text('المبلغ الإجمالي: ${returnItem.totalAmount} ريال'),
             Text('السبب: ${returnItem.returnReason}'),
             Text('الحالة: ${returnItem.status}'),
-            if (returnItem.notes?.isNotEmpty == true) Text('الملاحظات: ${returnItem.notes}'),
+            if (returnItem.notes?.isNotEmpty == true)
+              Text('الملاحظات: ${returnItem.notes}'),
           ],
         ),
         actions: [
@@ -780,7 +925,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.read<InventoryBloc>().add(ConfirmReturnEvent(returnItem.id));
+                context.read<InventoryBloc>().add(
+                  ConfirmReturnEvent(returnItem.id),
+                );
               },
               child: const Text('تأكيد المردود'),
             ),
@@ -810,9 +957,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             Text('السبب: ${damagedItem.damageReason}'),
             Text('الخطورة: ${damagedItem.severityLevel}'),
             Text('الحالة: ${damagedItem.displayStatus}'),
-            if (damagedItem.isInsuranceCovered) 
+            if (damagedItem.isInsuranceCovered)
               Text('مشمول بالتأمين: ${damagedItem.insuranceAmount} ريال'),
-            if (damagedItem.responsiblePerson?.isNotEmpty == true) 
+            if (damagedItem.responsiblePerson?.isNotEmpty == true)
               Text('المسؤول: ${damagedItem.responsiblePerson}'),
           ],
         ),
@@ -821,7 +968,9 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.read<InventoryBloc>().add(ConfirmDamageEvent(damagedItem.id));
+                context.read<InventoryBloc>().add(
+                  ConfirmDamageEvent(damagedItem.id),
+                );
               },
               child: const Text('تأكيد التلف'),
             ),
