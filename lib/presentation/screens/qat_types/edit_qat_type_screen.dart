@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -7,13 +8,9 @@ import '../../../domain/entities/qat_type.dart';
 import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
 import '../../blocs/qat_types/qat_types_state.dart';
-import '../../widgets/common/snackbar_widget.dart';
-import '../../widgets/common/confirm_dialog.dart';
 import './widgets/qat_type_form.dart';
 
-/// شاشة تعديل نوع قات
-/// 
-/// تسمح بتعديل بيانات نوع قات موجود
+/// شاشة تعديل نوع قات - تصميم راقي هادئ
 class EditQatTypeScreen extends StatefulWidget {
   final QatType qatType;
 
@@ -26,14 +23,57 @@ class EditQatTypeScreen extends StatefulWidget {
   State<EditQatTypeScreen> createState() => _EditQatTypeScreenState();
 }
 
-class _EditQatTypeScreenState extends State<EditQatTypeScreen> {
+class _EditQatTypeScreenState extends State<EditQatTypeScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   final _formKey = GlobalKey<QatTypeFormState>();
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+
+    _animationController.forward();
+
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submitQatType() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
+      HapticFeedback.lightImpact();
       return;
     }
 
+    HapticFeedback.mediumImpact();
     final formData = _formKey.currentState!.getFormData();
 
     context.read<QatTypesBloc>().add(
@@ -45,6 +85,8 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen> {
           defaultBuyPrice: formData['defaultBuyPrice'],
           defaultSellPrice: formData['defaultSellPrice'],
           icon: formData['icon'],
+          availableUnits: formData['availableUnits'],
+          unitPrices: formData['unitPrices'],
         ),
       ),
     );
@@ -52,56 +94,227 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('تعديل نوع القات'),
-          backgroundColor: AppColors.primary,
-          elevation: 0,
-        ),
-        body: BlocConsumer<QatTypesBloc, QatTypesState>(
-          listener: (context, state) {
-            if (state is QatTypeOperationSuccess) {
-              SnackbarWidget.showSuccess(
-                context: context,
-                message: 'تم تحديث نوع القات بنجاح',
-              );
-              Navigator.of(context).pop(true);
-            } else if (state is QatTypesError) {
-              SnackbarWidget.showError(
-                context: context,
-                message: state.message,
-              );
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is QatTypesLoading;
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            _buildGradientBackground(),
 
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                QatTypeForm(
-                  key: _formKey,
-                  qatType: widget.qatType,
-                  isLoading: isLoading,
-                  onSubmit: _submitQatType,
-                  onCancel: () async {
-                    final confirm = await ConfirmDialog.show(
-                      context,
-                      title: 'إلغاء التعديل',
-                      message: 'هل تريد إلغاء تعديل نوع القات؟',
-                      confirmText: 'نعم، إلغاء',
-                      cancelText: 'لا، متابعة',
-                    );
-                    if (confirm == true && mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  },
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                _buildModernAppBar(topPadding),
+
+                SliverToBoxAdapter(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: BlocConsumer<QatTypesBloc, QatTypesState>(
+                        listener: (context, state) {
+                          if (state is QatTypeOperationSuccess) {
+                            HapticFeedback.heavyImpact();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle, color: Colors.white),
+                                    const SizedBox(width: 12),
+                                    Text(state.message),
+                                  ],
+                                ),
+                                backgroundColor: AppColors.success,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                            Navigator.of(context).pop(true);
+                          } else if (state is QatTypesError) {
+                            HapticFeedback.heavyImpact();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.error, color: Colors.white),
+                                    const SizedBox(width: 12),
+                                    Text(state.message),
+                                  ],
+                                ),
+                                backgroundColor: AppColors.danger,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        builder: (context, state) {
+                          final isLoading = state is QatTypesLoading;
+
+                          return Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: QatTypeForm(
+                              key: _formKey,
+                              qatType: widget.qatType,
+                              isLoading: isLoading,
+                              onSubmit: _submitQatType,
+                              onCancel: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ],
-            );
-          },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientBackground() => Container(
+    height: 500,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.info.withOpacity(0.08),
+          AppColors.primary.withOpacity(0.05),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildModernAppBar(double topPadding) {
+    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 140,
+      pinned: true,
+      backgroundColor: AppColors.surface.withOpacity(opacity),
+      elevation: opacity * 2,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: opacity < 0.5
+                ? AppColors.surface.withOpacity(0.9)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
+            ),
+          ),
+          child: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.textPrimary,
+            size: 20,
+          ),
+        ),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.pop(context);
+        },
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.info.withOpacity(0.05),
+                AppColors.primary.withOpacity(0.03),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.info, AppColors.primary],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.info.withOpacity(0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                            BoxShadow(
+                              color: AppColors.info.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.edit_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'تعديل نوع القات',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 24,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.qatType.name,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

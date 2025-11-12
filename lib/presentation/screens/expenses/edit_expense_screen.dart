@@ -11,15 +11,20 @@ import '../../blocs/expenses/expenses_state.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import './widgets/expense_form.dart';
 
-/// شاشة إضافة مصروف - تصميم راقي هادئ
-class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+/// شاشة تعديل مصروف - تصميم راقي هادئ
+class EditExpenseScreen extends StatefulWidget {
+  final Expense expense;
+
+  const EditExpenseScreen({
+    super.key,
+    required this.expense,
+  });
 
   @override
-  State<AddExpenseScreen> createState() => _AddExpenseScreenState();
+  State<EditExpenseScreen> createState() => _EditExpenseScreenState();
 }
 
-class _AddExpenseScreenState extends State<AddExpenseScreen> {
+class _EditExpenseScreenState extends State<EditExpenseScreen> {
   final _formKey = GlobalKey<ExpenseFormState>();
 
   Future<void> _submitExpense() async {
@@ -30,19 +35,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final formData = _formKey.currentState!.getFormData();
     final now = DateTime.now();
 
-    final expense = Expense(
+    final updatedExpense = Expense(
+      id: widget.expense.id,
       amount: formData['amount'],
       category: formData['category'],
       description: formData['description'],
       notes: formData['notes'],
       date: formData['date'].toString().split(' ')[0],
-      time: '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      time: formData['time'] ?? '${now.hour}:${now.minute}',
       paymentMethod: formData['paymentMethod'] ?? 'نقد',
       recurring: formData['recurring'] ?? false,
     );
 
     if (mounted) {
-      context.read<ExpensesBloc>().add(AddExpenseEvent(expense));
+      context.read<ExpensesBloc>().add(UpdateExpenseEvent(updatedExpense));
     }
   }
 
@@ -63,7 +69,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   child: BlocConsumer<ExpensesBloc, ExpensesState>(
                     listener: (context, state) {
                       if (state is ExpenseOperationSuccess) {
-                        _showSuccessMessage(context, 'تمت إضافة المصروف بنجاح');
+                        _showSuccessMessage(context, 'تم تعديل المصروف بنجاح');
                         Navigator.of(context).pop(true);
                       } else if (state is ExpensesError) {
                         _showErrorMessage(context, state.message);
@@ -81,13 +87,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             const SizedBox(height: 20),
                             ExpenseForm(
                               key: _formKey,
+                              initialExpense: widget.expense,
                               isLoading: isLoading,
                               onSubmit: _submitExpense,
                               onCancel: () async {
                                 final confirm = await ConfirmDialog.show(
                                   context,
-                                  title: 'إلغاء العملية',
-                                  message: 'هل تريد إلغاء إضافة المصروف؟',
+                                  title: 'إلغاء التعديل',
+                                  message: 'هل تريد إلغاء تعديل المصروف؟',
                                   confirmText: 'نعم، إلغاء',
                                   cancelText: 'لا، متابعة',
                                 );
@@ -147,8 +154,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         onPressed: () async {
           final confirm = await ConfirmDialog.show(
             context,
-            title: 'إلغاء العملية',
-            message: 'هل تريد إلغاء إضافة المصروف؟',
+            title: 'إلغاء التعديل',
+            message: 'هل تريد إلغاء تعديل المصروف؟',
             confirmText: 'نعم، إلغاء',
             cancelText: 'لا، متابعة',
           );
@@ -192,7 +199,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           ],
                         ),
                         child: const Icon(
-                          Icons.add_rounded,
+                          Icons.edit_rounded,
                           color: Colors.white,
                           size: 26,
                         ),
@@ -204,7 +211,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'إضافة مصروف',
+                              'تعديل المصروف',
                               style: AppTextStyles.h2.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -213,7 +220,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'تسجيل مصروف جديد',
+                              widget.expense.category,
                               style: AppTextStyles.bodySmall.copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
@@ -263,7 +270,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'قم بتعبئة البيانات أدناه لتسجيل مصروف جديد',
+              'قم بتعديل بيانات المصروف أدناه',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.info,
                 fontWeight: FontWeight.w600,

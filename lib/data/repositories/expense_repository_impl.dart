@@ -40,10 +40,16 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   Future<void> delete(int id) => local.delete(id);
 
   @override
-  Future<List<Expense>> getAll() async => <Expense>[];
+  Future<List<Expense>> getAll() async {
+    final models = await local.getAll();
+    return models.map(_fromModel).toList();
+  }
 
   @override
-  Future<Expense?> getById(int id) async => null;
+  Future<Expense?> getById(int id) async {
+    final model = await local.getById(id);
+    return model != null ? _fromModel(model) : null;
+  }
 
   @override
   Future<List<Expense>> getByCategory(String category) async {

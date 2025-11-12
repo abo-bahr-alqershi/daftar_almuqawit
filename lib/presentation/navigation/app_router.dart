@@ -2,6 +2,7 @@
 /// يعرف جميع المسارات ويدير التنقل بين الشاشات مع حماية المسارات
 
 import 'package:flutter/material.dart';
+import '../../domain/entities/expense.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/activities_screen.dart';
@@ -24,6 +25,9 @@ import '../screens/sales/today_sales_screen.dart';
 import '../screens/debts/debts_screen.dart';
 import '../screens/debt_payments/debt_payments_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
+import '../screens/expenses/add_expense_screen.dart';
+import '../screens/expenses/edit_expense_screen.dart';
+import '../screens/expenses/expense_details_screen.dart';
 import '../screens/accounting/accounting_screen.dart';
 import '../screens/statistics/statistics_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -102,6 +106,14 @@ class AppRouter {
         return _buildRoute(const DebtPaymentsScreen());
       case RouteNames.expenses:
         return _buildRoute(const ExpensesScreen());
+      case RouteNames.addExpense:
+        return _buildRoute(const AddExpenseScreen());
+      case RouteNames.editExpense:
+        final expense = settings.arguments as Expense;
+        return _buildRoute(EditExpenseScreen(expense: expense));
+      case RouteNames.expenseDetails:
+        final expense = settings.arguments as Expense;
+        return _buildRoute(ExpenseDetailsScreen(expense: expense));
       case RouteNames.accounts:
         return _buildRoute(const AccountingScreen());
       case RouteNames.accounting:

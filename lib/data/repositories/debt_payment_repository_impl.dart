@@ -33,21 +33,26 @@ class DebtPaymentRepositoryImpl implements DebtPaymentRepository {
   Future<int> add(DebtPayment entity) => local.insert(_toModel(entity));
 
   @override
-  Future<void> delete(int id) async {
-    // ليس لدينا delete مباشر لدفعات الديون حالياً
+  Future<void> delete(int id) => local.delete(id);
+
+  @override
+  Future<List<DebtPayment>> getAll() async {
+    final models = await local.getAll();
+    return models.map(_fromModel).toList();
   }
 
   @override
-  Future<List<DebtPayment>> getAll() async => <DebtPayment>[];
-
-  @override
-  Future<DebtPayment?> getById(int id) async => null;
-
-  @override
-  Future<List<DebtPayment>> getByDebt(int debtId) async => (await local.getByDebt(debtId)).map(_fromModel).toList();
-
-  @override
-  Future<void> update(DebtPayment entity) async {
-    // ليس لدينا update مباشر لدفعات الديون حالياً
+  Future<DebtPayment?> getById(int id) async {
+    final model = await local.getById(id);
+    return model != null ? _fromModel(model) : null;
   }
+
+  @override
+  Future<List<DebtPayment>> getByDebt(int debtId) async {
+    final models = await local.getByDebt(debtId);
+    return models.map(_fromModel).toList();
+  }
+
+  @override
+  Future<void> update(DebtPayment entity) => local.update(_toModel(entity));
 }

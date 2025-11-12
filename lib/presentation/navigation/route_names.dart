@@ -51,12 +51,12 @@ class RouteNames {
 
   // ========== Inventory Routes  // المخزون
   static const String inventory = '/inventory';
-  
+
   // المردودات
   static const String returns = '/returns';
   static const String addReturn = '/add-return';
   static const String returnDetails = '/return-details';
-  
+
   // البضاعة التالفة
   static const String damagedItems = '/damaged-items';
   static const String addDamagedItem = '/add-damaged-item';
@@ -79,6 +79,8 @@ class RouteNames {
   // ========== Expenses Routes ==========
   static const String expenses = '/expenses';
   static const String addExpense = '/expenses/add';
+  static const String editExpense = '/expenses/edit';
+  static const String expenseDetails = '/expenses/details';
   static const String expenseCategories = '/expenses/categories';
 
   // ========== Accounting Routes ==========

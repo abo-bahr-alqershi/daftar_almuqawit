@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// فلترة وتصفية أنواع القات
-/// 
-/// يوفر خيارات متعددة لتصفية قائمة أنواع القات
+/// فلترة وتصفية أنواع القات - تصميم راقي هادئ
 class QatTypeFilters extends StatefulWidget {
   final String selectedFilter;
   final String selectedSortBy;
@@ -37,92 +36,172 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'تصفية أنواع القات',
-                style: AppTextStyles.headlineMedium.copyWith(
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.15),
+                      AppColors.primary.withOpacity(0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.filter_list_rounded,
+                  color: AppColors.primary,
+                  size: 24,
                 ),
               ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
+              const SizedBox(width: 14),
+              Text(
+                'تصفية أنواع القات',
+                style: AppTextStyles.h3.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('حسب الجودة'),
+          _buildSectionTitle('حسب الجودة', Icons.grade_rounded),
           const SizedBox(height: 12),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildFilterChip('الكل', Icons.all_inclusive, null),
-              _buildFilterChip('ممتاز', Icons.star, AppColors.success),
-              _buildFilterChip('جيد جداً', Icons.star_half, AppColors.info),
-              _buildFilterChip('جيد', Icons.thumb_up, AppColors.primary),
-              _buildFilterChip('متوسط', Icons.thumbs_up_down, AppColors.warning),
-              _buildFilterChip('عادي', Icons.thumb_down, AppColors.textSecondary),
+              _buildFilterChip('الكل', Icons.all_inclusive_rounded, AppColors.textSecondary),
+              _buildFilterChip('ممتاز', Icons.star_rounded, AppColors.success),
+              _buildFilterChip('جيد جداً', Icons.star_half_rounded, AppColors.info),
+              _buildFilterChip('جيد', Icons.thumb_up_rounded, AppColors.primary),
+              _buildFilterChip('متوسط', Icons.thumbs_up_down_rounded, AppColors.warning),
+              _buildFilterChip('عادي', Icons.thumb_down_rounded, AppColors.danger),
             ],
           ),
+
           const SizedBox(height: 24),
 
-          _buildSectionTitle('الترتيب'),
+          _buildSectionTitle('الترتيب', Icons.sort_rounded),
           const SizedBox(height: 12),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildSortChip('الاسم', Icons.sort_by_alpha),
-              _buildSortChip('سعر الشراء', Icons.shopping_cart),
-              _buildSortChip('سعر البيع', Icons.sell),
-              _buildSortChip('الربح', Icons.trending_up),
+              _buildSortChip('الاسم', Icons.sort_by_alpha_rounded),
+              _buildSortChip('سعر الشراء', Icons.shopping_cart_rounded),
+              _buildSortChip('سعر البيع', Icons.sell_rounded),
+              _buildSortChip('الربح', Icons.trending_up_rounded),
             ],
           ),
+
           const SizedBox(height: 24),
 
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedFilter = 'الكل';
-                      _selectedSortBy = 'الاسم';
-                    });
-                    widget.onFilterChanged('الكل');
-                    widget.onSortChanged('الاسم');
-                  },
-                  child: const Text('إعادة تعيين'),
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _selectedFilter = 'الكل';
+                          _selectedSortBy = 'الاسم';
+                        });
+                        widget.onFilterChanged('الكل');
+                        widget.onSortChanged('الاسم');
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Center(
+                        child: Text(
+                          'إعادة تعيين',
+                          style: AppTextStyles.button.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 flex: 2,
-                child: ElevatedButton(
-                  onPressed: () {
-                    widget.onFilterChanged(_selectedFilter);
-                    widget.onSortChanged(_selectedSortBy);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.success],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: const Text('تطبيق'),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        widget.onFilterChanged(_selectedFilter);
+                        widget.onSortChanged(_selectedSortBy);
+                        Navigator.pop(context);
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'تطبيق الفلاتر',
+                            style: AppTextStyles.button.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -133,78 +212,140 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTextStyles.bodyLarge.copyWith(
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-      ),
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: AppColors.primary),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: AppTextStyles.titleSmall.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon, Color? color) {
+  Widget _buildFilterChip(String label, IconData icon, Color color) {
     final isSelected = _selectedFilter == label;
-    final chipColor = color ?? AppColors.primary;
 
-    return FilterChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isSelected ? AppColors.textOnDark : chipColor,
-          ),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
-      ),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _selectedFilter = label;
-        });
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedFilter = label);
       },
-      selectedColor: chipColor,
-      backgroundColor: AppColors.backgroundSecondary,
-      labelStyle: AppTextStyles.bodyMedium.copyWith(
-        color: isSelected ? AppColors.textOnDark : AppColors.textPrimary,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [color, color.withOpacity(0.8)],
+                )
+              : null,
+          color: isSelected ? null : AppColors.background.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : AppColors.border.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : color,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
-      checkmarkColor: AppColors.textOnDark,
     );
   }
 
   Widget _buildSortChip(String label, IconData icon) {
     final isSelected = _selectedSortBy == label;
 
-    return FilterChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isSelected ? AppColors.textOnDark : AppColors.primary,
-          ),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
-      ),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _selectedSortBy = label;
-        });
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedSortBy = label);
       },
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.backgroundSecondary,
-      labelStyle: AppTextStyles.bodyMedium.copyWith(
-        color: isSelected ? AppColors.textOnDark : AppColors.textPrimary,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [AppColors.info, AppColors.primary],
+                )
+              : null,
+          color: isSelected ? null : AppColors.background.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.info
+                : AppColors.border.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.info.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : AppColors.info,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
-      checkmarkColor: AppColors.textOnDark,
     );
   }
 }
