@@ -9,8 +9,8 @@ import '../../../domain/usecases/inventory/get_inventory_list.dart';
 import 'widgets/inventory_list_widget.dart';
 import 'widgets/inventory_filter_widget.dart';
 import 'widgets/inventory_stats_card.dart';
-import 'widgets/add_return_dialog.dart';
-import 'widgets/add_damaged_item_dialog.dart';
+import 'add_return_screen.dart';
+import 'add_damaged_item_screen.dart';
 
 /// شاشة المخزون الرئيسية
 class InventoryScreen extends StatelessWidget {
@@ -85,13 +85,13 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
                         IconButton(
                           icon: const Icon(Icons.keyboard_return),
                           tooltip: 'إضافة مردود',
-                          onPressed: () => _showAddReturnDialog(context),
+                          onPressed: () => _navigateToAddReturnScreen(context),
                         ),
                       if (currentIndex == 4) // تبويب التالف
                         IconButton(
                           icon: const Icon(Icons.broken_image),
                           tooltip: 'تسجيل تلف',
-                          onPressed: () => _showAddDamagedItemDialog(context),
+                          onPressed: () => _navigateToAddDamagedItemScreen(context),
                         ),
                       IconButton(
                         icon: const Icon(Icons.refresh),
@@ -205,7 +205,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
 
               case 3: // المردودات
                 return FloatingActionButton.extended(
-                  onPressed: () => _showAddReturnDialog(context),
+                  onPressed: () => _navigateToAddReturnScreen(context),
                   icon: const Icon(Icons.keyboard_return),
                   label: const Text('إضافة مردود'),
                   backgroundColor: Colors.orange,
@@ -214,7 +214,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
 
               case 4: // التالف
                 return FloatingActionButton.extended(
-                  onPressed: () => _showAddDamagedItemDialog(context),
+                  onPressed: () => _navigateToAddDamagedItemScreen(context),
                   icon: const Icon(Icons.broken_image),
                   label: const Text('تسجيل تلف'),
                   backgroundColor: Colors.red,
@@ -230,30 +230,34 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
     );
   }
 
-  /// عرض نافذة إضافة مردود
-  void _showAddReturnDialog(BuildContext context) {
-    // حفظ مرجع للـ bloc قبل فتح الـ dialog
+  /// الانتقال إلى صفحة إضافة مردود
+  void _navigateToAddReturnScreen(BuildContext context) {
+    // حفظ مرجع للـ bloc قبل الانتقال للصفحة
     final inventoryBloc = context.read<InventoryBloc>();
 
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: inventoryBloc,
-        child: const AddReturnDialog(),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (screenContext) => BlocProvider.value(
+          value: inventoryBloc,
+          child: const AddReturnScreen(),
+        ),
       ),
     );
   }
 
-  /// عرض نافذة إضافة بضاعة تالفة
-  void _showAddDamagedItemDialog(BuildContext context) {
-    // حفظ مرجع للـ bloc قبل فتح الـ dialog
+  /// الانتقال إلى صفحة إضافة بضاعة تالفة
+  void _navigateToAddDamagedItemScreen(BuildContext context) {
+    // حفظ مرجع للـ bloc قبل الانتقال للصفحة
     final inventoryBloc = context.read<InventoryBloc>();
 
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: inventoryBloc,
-        child: const AddDamagedItemDialog(),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (screenContext) => BlocProvider.value(
+          value: inventoryBloc,
+          child: const AddDamagedItemScreen(),
+        ),
       ),
     );
   }
@@ -639,7 +643,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () => _showAddReturnDialog(context),
+                onPressed: () => _navigateToAddReturnScreen(context),
                 icon: const Icon(Icons.keyboard_return),
                 label: const Text('إضافة مردود جديد'),
                 style: ElevatedButton.styleFrom(
@@ -696,7 +700,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _showAddReturnDialog(context),
+                onPressed: () => _navigateToAddReturnScreen(context),
                 icon: const Icon(Icons.add),
                 label: const Text('إضافة مردود جديد'),
                 style: ElevatedButton.styleFrom(
@@ -755,7 +759,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () => _showAddDamagedItemDialog(context),
+                onPressed: () => _navigateToAddDamagedItemScreen(context),
                 icon: const Icon(Icons.broken_image),
                 label: const Text('تسجيل بضاعة تالفة'),
                 style: ElevatedButton.styleFrom(
@@ -811,7 +815,7 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _showAddDamagedItemDialog(context),
+                onPressed: () => _navigateToAddDamagedItemScreen(context),
                 icon: const Icon(Icons.add),
                 label: const Text('تسجيل بضاعة تالفة جديدة'),
                 style: ElevatedButton.styleFrom(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/supplier.dart';
 
-/// بطاقة عرض المورد
-class SupplierCard extends StatelessWidget {
+class SupplierCard extends StatefulWidget {
   final Supplier supplier;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
@@ -19,250 +19,363 @@ class SupplierCard extends StatelessWidget {
   });
 
   @override
+  State<SupplierCard> createState() => _SupplierCardState();
+}
+
+class _SupplierCardState extends State<SupplierCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 1,
+      end: 0.98,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Name and Actions
-              Row(
+    final trustColor = _getTrustLevelColor(widget.supplier.trustLevel);
+    final ratingColor = _getRatingColor(widget.supplier.qualityRating);
+
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _controller.forward();
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+        if (widget.onTap != null) {
+          HapticFeedback.lightImpact();
+          widget.onTap!();
+        }
+      },
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _isPressed
+                    ? trustColor.withOpacity(0.3)
+                    : trustColor.withOpacity(0.15),
+                width: _isPressed ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: trustColor.withOpacity(_isPressed ? 0.15 : 0.08),
+                  blurRadius: _isPressed ? 20 : 12,
+                  offset: Offset(0, _isPressed ? 6 : 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.business,
-                            color: AppColors.primary,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                supplier.name,
-                                style: AppTextStyles.titleMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (supplier.area != null) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.location_on,
-                                      size: 14,
-                                      color: AppColors.textTertiary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        supplier.area!,
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.textTertiary,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                  if (widget.supplier.totalDebtToHim > 0)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 2,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.danger,
+                              AppColors.danger.withOpacity(0.5),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  // Actions
-                  Row(
-                    children: [
-                      if (onEdit != null)
-                        IconButton(
-                          icon: Icon(Icons.edit, size: 20),
-                          color: AppColors.primary,
-                          onPressed: onEdit,
-                          tooltip: 'تعديل',
-                        ),
-                      if (onDelete != null)
-                        IconButton(
-                          icon: Icon(Icons.delete, size: 20),
-                          color: AppColors.danger,
-                          onPressed: onDelete,
-                          tooltip: 'حذف',
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
 
-              // Content: Phone, Rating, Trust Level
-              Row(
-                children: [
-                  // Phone
-                  if (supplier.phone != null)
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.phone,
-                            size: 16,
-                            color: AppColors.textSecondary,
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Hero(
+                              tag: 'supplier-icon-${widget.supplier.id}',
+                              child: Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      trustColor.withOpacity(0.15),
+                                      trustColor.withOpacity(0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  Icons.local_shipping_rounded,
+                                  color: trustColor,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.supplier.name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                      letterSpacing: -0.3,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (widget.supplier.area != null)
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on_rounded,
+                                          size: 14,
+                                          color: AppColors.textHint,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            widget.supplier.area!,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textHint,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ratingColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 14,
+                                    color: ratingColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.supplier.qualityRating.toString(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: ratingColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              supplier.phone!,
-                              style: AppTextStyles.bodySmall,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          decoration: BoxDecoration(
+                            color: trustColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: trustColor.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getTrustIcon(widget.supplier.trustLevel),
+                                size: 14,
+                                color: trustColor,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                widget.supplier.trustLevel,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: trustColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary.withOpacity(0.03),
+                                AppColors.info.withOpacity(0.02),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.border.withOpacity(0.1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildFinancialItem(
+                                  icon: Icons.shopping_cart_rounded,
+                                  label: 'إجمالي المشتريات',
+                                  value: widget.supplier.totalPurchases,
+                                  color: AppColors.purchases,
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 44,
+                                color: AppColors.border.withOpacity(0.2),
+                              ),
+                              Expanded(
+                                child: _buildFinancialItem(
+                                  icon: Icons.account_balance_wallet_rounded,
+                                  label: 'الدين له',
+                                  value: widget.supplier.totalDebtToHim,
+                                  color: widget.supplier.totalDebtToHim > 0
+                                      ? AppColors.danger
+                                      : AppColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (widget.supplier.phone != null) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.phone_rounded,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                widget.supplier.phone!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+
+                        if (widget.supplier.notes != null &&
+                            widget.supplier.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.info.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppColors.info.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.note_rounded,
+                                  size: 14,
+                                  color: AppColors.info,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    widget.supplier.notes!,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                      height: 1.4,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                  const SizedBox(width: 16),
-
-                  // Quality Rating
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getRatingColor(supplier.qualityRating).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.star,
-                          size: 14,
-                          color: _getRatingColor(supplier.qualityRating),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          supplier.qualityRating.toString(),
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: _getRatingColor(supplier.qualityRating),
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
 
-              // Trust Level
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _getTrustLevelColor(supplier.trustLevel).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _getTrustLevelColor(supplier.trustLevel).withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  supplier.trustLevel,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: _getTrustLevelColor(supplier.trustLevel),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Financial Info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildFinancialItem(
-                        label: 'إجمالي المشتريات',
-                        value: supplier.totalPurchases,
-                        color: AppColors.purchases,
-                      ),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 36,
-                      color: AppColors.divider,
-                    ),
-                    Expanded(
-                      child: _buildFinancialItem(
-                        label: 'الدين له',
-                        value: supplier.totalDebtToHim,
-                        color: AppColors.debt,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Notes
-              if (supplier.notes != null && supplier.notes!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.info.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.note,
-                        size: 16,
-                        color: AppColors.info,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          supplier.notes!,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                  if (_isPressed)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: trustColor.withOpacity(0.05),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -270,25 +383,36 @@ class SupplierCard extends StatelessWidget {
   }
 
   Widget _buildFinancialItem({
+    required IconData icon,
     required String label,
     required double value,
     required Color color,
   }) {
     return Column(
       children: [
-        Text(
-          label,
-          style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.textTertiary,
-          ),
-          textAlign: TextAlign.center,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
-          '${value.toStringAsFixed(2)} ر.س',
-          style: AppTextStyles.labelMedium.copyWith(
+          '${value.toStringAsFixed(0)} ر.ي',
+          style: TextStyle(
+            fontSize: 16,
             color: color,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
           ),
           textAlign: TextAlign.center,
         ),
@@ -298,20 +422,38 @@ class SupplierCard extends StatelessWidget {
 
   Color _getRatingColor(int rating) {
     if (rating >= 4) return AppColors.success;
-    if (rating >= 3) return AppColors.warning;
+    if (rating >= 3) return const Color(0xFFFFD700);
+    if (rating >= 2) return AppColors.warning;
     return AppColors.danger;
   }
 
   Color _getTrustLevelColor(String trustLevel) {
     switch (trustLevel) {
-      case 'موثوق':
+      case 'ممتاز':
         return AppColors.success;
+      case 'جيد':
+        return const Color(0xFF10B981);
       case 'متوسط':
         return AppColors.warning;
-      case 'غير موثوق':
+      case 'ضعيف':
         return AppColors.danger;
       default:
         return AppColors.info;
+    }
+  }
+
+  IconData _getTrustIcon(String trustLevel) {
+    switch (trustLevel) {
+      case 'ممتاز':
+        return Icons.verified_rounded;
+      case 'جيد':
+        return Icons.check_circle_rounded;
+      case 'متوسط':
+        return Icons.warning_rounded;
+      case 'ضعيف':
+        return Icons.error_rounded;
+      default:
+        return Icons.info_rounded;
     }
   }
 }
