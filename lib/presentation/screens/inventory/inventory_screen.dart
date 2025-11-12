@@ -1,240 +1,1037 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../core/di/injection_container.dart';
-import '../../blocs/inventory/inventory_bloc.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/inventory.dart';
-import '../../../domain/entities/inventory_transaction.dart';
 import '../../../domain/usecases/inventory/get_inventory_list.dart';
-import 'widgets/inventory_list_widget.dart';
-import 'widgets/inventory_filter_widget.dart';
+import '../../blocs/inventory/inventory_bloc.dart';
+import '../../widgets/common/confirm_dialog.dart';
+import 'widgets/inventory_item_card.dart';
 import 'widgets/inventory_stats_card.dart';
+import 'widgets/inventory_transaction_card.dart';
+import 'widgets/inventory_filter_widget.dart';
 import 'add_return_screen.dart';
 import 'add_damaged_item_screen.dart';
+import 'inventory_details_screen.dart';
+import 'adjust_quantity_screen.dart';
 
-/// شاشة المخزون الرئيسية
-class InventoryScreen extends StatelessWidget {
+/// الشاشة الرئيسية لإدارة المخزون - تصميم راقي هادئ
+class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<InventoryBloc>()
-        ..add(const LoadInventoryListEvent())
-        ..add(const LoadInventoryStatisticsEvent()),
-      child: const _InventoryScreenContent(),
-    );
-  }
+  State<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InventoryScreenContent extends StatefulWidget {
-  const _InventoryScreenContent();
-
-  @override
-  State<_InventoryScreenContent> createState() =>
-      _InventoryScreenContentState();
-}
-
-class _InventoryScreenContentState extends State<_InventoryScreenContent>
+class _InventoryScreenState extends State<InventoryScreen>
     with TickerProviderStateMixin {
-  late TabController _tabController;
+  late AnimationController _animationController;
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  double _scrollOffset = 0;
+  late TabController _tabController;
+  InventoryFilterType _currentFilter = InventoryFilterType.all;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
-    // _searchController already initialized above
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _animationController.forward();
 
-    // تحميل البيانات الأولية
-    context.read<InventoryBloc>().add(const LoadInventoryListEvent());
-    context.read<InventoryBloc>().add(const LoadInventoryStatisticsEvent());
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
 
-    // إضافة listener للتبديل بين التبويبات
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _onTabChanged(_tabController.index);
       }
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<InventoryBloc>().add(const LoadInventoryListEvent());
+      context.read<InventoryBloc>().add(const LoadInventoryStatisticsEvent());
+    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _animationController.dispose();
+    _scrollController.dispose();
     _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('المخزون'),
-        actions: [
-          // أزرار حسب التبويب النشط
-          BlocBuilder<InventoryBloc, InventoryState>(
-            builder: (context, state) {
-              return AnimatedBuilder(
-                animation: _tabController,
-                builder: (builderContext, child) {
-                  final currentIndex = _tabController.index;
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            _buildGradientBackground(),
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                _buildModernAppBar(),
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (currentIndex == 3) // تبويب المردودات
-                        IconButton(
-                          icon: const Icon(Icons.keyboard_return),
-                          tooltip: 'إضافة مردود',
-                          onPressed: () => _navigateToAddReturnScreen(context),
-                        ),
-                      if (currentIndex == 4) // تبويب التالف
-                        IconButton(
-                          icon: const Icon(Icons.broken_image),
-                          tooltip: 'تسجيل تلف',
-                          onPressed: () => _navigateToAddDamagedItemScreen(context),
-                        ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () {
-                          context.read<InventoryBloc>().add(
-                            const RefreshInventoryEvent(),
+                      const SizedBox(height: 20),
+                      BlocConsumer<InventoryBloc, InventoryState>(
+                        listener: (context, state) {
+                          if (state is InventoryOperationSuccess) {
+                            _showSuccessMessage(state.message);
+                          } else if (state is InventoryError) {
+                            _showErrorMessage(state.message);
+                          }
+                        },
+                        builder: (context, state) {
+                          return Column(
+                            children: [
+                              if (state is InventoryStatisticsLoaded)
+                                InventoryStatsCard(
+                                  statistics: state.statistics,
+                                ),
+                              const SizedBox(height: 20),
+                              _buildSearchBar(),
+                              const SizedBox(height: 20),
+                              _buildTabBar(),
+                              const SizedBox(height: 16),
+                              _buildTabContent(state),
+                              const SizedBox(height: 100),
+                            ],
                           );
                         },
                       ),
-                      if (currentIndex == 0 ||
-                          currentIndex == 1) // تبويبات المخزون
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          tooltip: 'إضافة صنف للمخزون',
-                          onPressed: () {
-                            _showAddInventoryDialog(context);
-                          },
-                        ),
                     ],
-                  );
-                },
-              );
-            },
+                  ),
+                ),
+              ],
+            ),
+            _buildFloatingActionButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientBackground() => Container(
+    height: 400,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.info.withOpacity(0.08),
+          AppColors.primary.withOpacity(0.05),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildModernAppBar() {
+    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 140,
+      pinned: true,
+      backgroundColor: AppColors.surface.withOpacity(opacity),
+      elevation: opacity * 2,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.info, AppColors.primary],
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.info.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.inventory_2_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'المخزون',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 24,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'إدارة المخزون والأصناف',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        _buildIconButton(
+          Icons.filter_list_rounded,
+          onPressed: _showFilterDialog,
+        ),
+        _buildIconButton(
+          Icons.refresh_rounded,
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            context.read<InventoryBloc>().add(const RefreshInventoryEvent());
+          },
+        ),
+        const SizedBox(width: 12),
+      ],
+    );
+  }
+
+  Widget _buildIconButton(
+    IconData icon, {
+    required VoidCallback onPressed,
+    String? badge,
+  }) => Stack(
+    children: [
+      IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+          ),
+          child: Icon(icon, color: AppColors.textPrimary, size: 20),
+        ),
+        onPressed: onPressed,
+      ),
+      if (badge != null)
+        Positioned(
+          right: 8,
+          top: 8,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              color: AppColors.danger,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              badge,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+    ],
+  );
+
+  Widget _buildSearchBar() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      body: Column(
+      child: TextField(
+        controller: _searchController,
+        style: AppTextStyles.bodyMedium,
+        decoration: InputDecoration(
+          hintText: 'البحث في المخزون...',
+          hintStyle: AppTextStyles.inputHint.copyWith(fontSize: 14),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.textSecondary,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+        onSubmitted: (query) {
+          context.read<InventoryBloc>().add(SearchInventoryEvent(query));
+        },
+      ),
+    ),
+  );
+
+  Widget _buildTabBar() => Container(
+    margin: const EdgeInsets.symmetric(horizontal: 20),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      indicator: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.info, AppColors.primary],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      labelColor: Colors.white,
+      unselectedLabelColor: AppColors.textSecondary,
+      labelStyle: AppTextStyles.labelMedium.copyWith(
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelStyle: AppTextStyles.labelMedium,
+      padding: const EdgeInsets.all(4),
+      tabs: const [
+        Tab(text: 'الكل'),
+        Tab(text: 'منخفض'),
+        Tab(text: 'الحركات'),
+        Tab(text: 'المردودات'),
+        Tab(text: 'التالف'),
+      ],
+    ),
+  );
+
+  Widget _buildTabContent(InventoryState state) {
+    if (state is InventoryLoading) {
+      return _buildLoadingShimmer();
+    }
+
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: TabBarView(
+        controller: _tabController,
         children: [
-          // شريط البحث والتصفية
-          _buildSearchAndFilterBar(),
+          _buildAllInventoryTab(state),
+          _buildLowStockTab(state),
+          _buildTransactionsTab(state),
+          _buildReturnsTab(state),
+          _buildDamagedTab(state),
+        ],
+      ),
+    );
+  }
 
-          // إحصائيات المخزون
-          BlocBuilder<InventoryBloc, InventoryState>(
-            builder: (context, state) {
-              if (state is InventoryStatisticsLoaded) {
-                return InventoryStatsCard(statistics: state.statistics);
-              }
-              return const SizedBox.shrink();
-            },
+  Widget _buildAllInventoryTab(InventoryState state) {
+    if (state is InventoryListLoaded) {
+      if (state.inventory.isEmpty) {
+        return _buildEmptyState(
+          icon: Icons.inventory_2_rounded,
+          title: 'لا توجد أصناف',
+          subtitle: 'ابدأ بإضافة أصناف جديدة للمخزون',
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: state.inventory.length,
+        itemBuilder: (context, index) {
+          final item = state.inventory[index];
+          return InventoryItemCard(
+            item: item,
+            onTap: () => _navigateToDetails(item),
+            onEdit: () => _showEditDialog(item),
+            onAdjustQuantity: () => _navigateToAdjustQuantity(item),
+          );
+        },
+      );
+    }
+    if (state is InventoryError) {
+      return _buildErrorState(state.message);
+    }
+    return _buildEmptyState(
+      icon: Icons.inventory_2_rounded,
+      title: 'لا توجد بيانات',
+    );
+  }
+
+  Widget _buildLowStockTab(InventoryState state) {
+    if (state is InventoryListLoaded) {
+      final lowStockItems = state.inventory
+          .where((item) => item.isLowStock)
+          .toList();
+      if (lowStockItems.isEmpty) {
+        return _buildEmptyState(
+          icon: Icons.check_circle_rounded,
+          title: 'ممتاز!',
+          subtitle: 'لا يوجد مخزون منخفض',
+          color: AppColors.success,
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: lowStockItems.length,
+        itemBuilder: (context, index) {
+          final item = lowStockItems[index];
+          return InventoryItemCard(
+            item: item,
+            showLowStockWarning: true,
+            onTap: () => _navigateToDetails(item),
+            onEdit: () => _showEditDialog(item),
+            onAdjustQuantity: () => _navigateToAdjustQuantity(item),
+          );
+        },
+      );
+    }
+    return _buildEmptyState(
+      icon: Icons.warning_rounded,
+      title: 'لا توجد بيانات',
+    );
+  }
+
+  Widget _buildTransactionsTab(InventoryState state) {
+    if (state is InventoryTransactionsLoaded) {
+      if (state.transactions.isEmpty) {
+        return _buildEmptyState(
+          icon: Icons.history_rounded,
+          title: 'لا توجد حركات',
+          subtitle: 'ستظهر حركات المخزون هنا',
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: state.transactions.length,
+        itemBuilder: (context, index) {
+          final transaction = state.transactions[index];
+          return InventoryTransactionCard(transaction: transaction);
+        },
+      );
+    }
+    return _buildEmptyState(
+      icon: Icons.history_rounded,
+      title: 'لا توجد حركات',
+    );
+  }
+
+  Widget _buildReturnsTab(InventoryState state) {
+    if (state is ReturnsLoadedState) {
+      if (state.returns.isEmpty) {
+        return _buildEmptyState(
+          icon: Icons.assignment_return_rounded,
+          title: 'لا توجد مردودات',
+          subtitle: 'ستظهر المردودات هنا عند إضافتها',
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: state.returns.length,
+        itemBuilder: (context, index) {
+          final returnItem = state.returns[index];
+          return _buildReturnCard(returnItem);
+        },
+      );
+    }
+    return _buildEmptyState(
+      icon: Icons.assignment_return_rounded,
+      title: 'لا توجد مردودات',
+    );
+  }
+
+  Widget _buildDamagedTab(InventoryState state) {
+    if (state is DamagedItemsLoadedState) {
+      if (state.damagedItems.isEmpty) {
+        return _buildEmptyState(
+          icon: Icons.broken_image_rounded,
+          title: 'لا توجد بضاعة تالفة',
+          subtitle: 'ستظهر البضاعة التالفة هنا عند تسجيلها',
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: state.damagedItems.length,
+        itemBuilder: (context, index) {
+          final damagedItem = state.damagedItems[index];
+          return _buildDamagedCard(damagedItem);
+        },
+      );
+    }
+    return _buildEmptyState(
+      icon: Icons.broken_image_rounded,
+      title: 'لا توجد بضاعة تالفة',
+    );
+  }
+
+  Widget _buildReturnCard(dynamic returnItem) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.warning.withOpacity(0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-
-          // التبويبات
-          TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabs: const [
-              Tab(text: 'جميع الأصناف', icon: Icon(Icons.inventory)),
-              Tab(text: 'مخزون منخفض', icon: Icon(Icons.warning)),
-              Tab(text: 'الحركات', icon: Icon(Icons.history)),
-              Tab(text: 'المردودات'),
-              Tab(text: 'التالف'),
-            ],
-          ),
-
-          // محتوى التبويبات
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // تبويب جميع الأصناف
-                BlocBuilder<InventoryBloc, InventoryState>(
-                  builder: (context, state) => _buildInventoryContent(state),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.warning.withOpacity(0.15),
+                            AppColors.warning.withOpacity(0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.keyboard_return_rounded,
+                        color: AppColors.warning,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            returnItem.qatTypeName ?? 'غير محدد',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'السبب: ${returnItem.returnReason}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(
+                          returnItem.status,
+                        ).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        returnItem.status,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _getStatusColor(returnItem.status),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
-                // تبويب المخزون المنخفض
-                BlocBuilder<InventoryBloc, InventoryState>(
-                  builder: (context, state) => _buildLowStockContent(state),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildMetricItem(
+                      icon: Icons.inventory_2_rounded,
+                      label: 'الكمية',
+                      value: '${returnItem.quantity} ${returnItem.unit}',
+                      color: AppColors.info,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildMetricItem(
+                      icon: Icons.attach_money_rounded,
+                      label: 'المبلغ',
+                      value:
+                          '${returnItem.totalAmount.toStringAsFixed(0)} ريال',
+                      color: AppColors.warning,
+                    ),
+                  ],
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                // تبويب الحركات
-                BlocBuilder<InventoryBloc, InventoryState>(
-                  builder: (context, state) => _buildTransactionsContent(state),
+  Widget _buildDamagedCard(dynamic damagedItem) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.danger.withOpacity(0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _getSeverityColor(
+                              damagedItem.severityLevel,
+                            ).withOpacity(0.15),
+                            _getSeverityColor(
+                              damagedItem.severityLevel,
+                            ).withOpacity(0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _getDamageIcon(damagedItem.severityLevel),
+                        color: _getSeverityColor(damagedItem.severityLevel),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            damagedItem.qatTypeName ?? 'غير محدد',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'السبب: ${damagedItem.damageReason}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getSeverityColor(
+                          damagedItem.severityLevel,
+                        ).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        damagedItem.severityLevel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _getSeverityColor(damagedItem.severityLevel),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
-                // تبويب المردودات
-                BlocBuilder<InventoryBloc, InventoryState>(
-                  builder: (context, state) => _buildReturnsContent(state),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildMetricItem(
+                      icon: Icons.inventory_2_rounded,
+                      label: 'الكمية',
+                      value: '${damagedItem.quantity} ${damagedItem.unit}',
+                      color: AppColors.info,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildMetricItem(
+                      icon: Icons.attach_money_rounded,
+                      label: 'التكلفة',
+                      value: '${damagedItem.totalCost.toStringAsFixed(0)} ريال',
+                      color: AppColors.danger,
+                    ),
+                  ],
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                // تبويب التالف
-                BlocBuilder<InventoryBloc, InventoryState>(
-                  builder: (context, state) => _buildDamagedItemsContent(state),
+  Widget _buildMetricItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) => Expanded(
+    child: Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
           ),
         ],
       ),
-      floatingActionButton: _buildFloatingActionButtons(),
+    ),
+  );
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Color? color,
+  }) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  (color ?? AppColors.textSecondary).withOpacity(0.1),
+                  (color ?? AppColors.textSecondary).withOpacity(0.05),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 64,
+              color: color ?? AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            title,
+            style: AppTextStyles.h3.copyWith(
+              color: color ?? AppColors.textSecondary,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildErrorState(String message) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 64,
+            color: AppColors.danger,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'حدث خطأ',
+            style: AppTextStyles.h3.copyWith(color: AppColors.danger),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: AppTextStyles.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              context.read<InventoryBloc>().add(const LoadInventoryListEvent());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildLoadingShimmer() => ListView.builder(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    itemCount: 5,
+    itemBuilder: (context, index) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+        ),
+      );
+    },
+  );
+
+  Widget _buildFloatingActionButton() {
+    return Positioned(
+      bottom: 24,
+      left: 20,
+      child: AnimatedBuilder(
+        animation: _tabController,
+        builder: (context, child) {
+          final currentIndex = _tabController.index;
+
+          switch (currentIndex) {
+            case 0:
+            case 1:
+              return FloatingActionButton.extended(
+                onPressed: () {},
+                backgroundColor: AppColors.info,
+                icon: const Icon(Icons.add_rounded, color: Colors.white),
+                label: const Text(
+                  'إضافة صنف',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            case 3:
+              return FloatingActionButton.extended(
+                onPressed: () => _navigateToAddReturn(),
+                backgroundColor: AppColors.warning,
+                icon: const Icon(
+                  Icons.keyboard_return_rounded,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  'إضافة مردود',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            case 4:
+              return FloatingActionButton.extended(
+                onPressed: () => _navigateToDamaged(),
+                backgroundColor: AppColors.danger,
+                icon: const Icon(
+                  Icons.broken_image_rounded,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  'تسجيل تلف',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            default:
+              return const SizedBox.shrink();
+          }
+        },
+      ),
     );
   }
 
-  /// الأزرار العائمة حسب التبويب الحالي
-  Widget _buildFloatingActionButtons() {
-    return BlocBuilder<InventoryBloc, InventoryState>(
-      builder: (context, state) {
-        return AnimatedBuilder(
-          animation: _tabController,
-          builder: (builderContext, child) {
-            final currentIndex = _tabController.index;
-
-            switch (currentIndex) {
-              case 0: // جميع الأصناف
-              case 1: // مخزون منخفض
-                return FloatingActionButton(
-                  onPressed: () => _showAddInventoryDialog(context),
-                  child: const Icon(Icons.add),
-                  tooltip: 'إضافة صنف للمخزون',
-                  heroTag: "inventory_fab",
-                );
-
-              case 3: // المردودات
-                return FloatingActionButton.extended(
-                  onPressed: () => _navigateToAddReturnScreen(context),
-                  icon: const Icon(Icons.keyboard_return),
-                  label: const Text('إضافة مردود'),
-                  backgroundColor: Colors.orange,
-                  heroTag: "returns_fab",
-                );
-
-              case 4: // التالف
-                return FloatingActionButton.extended(
-                  onPressed: () => _navigateToAddDamagedItemScreen(context),
-                  icon: const Icon(Icons.broken_image),
-                  label: const Text('تسجيل تلف'),
-                  backgroundColor: Colors.red,
-                  heroTag: "damages_fab",
-                );
-
-              default:
-                return const SizedBox.shrink();
-            }
-          },
+  void _onTabChanged(int index) {
+    switch (index) {
+      case 0:
+        context.read<InventoryBloc>().add(const LoadInventoryListEvent());
+        break;
+      case 1:
+        context.read<InventoryBloc>().add(
+          const LoadInventoryListEvent(
+            filterType: InventoryFilterType.lowStock,
+          ),
         );
-      },
+        break;
+      case 2:
+        context.read<InventoryBloc>().add(
+          const LoadInventoryTransactionsEvent(),
+        );
+        break;
+      case 3:
+        context.read<InventoryBloc>().add(const LoadReturnsEvent());
+        break;
+      case 4:
+        context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
+        break;
+    }
+  }
+
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: InventoryFilterWidget(
+          currentFilter: _currentFilter,
+          onFilterChanged: (filter, options) {
+            setState(() => _currentFilter = filter);
+            context.read<InventoryBloc>().add(
+              LoadInventoryListEvent(filterType: filter),
+            );
+          },
+        ),
+      ),
     );
   }
 
-  /// الانتقال إلى صفحة إضافة مردود
-  void _navigateToAddReturnScreen(BuildContext context) {
-    // حفظ مرجع للـ bloc قبل الانتقال للصفحة
-    final inventoryBloc = context.read<InventoryBloc>();
+  void _navigateToDetails(Inventory item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => InventoryDetailsScreen(item: item),
+      ),
+    );
+  }
 
+  void _navigateToAdjustQuantity(Inventory item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AdjustQuantityScreen(item: item)),
+    );
+  }
+
+  void _navigateToAddReturn() {
+    final inventoryBloc = context.read<InventoryBloc>();
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -246,11 +1043,8 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
     );
   }
 
-  /// الانتقال إلى صفحة إضافة بضاعة تالفة
-  void _navigateToAddDamagedItemScreen(BuildContext context) {
-    // حفظ مرجع للـ bloc قبل الانتقال للصفحة
+  void _navigateToDamaged() {
     final inventoryBloc = context.read<InventoryBloc>();
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -262,728 +1056,70 @@ class _InventoryScreenContentState extends State<_InventoryScreenContent>
     );
   }
 
-  /// شريط البحث والتصفية
-  Widget _buildSearchAndFilterBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          // حقل البحث
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'بحث في المخزون...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-              onSubmitted: (query) {
-                context.read<InventoryBloc>().add(SearchInventoryEvent(query));
-              },
-            ),
-          ),
+  void _showEditDialog(Inventory item) {}
 
-          const SizedBox(width: 8),
-
-          // زر التصفية
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              _showFilterDialog(context);
-            },
-          ),
-        ],
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  /// محتوى تبويب جميع الأصناف
-  Widget _buildInventoryContent(InventoryState state) {
-    if (state is InventoryLoading) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (state is InventoryListLoaded) {
-      return InventoryListWidget(
-        inventory: state.inventory,
-        onItemTap: (item) => _showInventoryDetails(item),
-        onItemEdit: (item) => _showEditInventoryDialog(item),
-        onAdjustQuantity: (item) => _showAdjustQuantityDialog(item),
-      );
-    } else if (state is InventoryError) {
-      return Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              const Text(
-                'حدث خطأ في تحميل البيانات',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'تحقق من اتصال قاعدة البيانات',
-                style: TextStyle(color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  context.read<InventoryBloc>().add(
-                    const LoadInventoryListEvent(),
-                  );
-                },
-                child: const Text('إعادة المحاولة'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return const Center(child: Text('لا توجد بيانات'));
-  }
-
-  /// محتوى تبويب المخزون المنخفض
-  Widget _buildLowStockContent(InventoryState state) {
-    return BlocBuilder<InventoryBloc, InventoryState>(
-      builder: (context, state) {
-        // تحميل المخزون المنخفض
-        context.read<InventoryBloc>().add(
-          const LoadInventoryListEvent(
-            filterType: InventoryFilterType.lowStock,
-          ),
-        );
-
-        if (state is InventoryLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is InventoryListLoaded) {
-          if (state.inventory.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle, size: 64, color: Colors.green),
-                  SizedBox(height: 16),
-                  Text(
-                    'ممتاز! لا يوجد مخزون منخفض',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return InventoryListWidget(
-            inventory: state.inventory,
-            showLowStockWarning: true,
-            onItemTap: (item) => _showInventoryDetails(item),
-            onItemEdit: (item) => _showEditInventoryDialog(item),
-            onAdjustQuantity: (item) => _showAdjustQuantityDialog(item),
-          );
-        } else if (state is InventoryError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 8),
-                const Text('خطأ في تحميل البيانات'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<InventoryBloc>().add(
-                      const LoadInventoryListEvent(
-                        filterType: InventoryFilterType.lowStock,
-                      ),
-                    );
-                  },
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return const Center(child: Text('لا توجد بيانات'));
-      },
-    );
-  }
-
-  /// محتوى تبويب الحركات
-  Widget _buildTransactionsContent(InventoryState state) {
-    return BlocBuilder<InventoryBloc, InventoryState>(
-      builder: (context, state) {
-        // تحميل حركات المخزون
-        context.read<InventoryBloc>().add(
-          const LoadInventoryTransactionsEvent(),
-        );
-
-        if (state is InventoryLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is InventoryTransactionsLoaded) {
-          return _buildTransactionsList(state.transactions);
-        } else if (state is InventoryError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 8),
-                const Text('خطأ في تحميل الحركات'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<InventoryBloc>().add(
-                      const LoadInventoryTransactionsEvent(),
-                    );
-                  },
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return const Center(child: Text('لا توجد حركات'));
-      },
-    );
-  }
-
-  /// قائمة حركات المخزون
-  Widget _buildTransactionsList(List<InventoryTransaction> transactions) {
-    if (transactions.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('لا توجد حركات مخزون'),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: transactions.length,
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: _getTransactionColor(
-                transaction.transactionType,
-              ),
-              child: Icon(
-                _getTransactionIcon(transaction.transactionType),
-                color: Colors.white,
-              ),
-            ),
-            title: Text(transaction.qatTypeName),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('${transaction.transactionType} - ${transaction.unit}'),
-                Text(
-                  '${transaction.transactionDate} ${transaction.transactionTime}',
-                ),
-              ],
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${transaction.quantityChange > 0 ? '+' : ''}${transaction.quantityChange.toStringAsFixed(1)}',
-                  style: TextStyle(
-                    color: transaction.quantityChange > 0
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'المتبقي: ${transaction.quantityAfter.toStringAsFixed(1)}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ================= Helper Methods =================
-
-  Color _getTransactionColor(String type) {
-    switch (type) {
-      case 'شراء':
-      case 'مرتجع':
-        return Colors.green;
-      case 'بيع':
-      case 'تالف':
-        return Colors.red;
-      case 'تعديل':
-      case 'جرد':
-        return Colors.blue;
-      case 'تحويل':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getTransactionIcon(String type) {
-    switch (type) {
-      case 'شراء':
-        return Icons.add_shopping_cart;
-      case 'بيع':
-        return Icons.sell;
-      case 'تعديل':
-        return Icons.edit;
-      case 'تحويل':
-        return Icons.compare_arrows;
-      case 'تالف':
-        return Icons.broken_image;
-      case 'مرتجع':
-        return Icons.keyboard_return;
-      case 'جرد':
-        return Icons.inventory;
-      default:
-        return Icons.history;
-    }
-  }
-
-  // ================= Dialog Methods =================
-
-  void _showAddInventoryDialog(BuildContext context) {
-    // TODO: تطبيق نافذة إضافة عنصر مخزون
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('إضافة عنصر مخزون'),
-        content: const Text('سيتم تطبيق هذه الميزة قريباً'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  void _showEditInventoryDialog(Inventory item) {
-    // TODO: تطبيق نافذة تعديل عنصر المخزون
-  }
-
-  void _showAdjustQuantityDialog(Inventory item) {
-    // TODO: تطبيق نافذة تعديل الكمية
-  }
-
-  void _showInventoryDetails(Inventory item) {
-    // TODO: تطبيق شاشة تفاصيل المخزون
-  }
-
-  void _showFilterDialog(BuildContext context) {
-    // TODO: تطبيق نافذة التصفية
-  }
-
-  /// التبديل بين التبويبات
-  void _onTabChanged(int index) {
-    switch (index) {
-      case 0: // جميع الأصناف
-        context.read<InventoryBloc>().add(const LoadInventoryListEvent());
-        break;
-      case 1: // مخزون منخفض
-        context.read<InventoryBloc>().add(
-          const LoadInventoryListEvent(
-            filterType: InventoryFilterType.lowStock,
-          ),
-        );
-        break;
-      case 2: // الحركات
-        context.read<InventoryBloc>().add(
-          const LoadInventoryTransactionsEvent(),
-        );
-        break;
-      case 3: // المردودات
-        context.read<InventoryBloc>().add(const LoadReturnsEvent());
-        break;
-      case 4: // التالف
-        context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
-        break;
-    }
-  }
-
-  /// محتوى تبويب المردودات
-  Widget _buildReturnsContent(InventoryState state) {
-    if (state is InventoryLoading) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (state is ReturnsLoadedState) {
-      if (state.returns.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.assignment_return, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text(
-                'لا توجد مردودات',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'ستظهر المردودات هنا عند إضافتها',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => _navigateToAddReturnScreen(context),
-                icon: const Icon(Icons.keyboard_return),
-                label: const Text('إضافة مردود جديد'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.returns.length,
-              itemBuilder: (context, index) {
-                final returnItem = state.returns[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: returnItem.isSalesReturn
-                          ? Colors.orange
-                          : Colors.blue,
-                      child: Icon(
-                        returnItem.isSalesReturn
-                            ? Icons.keyboard_return
-                            : Icons.undo,
-                        color: Colors.white,
-                      ),
-                    ),
-                    title: Text(returnItem.qatTypeName ?? 'صنف غير معروف'),
-                    subtitle: Text(
-                      'السبب: ${returnItem.returnReason}\n'
-                      'الكمية: ${returnItem.quantity} ${returnItem.unit}\n'
-                      'المبلغ: ${returnItem.totalAmount.toStringAsFixed(2)} ريال',
-                    ),
-                    trailing: Chip(
-                      label: Text(returnItem.status),
-                      backgroundColor: _getStatusColor(returnItem.status),
-                    ),
-                    onTap: () => _showReturnDetails(returnItem),
-                  ),
-                );
-              },
-            ),
-          ),
-          // زر إضافة مردود جديد في أسفل القائمة
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _navigateToAddReturnScreen(context),
-                icon: const Icon(Icons.add),
-                label: const Text('إضافة مردود جديد'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else if (state is InventoryError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 8),
-            const Text('خطأ في تحميل المردودات'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                context.read<InventoryBloc>().add(const LoadReturnsEvent());
-              },
-              child: const Text('إعادة المحاولة'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return const Center(child: Text('لا توجد بيانات'));
-  }
-
-  /// محتوى تبويب التالف
-  Widget _buildDamagedItemsContent(InventoryState state) {
-    if (state is InventoryLoading) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (state is DamagedItemsLoadedState) {
-      if (state.damagedItems.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.broken_image, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text(
-                'لا توجد بضاعة تالفة',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'ستظهر البضاعة التالفة هنا عند تسجيلها',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => _navigateToAddDamagedItemScreen(context),
-                icon: const Icon(Icons.broken_image),
-                label: const Text('تسجيل بضاعة تالفة'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.damagedItems.length,
-              itemBuilder: (context, index) {
-                final damagedItem = state.damagedItems[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: _getSeverityColor(
-                        damagedItem.severityLevel,
-                      ),
-                      child: Icon(
-                        _getDamageIcon(damagedItem.severityLevel),
-                        color: Colors.white,
-                      ),
-                    ),
-                    title: Text(damagedItem.qatTypeName ?? 'صنف غير معروف'),
-                    subtitle: Text(
-                      'السبب: ${damagedItem.damageReason}\n'
-                      'الكمية: ${damagedItem.quantity} ${damagedItem.unit}\n'
-                      'التكلفة: ${damagedItem.totalCost.toStringAsFixed(2)} ريال\n'
-                      'الخطورة: ${damagedItem.severityLevel}',
-                    ),
-                    trailing: Chip(
-                      label: Text(damagedItem.displayStatus),
-                      backgroundColor: _getStatusColor(damagedItem.status),
-                    ),
-                    onTap: () => _showDamageDetails(damagedItem),
-                  ),
-                );
-              },
-            ),
-          ),
-          // زر تسجيل بضاعة تالفة جديدة
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _navigateToAddDamagedItemScreen(context),
-                icon: const Icon(Icons.add),
-                label: const Text('تسجيل بضاعة تالفة جديدة'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else if (state is InventoryError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 8),
-            const Text('خطأ في تحميل البضاعة التالفة'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                context.read<InventoryBloc>().add(
-                  const LoadDamagedItemsEvent(),
-                );
-              },
-              child: const Text('إعادة المحاولة'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return const Center(child: Text('لا توجد بيانات'));
-  }
-
-  /// لون الحالة
   Color _getStatusColor(String status) {
     switch (status) {
       case 'مؤكد':
-        return Colors.green.shade100;
+        return AppColors.success;
       case 'معلق':
-        return Colors.orange.shade100;
+        return AppColors.warning;
       case 'ملغي':
-        return Colors.red.shade100;
-      case 'تحت_المراجعة':
-        return Colors.blue.shade100;
-      case 'تم_التعامل_معه':
-        return Colors.purple.shade100;
+        return AppColors.danger;
       default:
-        return Colors.grey.shade100;
+        return AppColors.textSecondary;
     }
   }
 
-  /// لون مستوى الخطورة
-  Color _getSeverityColor(String severityLevel) {
-    switch (severityLevel) {
+  Color _getSeverityColor(String level) {
+    switch (level) {
       case 'طفيف':
-        return Colors.green;
+        return AppColors.success;
       case 'متوسط':
-        return Colors.orange;
+        return AppColors.warning;
       case 'كبير':
-        return Colors.red;
+        return AppColors.danger;
       case 'كارثي':
-        return Colors.purple;
+        return AppColors.purchases;
       default:
-        return Colors.grey;
+        return AppColors.textSecondary;
     }
   }
 
-  /// أيقونة التلف
-  IconData _getDamageIcon(String severityLevel) {
-    switch (severityLevel) {
+  IconData _getDamageIcon(String level) {
+    switch (level) {
       case 'طفيف':
-        return Icons.info;
+        return Icons.info_outline_rounded;
       case 'متوسط':
-        return Icons.warning;
+        return Icons.warning_rounded;
       case 'كبير':
-        return Icons.error;
+        return Icons.error_rounded;
       case 'كارثي':
-        return Icons.dangerous;
+        return Icons.dangerous_rounded;
       default:
-        return Icons.broken_image;
+        return Icons.broken_image_rounded;
     }
-  }
-
-  /// عرض تفاصيل المردود
-  void _showReturnDetails(dynamic returnItem) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('تفاصيل المردود: ${returnItem.returnNumber}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('الصنف: ${returnItem.qatTypeName}'),
-            Text('النوع: ${returnItem.displayReturnType}'),
-            Text('الكمية: ${returnItem.quantity} ${returnItem.unit}'),
-            Text('السعر: ${returnItem.unitPrice} ريال'),
-            Text('المبلغ الإجمالي: ${returnItem.totalAmount} ريال'),
-            Text('السبب: ${returnItem.returnReason}'),
-            Text('الحالة: ${returnItem.status}'),
-            if (returnItem.notes?.isNotEmpty == true)
-              Text('الملاحظات: ${returnItem.notes}'),
-          ],
-        ),
-        actions: [
-          if (returnItem.isPending)
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<InventoryBloc>().add(
-                  ConfirmReturnEvent(returnItem.id),
-                );
-              },
-              child: const Text('تأكيد المردود'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// عرض تفاصيل التلف
-  void _showDamageDetails(dynamic damagedItem) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('تفاصيل التلف: ${damagedItem.damageNumber}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('الصنف: ${damagedItem.qatTypeName}'),
-            Text('النوع: ${damagedItem.displayDamageType}'),
-            Text('الكمية: ${damagedItem.quantity} ${damagedItem.unit}'),
-            Text('التكلفة: ${damagedItem.totalCost} ريال'),
-            Text('السبب: ${damagedItem.damageReason}'),
-            Text('الخطورة: ${damagedItem.severityLevel}'),
-            Text('الحالة: ${damagedItem.displayStatus}'),
-            if (damagedItem.isInsuranceCovered)
-              Text('مشمول بالتأمين: ${damagedItem.insuranceAmount} ريال'),
-            if (damagedItem.responsiblePerson?.isNotEmpty == true)
-              Text('المسؤول: ${damagedItem.responsiblePerson}'),
-          ],
-        ),
-        actions: [
-          if (damagedItem.isUnderReview)
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<InventoryBloc>().add(
-                  ConfirmDamageEvent(damagedItem.id),
-                );
-              },
-              child: const Text('تأكيد التلف'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
   }
 }

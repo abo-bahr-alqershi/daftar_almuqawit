@@ -27,6 +27,7 @@ import 'presentation/blocs/sales/quick_sale/quick_sale_bloc.dart';
 import 'presentation/blocs/purchases/purchases_bloc.dart';
 import 'presentation/blocs/debts/debts_bloc.dart';
 import 'presentation/blocs/expenses/expenses_bloc.dart';
+import 'presentation/blocs/inventory/inventory_bloc.dart';
 import 'presentation/blocs/statistics/statistics_bloc.dart';
 import 'presentation/blocs/statistics/reports_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart';
@@ -61,6 +62,7 @@ class App extends StatelessWidget {
       BlocProvider<SalesBloc>(create: (_) => sl<SalesBloc>()),
       BlocProvider<QuickSaleBloc>(create: (_) => sl<QuickSaleBloc>()),
       BlocProvider<PurchasesBloc>(create: (_) => sl<PurchasesBloc>()),
+      BlocProvider<InventoryBloc>(create: (_) => sl<InventoryBloc>()),
       BlocProvider<DebtsBloc>(create: (_) => sl<DebtsBloc>()),
       BlocProvider<PaymentBloc>(create: (_) => sl<PaymentBloc>()),
       BlocProvider<ExpensesBloc>(create: (_) => sl<ExpensesBloc>()),

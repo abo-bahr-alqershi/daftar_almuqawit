@@ -1,15 +1,10 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/theme/app_dimensions.dart';
-import '../../widgets/common/loading_widget.dart';
-import '../../blocs/app/app_settings_bloc.dart';
 
-/// شاشة اختيار اللغة
-/// 
-/// تسمح للمستخدم باختيار لغة التطبيق وحفظ الاختيار
+/// شاشة اختيار اللغة - تصميم راقي هادئ
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
 
@@ -18,6 +13,8 @@ class LanguageScreen extends StatefulWidget {
 }
 
 class _LanguageScreenState extends State<LanguageScreen> {
+  String _selectedLanguage = 'ar';
+
   final List<LanguageItem> _languages = [
     LanguageItem(
       code: 'ar',
@@ -33,14 +30,11 @@ class _LanguageScreenState extends State<LanguageScreen> {
     ),
   ];
 
-  /// تغيير اللغة
   void _changeLanguage(String languageCode) {
-    final settingsBloc = context.read<AppSettingsBloc>();
-    final currentLanguage = settingsBloc.state.languageCode;
+    if (_selectedLanguage == languageCode) return;
 
-    if (currentLanguage == languageCode) return;
-
-    settingsBloc.add(ChangeLanguage(languageCode: languageCode));
+    setState(() => _selectedLanguage = languageCode);
+    HapticFeedback.lightImpact();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -51,54 +45,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
         ),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      _showRestartDialog();
-    });
-  }
-
-  /// عرض dialog لإعادة التشغيل
-  void _showRestartDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Directionality(
-        textDirection: ui.TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: AppColors.info,
-                size: AppDimensions.iconM,
-              ),
-              const SizedBox(width: AppDimensions.spaceS),
-              Text('إعادة التشغيل', style: AppTextStyles.titleMedium),
-            ],
-          ),
-          content: Text(
-            'لتطبيق تغيير اللغة بشكل كامل، يُفضل إعادة تشغيل التطبيق.',
-            style: AppTextStyles.bodyMedium,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // إغلاق الـ dialog
-                Navigator.pop(context); // العودة للشاشة السابقة
-              },
-              child: Text(
-                'حسناً',
-                style: AppTextStyles.button.copyWith(color: AppColors.primary),
-              ),
-            ),
-          ],
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -112,177 +59,190 @@ class _LanguageScreenState extends State<LanguageScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.surface,
           elevation: 0,
-          title: Text('اللغة', style: AppTextStyles.titleLarge),
-          centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_forward, color: AppColors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: BlocBuilder<AppSettingsBloc, AppSettingsState>(
-          builder: (context, state) {
-            if (state.isLoading) {
-              return const LoadingWidget.large(message: 'جارِ التحميل...');
-            }
-            return _buildLanguageList(state.languageCode);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageList(String selectedLanguage) {
-    return Column(
-      children: [
-        // معلومات توضيحية
-        Container(
-          margin: const EdgeInsets.all(AppDimensions.marginL),
-          padding: const EdgeInsets.all(AppDimensions.paddingM),
-          decoration: BoxDecoration(
-            color: AppColors.infoLight,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            border: Border.all(color: AppColors.info.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.language,
-                color: AppColors.info,
-                size: AppDimensions.iconM,
-              ),
-              const SizedBox(width: AppDimensions.spaceM),
-              Expanded(
-                child: Text(
-                  'اختر اللغة المفضلة لعرض واجهة التطبيق',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.info),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // قائمة اللغات
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
-            itemCount: _languages.length,
-            separatorBuilder: (context, index) => const SizedBox(height: AppDimensions.spaceM),
-            itemBuilder: (context, index) {
-              final language = _languages[index];
-              final isSelected = selectedLanguage == language.code;
-
-              return _LanguageTile(
-                language: language,
-                isSelected: isSelected,
-                onTap: () => _changeLanguage(language.code),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// عنصر اللغة في القائمة
-class _LanguageTile extends StatelessWidget {
-  final LanguageItem language;
-  final bool isSelected;
-  final VoidCallback? onTap;
-
-  const _LanguageTile({
-    required this.language,
-    required this.isSelected,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingM),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight.withOpacity(0.1) : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // العلم
-            Container(
-              width: 50,
-              height: 50,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusS),
+                borderRadius: BorderRadius.circular(12),
               ),
-              alignment: Alignment.center,
-              child: Text(
-                language.flag,
-                style: const TextStyle(fontSize: 30),
-              ),
+              child: const Icon(Icons.arrow_forward_rounded, color: AppColors.textPrimary, size: 20),
             ),
-            const SizedBox(width: AppDimensions.spaceM),
-
-            // معلومات اللغة
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    language.name,
-                    style: AppTextStyles.titleSmall.copyWith(
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    language.englishName,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'اللغة',
+            style: AppTextStyles.titleLarge.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-
-            // أيقونة التحديد
-            if (isSelected)
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  color: AppColors.textOnDark,
-                  size: 18,
-                ),
-              )
-            else
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.border, width: 2),
-                ),
-              ),
+          ),
+        ),
+        body: Column(
+          children: [
+            const SizedBox(height: 20),
+            _buildInfoCard(),
+            const SizedBox(height: 20),
+            Expanded(child: _buildLanguageList()),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildInfoCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.info.withOpacity(0.12),
+            AppColors.info.withOpacity(0.06),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.info.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.info.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.language_rounded,
+              color: AppColors.info,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'اختر اللغة المفضلة لعرض واجهة التطبيق',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.info,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: _languages.length,
+      itemBuilder: (context, index) {
+        final language = _languages[index];
+        final isSelected = _selectedLanguage == language.code;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary.withOpacity(0.3)
+                  : AppColors.border.withOpacity(0.1),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _changeLanguage(language.code),
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withOpacity(0.1),
+                            AppColors.info.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        language.flag,
+                        style: const TextStyle(fontSize: 32),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            language.name,
+                            style: AppTextStyles.titleMedium.copyWith(
+                              color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            language.englishName,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isSelected)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primary, AppColors.success],
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border, width: 2),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
-/// نموذج بيانات اللغة
 class LanguageItem {
   final String code;
   final String name;

@@ -1,10 +1,13 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/damaged_item.dart';
 import '../../blocs/inventory/inventory_bloc.dart';
 
-/// صفحة إضافة بضاعة تالفة - تصميم راقي
+/// شاشة إضافة بضاعة تالفة - تصميم راقي هادئ
 class AddDamagedItemScreen extends StatefulWidget {
   const AddDamagedItemScreen({super.key});
 
@@ -12,356 +15,181 @@ class AddDamagedItemScreen extends StatefulWidget {
   State<AddDamagedItemScreen> createState() => _AddDamagedItemScreenState();
 }
 
-class _AddDamagedItemScreenState extends State<AddDamagedItemScreen>
-    with TickerProviderStateMixin {
+class _AddDamagedItemScreenState extends State<AddDamagedItemScreen> {
   final _formKey = GlobalKey<FormState>();
   final _qatTypeNameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _unitCostController = TextEditingController();
   final _damageReasonController = TextEditingController();
   final _responsiblePersonController = TextEditingController();
-  final _batchNumberController = TextEditingController();
   final _notesController = TextEditingController();
-  final _insuranceAmountController = TextEditingController();
 
   String _selectedDamageType = 'تلف_طبيعي';
   String _selectedSeverityLevel = 'متوسط';
   String _selectedUnit = 'ربطة';
-  bool _isInsuranceCovered = false;
-  DateTime? _expiryDate;
-
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  double _totalCost = 0;
 
   final List<String> _units = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
-  final List<String> _damageTypes = [
-    'تلف_طبيعي',
-    'تلف_بشري',
-    'تلف_خارجي',
-    'انتهاء_صلاحية'
-  ];
   final List<String> _severityLevels = ['طفيف', 'متوسط', 'كبير', 'كارثي'];
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
-    );
-    _animationController.forward();
-  }
-
-  @override
   void dispose() {
-    _animationController.dispose();
     _qatTypeNameController.dispose();
     _quantityController.dispose();
     _unitCostController.dispose();
     _damageReasonController.dispose();
     _responsiblePersonController.dispose();
-    _batchNumberController.dispose();
     _notesController.dispose();
-    _insuranceAmountController.dispose();
     super.dispose();
+  }
+
+  void _calculateTotal() {
+    final quantity = double.tryParse(_quantityController.text) ?? 0;
+    final cost = double.tryParse(_unitCostController.text) ?? 0;
+    setState(() {
+      _totalCost = quantity * cost;
+    });
+  }
+
+  Color _getSeverityColor() {
+    switch (_selectedSeverityLevel) {
+      case 'طفيف':
+        return AppColors.success;
+      case 'متوسط':
+        return AppColors.warning;
+      case 'كبير':
+        return AppColors.danger;
+      case 'كارثي':
+        return AppColors.purchases;
+      default:
+        return AppColors.danger;
+    }
+  }
+
+  void _submitDamage() {
+    if (!_formKey.currentState!.validate()) return;
+
+    HapticFeedback.mediumImpact();
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  _buildHeaderCard(),
-                  const SizedBox(height: 24),
-                  _buildProductInfoCard(),
-                  const SizedBox(height: 24),
-                  _buildDamageTypeCard(),
-                  const SizedBox(height: 24),
-                  _buildDamageReasonCard(),
-                  const SizedBox(height: 24),
-                  _buildAdditionalInfoCard(),
-                  const SizedBox(height: 24),
-                  _buildInsuranceCard(),
-                  const SizedBox(height: 32),
-                  _buildSubmitButton(),
-                  const SizedBox(height: 20),
-                ],
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: AppColors.textPrimary,
+                size: 20,
+              ),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'تسجيل بضاعة تالفة',
+            style: AppTextStyles.titleLarge.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: _getSeverityColor(_selectedSeverityLevel).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.broken_image,
-              color: _getSeverityColor(_selectedSeverityLevel),
-              size: 24,
+        body: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderCard(),
+                const SizedBox(height: 24),
+                _buildSeveritySection(),
+                const SizedBox(height: 24),
+                _buildItemInfoSection(),
+                const SizedBox(height: 24),
+                _buildCostSection(),
+                const SizedBox(height: 24),
+                _buildDamageReasonSection(),
+                const SizedBox(height: 24),
+                _buildResponsibleSection(),
+                const SizedBox(height: 24),
+                _buildNotesSection(),
+                const SizedBox(height: 24),
+                _buildSummaryCard(),
+                const SizedBox(height: 32),
+                _buildSubmitButton(),
+                const SizedBox(height: 40),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            'تسجيل بضاعة تالفة',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black87,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, size: 20),
-        onPressed: () => Navigator.pop(context),
+        ),
       ),
     );
   }
 
   Widget _buildHeaderCard() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            _getSeverityColor(_selectedSeverityLevel).withOpacity(0.8),
-            _getSeverityColor(_selectedSeverityLevel),
-          ],
+          colors: [_getSeverityColor(), _getSeverityColor().withOpacity(0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _getSeverityColor(_selectedSeverityLevel).withOpacity(0.3),
-            blurRadius: 15,
+            color: _getSeverityColor().withOpacity(0.3),
+            blurRadius: 20,
             offset: const Offset(0, 8),
+            spreadRadius: -4,
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(
-            _getSeverityIcon(_selectedSeverityLevel),
-            size: 48,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'تسجيل بضاعة تالفة',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.broken_image_rounded,
               color: Colors.white,
+              size: 32,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'سجل تفاصيل البضاعة التالفة بدقة لضمان المتابعة الصحيحة',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.9),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductInfoCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.inventory_2, color: Colors.blue[700]),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'معلومات الصنف',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildStyledTextField(
-            controller: _qatTypeNameController,
-            label: 'اسم الصنف التالف',
-            icon: Icons.inventory_2,
-            validator: (value) =>
-                (value?.trim().isEmpty ?? true) ? 'اسم الصنف مطلوب' : null,
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildStyledTextField(
-                  controller: _quantityController,
-                  label: 'الكمية التالفة',
-                  icon: Icons.numbers,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.trim().isEmpty ?? true) return 'الكمية مطلوبة';
-                    final quantity = double.tryParse(value!);
-                    if (quantity == null || quantity <= 0) {
-                      return 'الكمية يجب أن تكون رقماً موجباً';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStyledDropdown(
-                  value: _selectedUnit,
-                  label: 'الوحدة',
-                  icon: Icons.straighten,
-                  items: _units,
-                  onChanged: (value) => setState(() => _selectedUnit = value!),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildStyledTextField(
-            controller: _unitCostController,
-            label: 'تكلفة الوحدة',
-            icon: Icons.attach_money,
-            suffix: 'ريال',
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value?.trim().isEmpty ?? true) return 'التكلفة مطلوبة';
-              final cost = double.tryParse(value!);
-              if (cost == null || cost < 0) {
-                return 'التكلفة يجب أن تكون رقماً موجباً';
-              }
-              return null;
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDamageTypeCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.category, color: Colors.orange[700]),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'نوع ومستوى التلف',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildStyledDropdown(
-            value: _selectedDamageType,
-            label: 'نوع التلف',
-            icon: Icons.category,
-            items: _damageTypes,
-            displayMapper: _getDamageTypeDisplay,
-            onChanged: (value) =>
-                setState(() => _selectedDamageType = value!),
-          ),
-          const SizedBox(height: 20),
-          _buildStyledDropdown(
-            value: _selectedSeverityLevel,
-            label: 'مستوى الخطورة',
-            icon: _getSeverityIcon(_selectedSeverityLevel),
-            iconColor: _getSeverityColor(_selectedSeverityLevel),
-            items: _severityLevels,
-            onChanged: (value) =>
-                setState(() => _selectedSeverityLevel = value!),
-            itemBuilder: (level) => Row(
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  _getSeverityIcon(level),
-                  color: _getSeverityColor(level),
-                  size: 20,
+                Text(
+                  'تسجيل بضاعة تالفة',
+                  style: AppTextStyles.titleLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Text(level),
+                const SizedBox(height: 4),
+                Text(
+                  'موثق للخسائر والمحاسبة',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
               ],
             ),
           ),
@@ -370,467 +198,567 @@ class _AddDamagedItemScreenState extends State<AddDamagedItemScreen>
     );
   }
 
-  Widget _buildDamageReasonCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+  Widget _buildSeveritySection() {
+    return _SectionCard(
+      title: 'مستوى الخطورة',
+      icon: Icons.warning_rounded,
+      color: _getSeverityColor(),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: _severityLevels.map((level) {
+          final isSelected = _selectedSeverityLevel == level;
+          Color color;
+          switch (level) {
+            case 'طفيف':
+              color = AppColors.success;
+              break;
+            case 'متوسط':
+              color = AppColors.warning;
+              break;
+            case 'كبير':
+              color = AppColors.danger;
+              break;
+            case 'كارثي':
+              color = AppColors.purchases;
+              break;
+            default:
+              color = AppColors.danger;
+          }
+
+          return _SeverityChip(
+            label: level,
+            color: color,
+            isSelected: isSelected,
+            onTap: () {
+              setState(() => _selectedSeverityLevel = level);
+            },
+          );
+        }).toList(),
       ),
+    );
+  }
+
+  Widget _buildItemInfoSection() {
+    return _SectionCard(
+      title: 'معلومات الصنف',
+      icon: Icons.inventory_2_rounded,
+      color: AppColors.info,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildTextField(
+            controller: _qatTypeNameController,
+            label: 'اسم الصنف',
+            hint: 'مثال: قات بلدي',
+            icon: Icons.grass_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال اسم الصنف';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+              Expanded(
+                flex: 2,
+                child: _buildTextField(
+                  controller: _quantityController,
+                  label: 'الكمية التالفة',
+                  hint: '0',
+                  icon: Icons.inventory_rounded,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => _calculateTotal(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'مطلوب';
+                    }
+                    if (double.tryParse(value) == null ||
+                        double.parse(value) <= 0) {
+                      return 'قيمة غير صحيحة';
+                    }
+                    return null;
+                  },
                 ),
-                child: Icon(Icons.edit, color: Colors.red[700]),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'سبب التلف',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: _buildDropdown(
+                  value: _selectedUnit,
+                  items: _units,
+                  label: 'الوحدة',
+                  onChanged: (value) {
+                    setState(() => _selectedUnit = value!);
+                  },
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 24),
-          _buildStyledTextField(
-            controller: _damageReasonController,
-            label: 'سبب التلف',
-            icon: Icons.edit,
-            hint: 'مثال: رطوبة، كسر، انتهاء صلاحية، إلخ',
-            maxLines: 3,
-            validator: (value) =>
-                (value?.trim().isEmpty ?? true) ? 'سبب التلف مطلوب' : null,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAdditionalInfoCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.info, color: Colors.purple[700]),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'معلومات إضافية',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildStyledTextField(
-            controller: _responsiblePersonController,
-            label: 'الشخص المسؤول (اختياري)',
-            icon: Icons.person,
-          ),
-          const SizedBox(height: 20),
-          _buildStyledTextField(
-            controller: _batchNumberController,
-            label: 'رقم الدفعة (اختياري)',
-            icon: Icons.batch_prediction,
-          ),
-          const SizedBox(height: 20),
-          _buildDatePicker(),
-          const SizedBox(height: 20),
-          _buildStyledTextField(
-            controller: _notesController,
-            label: 'ملاحظات إضافية',
-            icon: Icons.note,
-            maxLines: 3,
-          ),
-        ],
+  Widget _buildCostSection() {
+    return _SectionCard(
+      title: 'التكلفة',
+      icon: Icons.attach_money_rounded,
+      color: AppColors.primary,
+      child: _buildTextField(
+        controller: _unitCostController,
+        label: 'تكلفة الوحدة',
+        hint: '0.00',
+        icon: Icons.price_change_rounded,
+        keyboardType: TextInputType.number,
+        suffixText: 'ريال',
+        onChanged: (_) => _calculateTotal(),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'الرجاء إدخال التكلفة';
+          }
+          if (double.tryParse(value) == null || double.parse(value) < 0) {
+            return 'قيمة غير صحيحة';
+          }
+          return null;
+        },
       ),
     );
   }
 
-  Widget _buildInsuranceCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+  Widget _buildDamageReasonSection() {
+    return _SectionCard(
+      title: 'سبب التلف',
+      icon: Icons.comment_rounded,
+      color: AppColors.danger,
+      child: _buildTextField(
+        controller: _damageReasonController,
+        label: 'السبب',
+        hint: 'مثال: تعفن، كسر، تخزين سيء...',
+        icon: Icons.notes_rounded,
+        maxLines: 3,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'الرجاء إدخال سبب التلف';
+          }
+          return null;
+        },
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.shield, color: Colors.green[700]),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'معلومات التأمين',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: SwitchListTile(
-              title: const Text(
-                'مشمول بالتأمين',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: const Text('هل هذا التلف مشمول بوثيقة التأمين؟'),
-              value: _isInsuranceCovered,
-              activeColor: Colors.green,
-              onChanged: (value) {
-                setState(() {
-                  _isInsuranceCovered = value;
-                  if (!value) _insuranceAmountController.clear();
-                });
-              },
-            ),
-          ),
-          if (_isInsuranceCovered) ...[
-            const SizedBox(height: 20),
-            _buildStyledTextField(
-              controller: _insuranceAmountController,
-              label: 'مبلغ التأمين المتوقع',
-              icon: Icons.shield,
-              suffix: 'ريال',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (_isInsuranceCovered && (value?.trim().isEmpty ?? true)) {
-                  return 'مبلغ التأمين مطلوب';
-                }
-                if (_isInsuranceCovered) {
-                  final amount = double.tryParse(value!);
-                  if (amount == null || amount <= 0) {
-                    return 'المبلغ يجب أن يكون رقماً موجباً';
-                  }
-                }
-                return null;
-              },
-            ),
+    );
+  }
+
+  Widget _buildResponsibleSection() {
+    return _SectionCard(
+      title: 'المسؤول (اختياري)',
+      icon: Icons.person_outline_rounded,
+      color: AppColors.textSecondary,
+      child: _buildTextField(
+        controller: _responsiblePersonController,
+        label: 'الشخص المسؤول',
+        hint: 'إن وُجد مسؤول عن التلف',
+        icon: Icons.badge_rounded,
+      ),
+    );
+  }
+
+  Widget _buildNotesSection() {
+    return _SectionCard(
+      title: 'ملاحظات إضافية',
+      icon: Icons.note_add_rounded,
+      color: AppColors.textSecondary,
+      child: _buildTextField(
+        controller: _notesController,
+        label: 'ملاحظات',
+        hint: 'أي ملاحظات إضافية (اختياري)',
+        icon: Icons.edit_note_rounded,
+        maxLines: 3,
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            _getSeverityColor().withOpacity(0.12),
+            _getSeverityColor().withOpacity(0.06),
           ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _getSeverityColor().withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _getSeverityColor().withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.calculate_rounded,
+                  color: _getSeverityColor(),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'ملخص الخسارة',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _SummaryRow(
+            label: 'مستوى الخطورة',
+            value: _selectedSeverityLevel,
+            color: _getSeverityColor(),
+          ),
+          const SizedBox(height: 12),
+          _SummaryRow(
+            label: 'الكمية',
+            value: _quantityController.text.isEmpty
+                ? '0'
+                : '${_quantityController.text} $_selectedUnit',
+            color: AppColors.info,
+          ),
+          const SizedBox(height: 12),
+          _SummaryRow(
+            label: 'تكلفة الوحدة',
+            value: _unitCostController.text.isEmpty
+                ? '0.00'
+                : '${_unitCostController.text} ريال',
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            height: 1,
+            color: AppColors.border.withOpacity(0.3),
+          ),
+          const SizedBox(height: 12),
+          _SummaryRow(
+            label: 'إجمالي الخسارة',
+            value: '${_totalCost.toStringAsFixed(2)} ريال',
+            color: AppColors.danger,
+            isBold: true,
+            isLarge: true,
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStyledTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    String? hint,
-    String? suffix,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        suffixText: suffix,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.blue[600]!, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-      ),
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-    );
-  }
-
-  Widget _buildStyledDropdown<T>({
-    required T value,
-    required String label,
-    required IconData icon,
-    Color? iconColor,
-    required List<T> items,
-    String Function(T)? displayMapper,
-    Widget Function(T)? itemBuilder,
-    required void Function(T?) onChanged,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: iconColor),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.blue[600]!, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-      ),
-      items: items.map((item) {
-        return DropdownMenuItem<T>(
-          value: item,
-          child: itemBuilder?.call(item) ??
-              Text(displayMapper?.call(item) ?? item.toString()),
-        );
-      }).toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildDatePicker() {
-    return InkWell(
-      onTap: () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: _expiryDate ?? DateTime.now(),
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2030),
-        );
-        if (date != null) setState(() => _expiryDate = date);
-      },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: 'تاريخ الانتهاء (اختياري)',
-          prefixIcon: const Icon(Icons.event_busy),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey[300]!),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey[300]!),
-          ),
-          filled: true,
-          fillColor: Colors.grey[50],
-        ),
-        child: Text(
-          _expiryDate?.toString().split(' ')[0] ?? 'اختر التاريخ',
-          style: TextStyle(
-            color: _expiryDate != null ? Colors.black87 : Colors.grey[600],
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildSubmitButton() {
     return Container(
-      width: double.infinity,
-      height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            _getSeverityColor(_selectedSeverityLevel),
-            _getSeverityColor(_selectedSeverityLevel).withOpacity(0.8),
-          ],
+          colors: [_getSeverityColor(), _getSeverityColor().withOpacity(0.85)],
         ),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _getSeverityColor(_selectedSeverityLevel).withOpacity(0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: _getSeverityColor().withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: ElevatedButton.icon(
-        onPressed: _submitDamagedItem,
-        icon: const Icon(Icons.save, color: Colors.white),
-        label: const Text(
-          'تسجيل التلف',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _submitDamage,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'تسجيل التلف',
+                  style: AppTextStyles.button.copyWith(fontSize: 17),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  String _getDamageTypeDisplay(String type) {
-    switch (type) {
-      case 'تلف_طبيعي':
-        return 'تلف طبيعي';
-      case 'تلف_بشري':
-        return 'تلف بشري';
-      case 'تلف_خارجي':
-        return 'تلف خارجي';
-      case 'انتهاء_صلاحية':
-        return 'انتهاء صلاحية';
-      default:
-        return type;
-    }
-  }
-
-  Color _getSeverityColor(String level) {
-    switch (level) {
-      case 'طفيف':
-        return Colors.green;
-      case 'متوسط':
-        return Colors.orange;
-      case 'كبير':
-        return Colors.red;
-      case 'كارثي':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getSeverityIcon(String level) {
-    switch (level) {
-      case 'طفيف':
-        return Icons.info;
-      case 'متوسط':
-        return Icons.warning;
-      case 'كبير':
-        return Icons.error;
-      case 'كارثي':
-        return Icons.dangerous;
-      default:
-        return Icons.broken_image;
-    }
-  }
-
-  void _submitDamagedItem() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final quantity = double.parse(_quantityController.text);
-    final unitCost = double.parse(_unitCostController.text);
-    final insuranceAmount = _isInsuranceCovered
-        ? double.tryParse(_insuranceAmountController.text)
-        : null;
-
-    context.read<InventoryBloc>().add(
-          AddDamagedItemEvent(
-            qatTypeId: 1, // سيتم تحديدها لاحقاً
-            qatTypeName: _qatTypeNameController.text.trim(),
-            unit: _selectedUnit,
-            quantity: quantity,
-            unitCost: unitCost,
-            damageReason: _damageReasonController.text.trim(),
-            damageType: _selectedDamageType,
-            severityLevel: _selectedSeverityLevel,
-            isInsuranceCovered: _isInsuranceCovered,
-            insuranceAmount: insuranceAmount,
-            responsiblePerson: _responsiblePersonController.text.trim().isNotEmpty
-                ? _responsiblePersonController.text.trim()
-                : null,
-            batchNumber: _batchNumberController.text.trim().isNotEmpty
-                ? _batchNumberController.text.trim()
-                : null,
-            expiryDate: _expiryDate?.toIso8601String().split('T')[0],
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    String? suffixText,
+    Function(String)? onChanged,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.labelMedium.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
           ),
-        );
-
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'تم تسجيل البضاعة التالفة بنجاح (مستوى: $_selectedSeverityLevel)',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            style: AppTextStyles.bodyMedium,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.inputHint.copyWith(fontSize: 14),
+              prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
+              suffixText: suffixText,
+              suffixStyle: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
               ),
             ),
-          ],
+            onChanged: onChanged,
+            validator: validator,
+          ),
         ),
-        backgroundColor: _getSeverityColor(_selectedSeverityLevel),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required String label,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.labelMedium.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        margin: const EdgeInsets.all(16),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: value,
+            items: items.map((item) {
+              return DropdownMenuItem(value: item, child: Text(item));
+            }).toList(),
+            onChanged: onChanged,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            style: AppTextStyles.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final Widget child;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12, right: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+class _SeverityChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SeverityChip({
+    required this.label,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isSelected
+            ? LinearGradient(colors: [color, color.withOpacity(0.8)])
+            : null,
+        color: isSelected ? null : AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? color : AppColors.border.withOpacity(0.3),
+          width: isSelected ? 0 : 1,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isBold;
+  final bool isLarge;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.isBold = false,
+    this.isLarge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
+            fontSize: isLarge ? 16 : 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontSize: isLarge ? 20 : 16,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,160 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 
-/// عنصر قائمة الإعدادات
-/// يستخدم لعرض خيار من خيارات الإعدادات مع أيقونة ووصف
+/// بطاقة إعداد - تصميم راقي هادئ
 class SettingsTile extends StatelessWidget {
-  /// عنوان الإعداد
   final String title;
-  
-  /// وصف الإعداد (اختياري)
   final String? subtitle;
-  
-  /// أيقونة الإعداد
   final IconData icon;
-  
-  /// لون الأيقونة
-  final Color? iconColor;
-  
-  /// لون خلفية الأيقونة
-  final Color? iconBackgroundColor;
-  
-  /// عنصر إضافي على اليسار (مثل Switch أو سهم)
-  final Widget? trailing;
-  
-  /// عند الضغط على العنصر
+  final Color iconColor;
   final VoidCallback? onTap;
-  
-  /// إظهار خط فاصل
-  final bool showDivider;
+  final Widget? trailing;
 
   const SettingsTile({
     super.key,
     required this.title,
     this.subtitle,
     required this.icon,
-    this.iconColor,
-    this.iconBackgroundColor,
-    this.trailing,
+    required this.iconColor,
     this.onTap,
-    this.showDivider = true,
+    this.trailing,
   });
-
-  /// إنشاء عنصر إعداد مع سهم للتصفح
-  factory SettingsTile.navigation({
-    Key? key,
-    required String title,
-    String? subtitle,
-    required IconData icon,
-    Color? iconColor,
-    Color? iconBackgroundColor,
-    required VoidCallback onTap,
-    bool showDivider = true,
-  }) {
-    return SettingsTile(
-      key: key,
-      title: title,
-      subtitle: subtitle,
-      icon: icon,
-      iconColor: iconColor,
-      iconBackgroundColor: iconBackgroundColor,
-      trailing: const Icon(
-        Icons.arrow_back_ios,
-        size: 16,
-        color: AppColors.textSecondary,
-      ),
-      onTap: onTap,
-      showDivider: showDivider,
-    );
-  }
-
-  /// إنشاء عنصر إعداد مع مفتاح تبديل (Switch)
-  factory SettingsTile.switchTile({
-    Key? key,
-    required String title,
-    String? subtitle,
-    required IconData icon,
-    Color? iconColor,
-    Color? iconBackgroundColor,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    bool showDivider = true,
-  }) {
-    return SettingsTile(
-      key: key,
-      title: title,
-      subtitle: subtitle,
-      icon: icon,
-      iconColor: iconColor,
-      iconBackgroundColor: iconBackgroundColor,
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeColor: AppColors.primary,
-      ),
-      showDivider: showDivider,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingL,
-            vertical: AppDimensions.paddingS,
-          ),
-          // أيقونة الإعداد
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: iconBackgroundColor ?? AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: iconColor ?? AppColors.primary,
-              size: 24,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap != null
+            ? () {
+                HapticFeedback.lightImpact();
+                onTap!();
+              }
+            : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.background.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.border.withOpacity(0.1),
             ),
           ),
-          // العنوان والوصف
-          title: Text(
-            title,
-            style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: subtitle != null
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    subtitle!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      iconColor.withOpacity(0.15),
+                      iconColor.withOpacity(0.08),
+                    ],
                   ),
-                )
-              : null,
-          // العنصر الإضافي
-          trailing: trailing,
-          // عند الضغط
-          onTap: onTap,
-          // تنسيق الشكل
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null)
+                trailing!
+              else if (onTap != null)
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary.withOpacity(0.5),
+                ),
+            ],
           ),
         ),
-        // خط فاصل
-        if (showDivider)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
-            child: Divider(height: 1),
-          ),
-      ],
+      ),
     );
   }
 }

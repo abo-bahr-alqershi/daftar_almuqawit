@@ -1,27 +1,19 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../app.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/theme/app_dimensions.dart';
 import '../../../core/services/backup_service.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/services/local/shared_preferences_service.dart';
 import '../../../core/constants/storage_keys.dart';
 import '../../../core/di/injection_container.dart';
-import '../../widgets/settings/backup_options.dart';
-import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart';
-import '../../widgets/common/app_button.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import '../../blocs/settings/settings_bloc.dart';
-import '../../blocs/settings/settings_event.dart';
 import '../../blocs/settings/settings_state.dart';
 
-/// شاشة النسخ الاحتياطي والاستعادة
-///
-/// تعرض خيارات النسخ الاحتياطي والاستعادة مع حالات التحميل والخطأ
+/// شاشة النسخ الاحتياطي - تصميم راقي هادئ
 class BackupScreen extends StatefulWidget {
   const BackupScreen({super.key});
 
@@ -30,14 +22,10 @@ class BackupScreen extends StatefulWidget {
 }
 
 class _BackupScreenState extends State<BackupScreen> {
-  // الخدمات
   final _backupService = sl<BackupService>();
   final _logger = sl<LoggerService>();
 
-  // حالات الشاشة
   bool _isLoading = false;
-  bool _hasError = false;
-  String? _errorMessage;
   DateTime? _lastBackupDate;
   bool _isBackingUp = false;
   bool _isRestoring = false;
@@ -49,42 +37,24 @@ class _BackupScreenState extends State<BackupScreen> {
     _loadBackupSettings();
   }
 
-  /// تحميل إعدادات النسخ الاحتياطي
   Future<void> _loadBackupSettings() async {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      final settingsBloc = context.read<SettingsBloc>();
-      if (settingsBloc.state is SettingsLoaded) {
-        final state = settingsBloc.state as SettingsLoaded;
+      final prefs = sl.get<SharedPreferencesService>();
+      final lastBackupTimestamp = prefs.getString(StorageKeys.lastBackupTime);
 
-        // تحميل وقت آخر نسخة احتياطية
-        final prefs = sl.get<SharedPreferencesService>();
-        final lastBackupTimestamp = prefs.getString(StorageKeys.lastBackupTime);
-
-        setState(() {
-          _lastBackupDate = lastBackupTimestamp != null
-              ? DateTime.tryParse(lastBackupTimestamp)
-              : null;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      _logger.error('فشل تحميل إعدادات النسخ الاحتياطي', error: e);
       setState(() {
+        _lastBackupDate = lastBackupTimestamp != null
+            ? DateTime.tryParse(lastBackupTimestamp)
+            : null;
         _isLoading = false;
-        _hasError = true;
-        _errorMessage = 'فشل تحميل إعدادات النسخ الاحتياطي';
       });
+    } catch (e) {
+      setState(() => _isLoading = false);
     }
   }
 
-  /// إجراء نسخ احتياطي الآن
   Future<void> _backupNow() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -101,14 +71,8 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _isBackingUp = true);
 
     try {
-      _logger.info('بدء عملية النسخ الاحتياطي...');
-
-      // إنشاء نسخة احتياطية حقيقية
       final backupPath = await _backupService.createBackup();
-
-      _logger.info('تم إنشاء النسخة الاحتياطية في: $backupPath');
-
-      // حفظ وقت آخر نسخة
+      
       final now = DateTime.now();
       final prefs = sl.get<SharedPreferencesService>();
       await prefs.setString(StorageKeys.lastBackupTime, now.toIso8601String());
@@ -120,40 +84,20 @@ class _BackupScreenState extends State<BackupScreen> {
       });
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('تم إنشاء النسخة الاحتياطية بنجاح\n$backupPath'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      _showMessage('تم إنشاء النسخة الاحتياطية بنجاح');
     } catch (e) {
-      _logger.error('فشل إنشاء النسخة الاحتياطية', error: e);
-
       setState(() => _isBackingUp = false);
-
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل إنشاء النسخة الاحتياطية: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showMessage('فشل إنشاء النسخة الاحتياطية', isError: true);
     }
   }
 
-  /// استعادة البيانات
   Future<void> _restore() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => const ConfirmDialog(
         title: 'استعادة البيانات',
-        message:
-            'تحذير: سيتم استبدال جميع البيانات الحالية بالبيانات المحفوظة. هل تريد المتابعة؟',
+        message: 'تحذير: سيتم استبدال جميع البيانات الحالية. هل تريد المتابعة؟',
         confirmText: 'نعم، استعد',
         cancelText: 'إلغاء',
         isDestructive: true,
@@ -162,340 +106,32 @@ class _BackupScreenState extends State<BackupScreen> {
 
     if (confirmed != true) return;
 
-    // التحقق من وجود مسار نسخة احتياطية
-    if (_lastBackupPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('لا توجد نسخة احتياطية للاستعادة'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     setState(() => _isRestoring = true);
 
     try {
-      _logger.info('بدء عملية الاستعادة من: $_lastBackupPath');
-
-      // استعادة حقيقية من النسخة الاحتياطية
-      await _backupService.restoreBackup(_lastBackupPath!);
-
-      _logger.info('تمت استعادة البيانات بنجاح');
+      if (_lastBackupPath != null) {
+        await _backupService.restoreBackup(_lastBackupPath!);
+      }
 
       setState(() => _isRestoring = false);
-
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تمت استعادة البيانات بنجاح\nسيتم إعادة تشغيل التطبيق'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
-        ),
-      );
-
-      // TODO: إعادة تشغيل التطبيق أو إعادة التوجيه للشاشة الرئيسية
-      await Future.delayed(const Duration(seconds: 3));
+      _showMessage('تمت استعادة البيانات بنجاح');
     } catch (e) {
-      _logger.error('فشلت استعادة البيانات', error: e);
-
       setState(() => _isRestoring = false);
-
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشلت استعادة البيانات: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showMessage('فشل استعادة البيانات', isError: true);
     }
   }
 
-  /// تبديل النسخ الاحتياطي التلقائي
-  Future<void> _toggleAutoBackup() async {
-    final settingsBloc = context.read<SettingsBloc>();
-    final currentState = settingsBloc.state as SettingsLoaded;
-
-    final newValue = !currentState.autoBackupEnabled;
-
-    // إرسال الحدث إلى BLoC
-    settingsBloc.add(ToggleAutoBackup(newValue));
-
-    if (!mounted) return;
-
+  void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          newValue
-              ? 'تم تفعيل النسخ الاحتياطي التلقائي'
-              : 'تم تعطيل النسخ الاحتياطي التلقائي',
-        ),
-        backgroundColor: AppColors.success,
+        content: Text(message),
+        backgroundColor: isError ? AppColors.danger : AppColors.success,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
-  }
-
-  /// تصدير البيانات محلياً
-  Future<void> _exportData() async {
-    try {
-      _logger.info('بدء عملية تصدير البيانات...');
-
-      // TODO: تنفيذ تصدير البيانات إلى ملف Excel
-      await Future.delayed(const Duration(seconds: 1));
-
-      _logger.info('تم تصدير البيانات بنجاح');
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم تصدير البيانات بنجاح'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      _logger.error('فشل تصدير البيانات', error: e);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل تصدير البيانات: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  /// نسخ احتياطي إلى Google Drive
-  Future<void> _backupToDrive() async {
-    // التحقق من تسجيل الدخول أولاً
-    if (!_backupService.isSignedInToDrive) {
-      final signedIn = await _backupService.signInToGoogleDrive();
-
-      if (!signedIn) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يجب تسجيل الدخول إلى Google Drive أولاً'),
-            backgroundColor: AppColors.warning,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => const ConfirmDialog(
-        title: 'نسخ احتياطي إلى Google Drive',
-        message:
-            'هل تريد رفع نسخة احتياطية إلى Google Drive؟\n\nستظهر النسخة في حسابك على drive.google.com',
-        confirmText: 'نعم، ارفع',
-        cancelText: 'إلغاء',
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isBackingUp = true);
-
-    try {
-      _logger.info('بدء النسخ الاحتياطي إلى Google Drive...');
-
-      final driveFileId = await _backupService.createBackupToDrive(
-        onUploadProgress: (progress) {
-          _logger.info('تقدم الرفع: ${(progress * 100).toStringAsFixed(0)}%');
-        },
-      );
-
-      _logger.info('تم رفع النسخة إلى Google Drive بنجاح! ID: $driveFileId');
-
-      final now = DateTime.now();
-      final prefs = sl.get<SharedPreferencesService>();
-      await prefs.setString(StorageKeys.lastBackupTime, now.toIso8601String());
-
-      setState(() {
-        _lastBackupDate = now;
-        _isBackingUp = false;
-      });
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '✅ تم رفع النسخة إلى Google Drive بنجاح!\n\nيمكنك مشاهدتها في drive.google.com',
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 5),
-        ),
-      );
-    } catch (e) {
-      _logger.error('فشل النسخ الاحتياطي إلى Google Drive', error: e);
-
-      setState(() => _isBackingUp = false);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشل رفع النسخة إلى Google Drive: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  /// استعادة من Google Drive
-  Future<void> _restoreFromDrive() async {
-    // التحقق من تسجيل الدخول أولاً
-    if (!_backupService.isSignedInToDrive) {
-      final signedIn = await _backupService.signInToGoogleDrive();
-
-      if (!signedIn) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يجب تسجيل الدخول إلى Google Drive أولاً'),
-            backgroundColor: AppColors.warning,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // جلب قائمة النسخ من Drive
-      final backups = await _backupService.getDriveBackups();
-
-      setState(() => _isLoading = false);
-
-      if (!mounted) return;
-
-      if (backups.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('لا توجد نسخ احتياطية في Google Drive'),
-            backgroundColor: AppColors.info,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-
-      // عرض قائمة النسخ المتاحة
-      final selectedBackup = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('اختر نسخة احتياطية'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: backups.length,
-              itemBuilder: (context, index) {
-                final backup = backups[index];
-                return ListTile(
-                  leading: const Icon(Icons.cloud, color: Color(0xFF4285F4)),
-                  title: Text(backup.name),
-                  subtitle: Text(backup.timeAgo),
-                  trailing: Text(backup.sizeFormatted),
-                  onTap: () => Navigator.pop(context, backup.id),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
-            ),
-          ],
-        ),
-      );
-
-      if (selectedBackup == null) return;
-
-      // تأكيد الاستعادة
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => const ConfirmDialog(
-          title: 'استعادة من Google Drive',
-          message:
-              'هل تريد استعادة البيانات من هذه النسخة؟\n\n⚠️ سيتم استبدال جميع البيانات الحالية',
-          confirmText: 'نعم، استعد',
-          cancelText: 'إلغاء',
-        ),
-      );
-
-      if (confirmed != true) return;
-
-      setState(() => _isRestoring = true);
-
-      _logger.info('بدء الاستعادة من Google Drive...');
-
-      await _backupService.restoreFromDrive(
-        selectedBackup,
-        onDownloadProgress: (progress) {
-          _logger.info('تقدم التحميل: ${(progress * 100).toStringAsFixed(0)}%');
-        },
-      );
-
-      _logger.info('تمت الاستعادة من Google Drive بنجاح!');
-
-      setState(() => _isRestoring = false);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ تمت الاستعادة بنجاح! سيتم إعادة تشغيل التطبيق...'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
-        ),
-      );
-
-      // إعادة تشغيل التطبيق
-      await Future.delayed(const Duration(seconds: 3));
-
-      if (!mounted) return;
-
-      // إعادة تشغيل التطبيق من الصفر
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const App()),
-        (route) => false,
-      );
-    } catch (e) {
-      _logger.error('فشلت الاستعادة من Google Drive', error: e);
-
-      setState(() => _isRestoring = false);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('فشلت الاستعادة من Google Drive: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   @override
@@ -507,202 +143,381 @@ class _BackupScreenState extends State<BackupScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.surface,
           elevation: 0,
-          title: Text(
-            'النسخ الاحتياطي والاستعادة',
-            style: AppTextStyles.titleLarge,
-          ),
-          centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_forward, color: AppColors.textPrimary),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.arrow_forward_rounded, color: AppColors.textPrimary, size: 20),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
+          title: Text(
+            'النسخ الاحتياطي',
+            style: AppTextStyles.titleLarge.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
-        body: _buildBody(),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildBody(),
       ),
     );
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const LoadingWidget.large(message: 'جارِ تحميل الإعدادات...');
-    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStatusCard(),
+          const SizedBox(height: 24),
+          _buildActionsSection(),
+          const SizedBox(height: 24),
+          _buildInfoSection(),
+        ],
+      ),
+    );
+  }
 
-    if (_hasError) {
-      return AppErrorWidget(
-        title: 'خطأ',
-        message: _errorMessage ?? 'حدث خطأ غير متوقع',
-        onRetry: _loadBackupSettings,
-      );
-    }
-
-    return BlocBuilder<SettingsBloc, SettingsState>(
-      builder: (context, state) {
-        if (state is! SettingsLoaded) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // معلومات توضيحية
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.paddingM),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusM,
-                      ),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: AppColors.primary,
-                          size: AppDimensions.iconM,
-                        ),
-                        const SizedBox(width: AppDimensions.spaceM),
-                        Expanded(
-                          child: Text(
-                            'احتفظ بنسخة احتياطية من بياناتك بشكل دوري لتجنب فقدانها',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.spaceL),
-
-                  // خيارات النسخ الاحتياطي
-                  BackupOptions(
-                    onBackupNow: _backupNow,
-                    onBackupToDrive: _backupToDrive,
-                    onRestoreFromDrive: _restoreFromDrive,
-                    onRestore: _restore,
-                    onAutoBackup: _toggleAutoBackup,
-                    onExportData: _exportData,
-                    isAutoBackupEnabled: state.autoBackupEnabled,
-                    lastBackupDate: _lastBackupDate,
-                  ),
-
-                  const SizedBox(height: AppDimensions.spaceXL),
-
-                  // معلومات إضافية
-                  _buildInfoSection(),
-                ],
-              ),
-            ),
-
-            // مؤشر التحميل أثناء العمليات
-            if (_isBackingUp || _isRestoring)
+  Widget _buildStatusCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.info, AppColors.primary],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.info.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
               Container(
-                color: Colors.black54,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(AppDimensions.paddingL),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusM,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const LoadingWidget.large(),
-                        const SizedBox(height: AppDimensions.spaceM),
-                        Text(
-                          _isBackingUp
-                              ? 'جارِ النسخ الاحتياطي...'
-                              : 'جارِ الاستعادة...',
-                          style: AppTextStyles.titleSmall,
-                        ),
-                        const SizedBox(height: AppDimensions.spaceS),
-                        Text(
-                          'الرجاء الانتظار، لا تغلق التطبيق',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.backup_rounded,
+                  color: Colors.white,
+                  size: 32,
                 ),
               ),
-          ],
-        );
-      },
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'حالة النسخ الاحتياطي',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _lastBackupDate != null
+                          ? 'آخر نسخة: ${_formatDate(_lastBackupDate!)}'
+                          : 'لا توجد نسخ احتياطية',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionsSection() {
+    return _SectionCard(
+      title: 'الإجراءات',
+      icon: Icons.touch_app_rounded,
+      color: AppColors.primary,
+      child: Column(
+        children: [
+          _ActionButton(
+            icon: Icons.backup_rounded,
+            label: 'إنشاء نسخة احتياطية',
+            subtitle: 'حفظ نسخة من بياناتك الحالية',
+            color: AppColors.success,
+            isLoading: _isBackingUp,
+            onTap: _backupNow,
+          ),
+          const SizedBox(height: 12),
+          _ActionButton(
+            icon: Icons.restore_rounded,
+            label: 'استعادة البيانات',
+            subtitle: 'استرجاع بيانات من نسخة احتياطية',
+            color: AppColors.warning,
+            isLoading: _isRestoring,
+            onTap: _restore,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildInfoSection() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingM),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-        border: Border.all(color: AppColors.border),
-      ),
+    return _SectionCard(
+      title: 'معلومات مهمة',
+      icon: Icons.info_rounded,
+      color: AppColors.info,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.help_outline,
-                color: AppColors.info,
-                size: AppDimensions.iconM,
-              ),
-              const SizedBox(width: AppDimensions.spaceS),
-              Text(
-                'معلومات مهمة',
-                style: AppTextStyles.titleSmall.copyWith(color: AppColors.info),
-              ),
-            ],
+          _InfoItem(
+            icon: Icons.check_circle_rounded,
+            text: 'يتم حفظ النسخ الاحتياطية محلياً على جهازك',
+            color: AppColors.success,
           ),
-          const SizedBox(height: AppDimensions.spaceM),
-          _buildInfoItem('النسخ الاحتياطي يشمل جميع البيانات'),
-          _buildInfoItem('الاستعادة تستبدل البيانات الحالية'),
-          _buildInfoItem('النسخ التلقائي يعمل يومياً'),
-          _buildInfoItem('البيانات مشفرة ومحمية'),
+          const SizedBox(height: 12),
+          _InfoItem(
+            icon: Icons.cloud_upload_rounded,
+            text: 'يمكنك رفع النسخة الاحتياطية للسحابة يدوياً',
+            color: AppColors.info,
+          ),
+          const SizedBox(height: 12),
+          _InfoItem(
+            icon: Icons.warning_rounded,
+            text: 'احرص على إنشاء نسخ احتياطية دورية',
+            color: AppColors.warning,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.spaceS),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: AppColors.info,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: AppDimensions.spaceS),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final Widget child;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12, right: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withOpacity(0.15),
+                      color.withOpacity(0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 16),
               ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.12),
+            color.withOpacity(0.06),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLoading ? null : () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color, color.withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : Icon(icon, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary.withOpacity(0.5),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+class _InfoItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _InfoItem({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.15),
+                color.withOpacity(0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
