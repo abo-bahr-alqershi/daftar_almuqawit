@@ -574,7 +574,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
   Widget _buildModernTabBar() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(6), // زيادة من 4 إلى 6
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -586,50 +586,56 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           ),
         ],
       ),
-      child: TabBar(
-        controller: _tabController,
-        // زيادة ارتفاع الـ Tab لاستيعاب Icon و Text
-        indicatorSize: TabBarIndicatorSize.tab,
-        isScrollable: false,
-        indicator: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.primaryDark],
+      child: SizedBox(
+        height: 48, // تحديد ارتفاع كافي للـ TabBar
+        child: TabBar(
+          controller: _tabController,
+          indicatorSize: TabBarIndicatorSize.tab,
+          isScrollable: false,
+          indicator: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryDark],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+          labelColor: Colors.white,
+          unselectedLabelColor: AppColors.textSecondary,
+          labelStyle: AppTextStyles.bodyMedium.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            height: 1.2,
+          ),
+          unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(
+            fontSize: 11,
+            height: 1.2,
+          ),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          onTap: (index) => HapticFeedback.selectionClick(),
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.info_outline, size: 16),
+              iconMargin: EdgeInsets.only(bottom: 1),
+              text: 'التفاصيل',
+            ),
+            Tab(
+              icon: Icon(Icons.account_balance_wallet, size: 16),
+              iconMargin: EdgeInsets.only(bottom: 1),
+              text: 'الديون',
+            ),
+            Tab(
+              icon: Icon(Icons.history, size: 16),
+              iconMargin: EdgeInsets.only(bottom: 1),
+              text: 'السجل',
             ),
           ],
         ),
-        labelColor: Colors.white,
-        unselectedLabelColor: AppColors.textSecondary,
-        labelStyle: AppTextStyles.bodyMedium.copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 12, // تصغير الخط قليلاً
-        ),
-        unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        onTap: (index) => HapticFeedback.selectionClick(),
-        tabs: const [
-          Tab(
-            icon: Icon(Icons.info_outline, size: 18),
-            iconMargin: EdgeInsets.only(bottom: 2),
-            text: 'التفاصيل',
-          ),
-          Tab(
-            icon: Icon(Icons.account_balance_wallet, size: 18),
-            iconMargin: EdgeInsets.only(bottom: 2),
-            text: 'الديون',
-          ),
-          Tab(
-            icon: Icon(Icons.history, size: 18),
-            iconMargin: EdgeInsets.only(bottom: 2),
-            text: 'السجل',
-          ),
-        ],
       ),
     );
   }

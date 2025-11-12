@@ -1,9 +1,12 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/purchase.dart';
+import '../../../domain/entities/supplier.dart';
+import '../../../domain/entities/qat_type.dart';
 import '../../blocs/purchases/purchases_bloc.dart';
 import '../../blocs/purchases/purchases_event.dart';
 import '../../blocs/purchases/purchases_state.dart';
@@ -13,16 +16,9 @@ import '../../blocs/suppliers/suppliers_state.dart';
 import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
 import '../../blocs/qat_types/qat_types_state.dart';
-import '../../widgets/common/app_button.dart';
-import '../../widgets/common/app_text_field.dart';
-import '../../widgets/common/app_date_picker.dart';
-import '../../widgets/common/app_dropdown.dart';
-import '../../widgets/common/confirm_dialog.dart';
-import '../../widgets/common/snackbar_widget.dart';
+import 'widgets/purchase_form.dart';
 
-/// شاشة إضافة عملية شراء
-/// 
-/// تسمح بإضافة عملية شراء جديدة مع كافة التفاصيل
+/// شاشة إضافة مشترى جديد - تصميم راقي
 class AddPurchaseScreen extends StatefulWidget {
   const AddPurchaseScreen({super.key});
 
@@ -30,581 +26,438 @@ class AddPurchaseScreen extends StatefulWidget {
   State<AddPurchaseScreen> createState() => _AddPurchaseScreenState();
 }
 
-class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _quantityController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _notesController = TextEditingController();
-  final _invoiceNumberController = TextEditingController();
-  
-  DateTime? _selectedDate;
-  String? _selectedSupplier;
-  String? _selectedQatType;
-  String? _selectedUnit;
-  String _paymentMethod = 'نقدي';
-  bool _isPaid = false;
-  
-  List<String> _availableUnits = [];
-  Map<String, double?> _unitBuyPrices = {};
+class _AddPurchaseScreenState extends State<AddPurchaseScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
+
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
 
   @override
   void initState() {
     super.initState();
+    
+    // تحميل البيانات المطلوبة
     context.read<SuppliersBloc>().add(LoadSuppliers());
     context.read<QatTypesBloc>().add(LoadQatTypes());
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _animationController.forward();
+    _fadeController.forward();
+
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
   }
 
   @override
   void dispose() {
-    _quantityController.dispose();
-    _priceController.dispose();
-    _notesController.dispose();
-    _invoiceNumberController.dispose();
+    _animationController.dispose();
+    _fadeController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _calculateTotal() {
-    final quantity = double.tryParse(_quantityController.text) ?? 0;
-    final price = double.tryParse(_priceController.text) ?? 0;
-    final total = quantity * price;
-    setState(() {});
-  }
-  
-  void _onQatTypeChanged(String? qatTypeId, List<dynamic> qatTypes) {
-    setState(() {
-      _selectedQatType = qatTypeId;
-      _selectedUnit = null;
-      _availableUnits = [];
-      _unitBuyPrices = {};
-      _priceController.clear();
-      
-      if (qatTypeId != null) {
-        final selectedQatType = qatTypes.firstWhere(
-          (qt) => qt.id.toString() == qatTypeId,
-          orElse: () => null,
-        );
-        
-        if (selectedQatType != null && selectedQatType.availableUnits != null) {
-          _availableUnits = List<String>.from(selectedQatType.availableUnits);
-          
-          if (selectedQatType.unitPrices != null) {
-            for (var unit in _availableUnits) {
-              final unitPrice = selectedQatType.unitPrices[unit];
-              _unitBuyPrices[unit] = unitPrice?.buyPrice;
-            }
-          }
-          
-          if (_availableUnits.isNotEmpty) {
-            _selectedUnit = _availableUnits.first;
-            _onUnitChanged(_selectedUnit);
-          }
-        }
-      }
-    });
-  }
-  
-  void _onUnitChanged(String? unit) {
-    setState(() {
-      _selectedUnit = unit;
-      if (unit != null && _unitBuyPrices.containsKey(unit)) {
-        final defaultPrice = _unitBuyPrices[unit];
-        if (defaultPrice != null && defaultPrice > 0) {
-          _priceController.text = defaultPrice.toString();
-        }
-      }
-    });
-  }
-
-  Future<void> _submitPurchase() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (_selectedSupplier == null) {
-      SnackbarWidget.showError(
-        context: context,
-        message: 'يرجى اختيار المورد',
-      );
-      return;
-    }
-
-    if (_selectedQatType == null) {
-      SnackbarWidget.showError(
-        context: context,
-        message: 'يرجى اختيار نوع القات',
-      );
-      return;
-    }
-    
-    if (_selectedUnit == null) {
-      SnackbarWidget.showError(
-        context: context,
-        message: 'يرجى اختيار الوحدة',
-      );
-      return;
-    }
-
-    final quantity = double.parse(_quantityController.text);
-    final price = double.parse(_priceController.text);
-
-    context.read<PurchasesBloc>().add(
-      AddPurchaseEvent(
-        Purchase(
-          date: (_selectedDate ?? DateTime.now()).toString().split(' ')[0],
-          time: TimeOfDay.now().format(context),
-          supplierId: int.tryParse(_selectedSupplier ?? '0'),
-          qatTypeId: int.tryParse(_selectedQatType ?? '0'),
-          quantity: quantity,
-          unit: _selectedUnit!,
-          unitPrice: price,
-          totalAmount: quantity * price,
-          paymentMethod: _paymentMethod,
-          paymentStatus: _isPaid ? 'مدفوع' : 'غير مدفوع',
-          paidAmount: _isPaid ? quantity * price : 0,
-          remainingAmount: _isPaid ? 0 : quantity * price,
-          invoiceNumber: _invoiceNumberController.text,
-          notes: _notesController.text,
-        ),
-      ),
-    );
+  void _handleSubmit(Purchase purchase) {
+    HapticFeedback.mediumImpact();
+    context.read<PurchasesBloc>().add(AddPurchaseEvent(purchase));
   }
 
   @override
   Widget build(BuildContext context) {
-    final quantity = double.tryParse(_quantityController.text) ?? 0;
-    final price = double.tryParse(_priceController.text) ?? 0;
-    final total = quantity * price;
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('إضافة عملية شراء'),
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-      ),
-      body: BlocConsumer<PurchasesBloc, PurchasesState>(
-        listener: (context, state) {
-          if (state is PurchaseAdded) {
-            SnackbarWidget.showSuccess(
-              context: context,
-              message: 'تمت إضافة عملية الشراء بنجاح',
-            );
-            Navigator.of(context).pop(true);
-          } else if (state is PurchasesError) {
-            SnackbarWidget.showError(
-              context: context,
-              message: state.message,
-            );
-          }
-        },
-        builder: (context, state) {
-          final isLoading = state is PurchasesLoading;
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            _buildGradientBackground(),
 
-          return Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // قسم المعلومات الأساسية
-                _buildSectionTitle('المعلومات الأساسية'),
-                const SizedBox(height: 16),
-                
-                AppDatePicker(
-                  label: 'تاريخ الشراء',
-                  selectedDate: _selectedDate,
-                  onDateSelected: (date) {
-                    setState(() {
-                      _selectedDate = date;
-                    });
-                  },
-                  required: true,
-                ),
-                const SizedBox(height: 16),
-
-                AppTextField(
-                  controller: _invoiceNumberController,
-                  label: 'رقم الفاتورة',
-                  hint: 'رقم فاتورة المورد',
-                  prefixIcon: Icons.receipt_long,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return 'يرجى إدخال رقم الفاتورة';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // اختيار المورد - جلب من قاعدة البيانات
-                BlocBuilder<SuppliersBloc, SuppliersState>(
-                  builder: (context, suppliersState) {
-                    if (suppliersState is SuppliersLoading) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                    
-                    if (suppliersState is SuppliersLoaded) {
-                      final suppliers = suppliersState.suppliers;
-                      
-                      if (suppliers.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.warning),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.warning, color: AppColors.warning),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'لا يوجد موردين. يرجى إضافة مورد أولاً',
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.warning,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      
-                      return AppDropdownField<String>(
-                        label: 'المورد',
-                        hint: 'اختر المورد',
-                        value: _selectedSupplier,
-                        items: suppliers.map((supplier) {
-                          return DropdownMenuItem<String>(
-                            value: supplier.id.toString(),
-                            child: Text(supplier.name),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSupplier = value;
-                          });
-                        },
-                        prefixIcon: Icons.person,
-                      );
-                    }
-                    
-                    return AppDropdownField<String>(
-                      label: 'المورد',
-                      hint: 'اختر المورد',
-                      value: _selectedSupplier,
-                      items: const [],
-                      onChanged: null,
-                      prefixIcon: Icons.person,
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // قسم تفاصيل القات
-                _buildSectionTitle('تفاصيل القات'),
-                const SizedBox(height: 16),
-
-                BlocBuilder<QatTypesBloc, QatTypesState>(
-                  builder: (context, qatTypesState) {
-                    if (qatTypesState is QatTypesLoading) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                    
-                    if (qatTypesState is QatTypesLoaded) {
-                      final qatTypes = qatTypesState.qatTypes;
-                      
-                      if (qatTypes.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.warning),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.warning, color: AppColors.warning),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'لا يوجد أنواع قات. يرجى إضافة نوع أولاً',
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.warning,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      
-                      return Column(
+            BlocListener<PurchasesBloc, PurchasesState>(
+              listener: (context, state) {
+                if (state is PurchaseOperationSuccess || state is PurchaseAdded) {
+                  HapticFeedback.heavyImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
                         children: [
-                          AppDropdownField<String>(
-                            label: 'نوع القات',
-                            hint: 'اختر نوع القات',
-                            value: _selectedQatType,
-                            items: qatTypes.map((qatType) {
-                              return DropdownMenuItem<String>(
-                                value: qatType.id.toString(),
-                                child: Text(qatType.name),
-                              );
-                            }).toList(),
-                            onChanged: (value) => _onQatTypeChanged(value, qatTypes),
-                            prefixIcon: Icons.grass,
-                          ),
-                          
-                          if (_availableUnits.isNotEmpty) ...[
-                            const SizedBox(height: 16),
-                            AppDropdownField<String>(
-                              label: 'الوحدة',
-                              hint: 'اختر الوحدة',
-                              value: _selectedUnit,
-                              items: _availableUnits.map((unit) {
-                                return DropdownMenuItem<String>(
-                                  value: unit,
-                                  child: Row(
-                                    children: [
-                                      Icon(_getUnitIcon(unit), size: 20),
-                                      const SizedBox(width: 8),
-                                      Text(unit),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: _onUnitChanged,
-                              prefixIcon: Icons.straighten,
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              state is PurchaseOperationSuccess 
+                                  ? state.message 
+                                  : (state as PurchaseAdded).message,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ],
+                          ),
                         ],
-                      );
-                    }
-                    
-                    return AppDropdownField<String>(
-                      label: 'نوع القات',
-                      hint: 'اختر نوع القات',
-                      value: _selectedQatType,
-                      items: const [],
-                      onChanged: null,
-                      prefixIcon: Icons.grass,
-                    );
-                  },
+                      ),
+                      backgroundColor: AppColors.success,
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 6,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                } else if (state is PurchasesError) {
+                  HapticFeedback.heavyImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              state.message,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: AppColors.danger,
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 6,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              },
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
                 ),
-                const SizedBox(height: 16),
+                slivers: [
+                  _buildModernAppBar(topPadding),
 
-                AppTextField.number(
-                  controller: _quantityController,
-                  label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
-                  hint: 'أدخل الكمية',
-                  prefixIcon: Icons.inventory,
-                  onChanged: (_) => _calculateTotal(),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return 'يرجى إدخال الكمية';
-                    }
-                    final quantity = double.tryParse(value!);
-                    if (quantity == null || quantity <= 0) {
-                      return 'يرجى إدخال كمية صحيحة';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: BlocBuilder<SuppliersBloc, SuppliersState>(
+                            builder: (context, suppliersState) {
+                              return BlocBuilder<QatTypesBloc, QatTypesState>(
+                                builder: (context, qatTypesState) {
+                                  if (suppliersState is SuppliersLoading ||
+                                      qatTypesState is QatTypesLoading) {
+                                    return _buildLoadingState();
+                                  }
 
-                AppTextField.currency(
-                  controller: _priceController,
-                  label: _selectedUnit != null ? 'سعر $_selectedUnit الواحد' : 'السعر',
-                  hint: 'أدخل السعر',
-                  onChanged: (_) => _calculateTotal(),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return 'يرجى إدخال السعر';
-                    }
-                    final price = double.tryParse(value!);
-                    if (price == null || price <= 0) {
-                      return 'يرجى إدخال سعر صحيح';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                                  if (suppliersState is SuppliersLoaded &&
+                                      qatTypesState is QatTypesLoaded) {
+                                    return PurchaseForm(
+                                      suppliers: suppliersState.suppliers,
+                                      qatTypes: qatTypesState.qatTypes,
+                                      onSubmit: _handleSubmit,
+                                      onCancel: () {
+                                        HapticFeedback.lightImpact();
+                                        Navigator.pop(context);
+                                      },
+                                    );
+                                  }
 
-                // عرض المجموع
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary, width: 1.5),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'المجموع الكلي:',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                                  return _buildErrorState();
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                      Text(
-                        '${total.toStringAsFixed(2)} ريال',
-                        style: AppTextStyles.headlineMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientBackground() => Container(
+        height: 500,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.purchases.withOpacity(0.08),
+              AppColors.primary.withOpacity(0.05),
+              Colors.transparent,
+            ],
+          ),
+        ),
+      );
+
+  Widget _buildModernAppBar(double topPadding) {
+    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 140,
+      pinned: true,
+      backgroundColor: AppColors.surface.withOpacity(opacity),
+      elevation: opacity * 2,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: opacity < 0.5
+                ? AppColors.surface.withOpacity(0.9)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
+            ),
+          ),
+          child: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.textPrimary,
+            size: 20,
+          ),
+        ),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.pop(context);
+        },
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.purchases.withOpacity(0.05),
+                AppColors.primary.withOpacity(0.03),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.purchases, Color(0xFF6A1B9A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.purchases.withOpacity(0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                            BoxShadow(
+                              color: AppColors.purchases.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.shopping_bag_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'إضافة مشترى جديد',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 24,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'أدخل معلومات المشترى بدقة',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // قسم الدفع
-                _buildSectionTitle('معلومات الدفع'),
-                const SizedBox(height: 16),
-
-                AppDropdownField<String>(
-                  label: 'طريقة الدفع',
-                  hint: 'اختر طريقة الدفع',
-                  value: _paymentMethod,
-                  items: const [
-                    DropdownMenuItem(value: 'نقدي', child: Text('نقدي')),
-                    DropdownMenuItem(value: 'آجل', child: Text('آجل')),
-                    DropdownMenuItem(value: 'حوالة', child: Text('حوالة')),
-                    DropdownMenuItem(value: 'محفظة', child: Text('محفظة')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _paymentMethod = value!;
-                      if (_paymentMethod == 'نقدي') {
-                        _isPaid = true;
-                      }
-                    });
-                  },
-                  prefixIcon: Icons.payment,
-                ),
-                const SizedBox(height: 16),
-
-                CheckboxListTile(
-                  title: Text(
-                    'تم الدفع',
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                  value: _isPaid,
-                  onChanged: (value) {
-                    setState(() {
-                      _isPaid = value ?? false;
-                    });
-                  },
-                  activeColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  tileColor: AppColors.surface,
-                ),
-                const SizedBox(height: 24),
-
-                // قسم الملاحظات
-                _buildSectionTitle('ملاحظات إضافية'),
-                const SizedBox(height: 16),
-
-                AppTextField.multiline(
-                  controller: _notesController,
-                  label: 'ملاحظات',
-                  hint: 'أضف أي ملاحظات أو تفاصيل إضافية',
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 32),
-
-                // أزرار الحفظ والإلغاء
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton.secondary(
-                        text: 'إلغاء',
-                        onPressed: isLoading
-                            ? null
-                            : () async {
-                                final confirm = await ConfirmDialog.show(
-                                  context,
-                                  title: 'إلغاء العملية',
-                                  message: 'هل تريد إلغاء إضافة عملية الشراء؟',
-                                  confirmText: 'نعم، إلغاء',
-                                  cancelText: 'لا، متابعة',
-                                );
-                                if (confirm == true && context.mounted) {
-                                  Navigator.of(context).pop();
-                                }
-                              },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: AppButton.primary(
-                        text: 'حفظ عملية الشراء',
-                        icon: Icons.save,
-                        isLoading: isLoading,
-                        onPressed: isLoading ? null : _submitPurchase,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
+                ],
+              ),
             ),
-          );
-        },
-      ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(2),
+  Widget _buildLoadingState() {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(48),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: AppTextStyles.headlineSmall.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.purchases.withOpacity(0.8),
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+          Text(
+            'جاري تحميل البيانات...',
+            style: AppTextStyles.bodyLarge.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
-  
-  IconData _getUnitIcon(String unit) {
-    switch (unit) {
-      case 'ربطة':
-        return Icons.shopping_bag;
-      case 'كيس':
-        return Icons.inventory_2;
-      case 'كيلو':
-        return Icons.scale;
-      default:
-        return Icons.category;
-    }
+
+  Widget _buildErrorState() {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.danger.withOpacity(0.2),
+                  AppColors.danger.withOpacity(0.1)
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.danger,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'حدث خطأ',
+            style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'فشل تحميل البيانات المطلوبة',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 }
