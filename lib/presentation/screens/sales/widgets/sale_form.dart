@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/customer.dart';
@@ -13,9 +14,7 @@ import 'qat_type_selector.dart' show QatTypeSelector, QatTypeOption;
 import 'payment_method_selector.dart';
 import 'quantity_input.dart';
 
-/// نموذج إضافة/تعديل عملية بيع
-///
-/// يوفر واجهة شاملة لإدخال بيانات البيع
+/// نموذج إضافة/تعديل عملية بيع - تصميم راقي هادئ
 class SaleForm extends StatefulWidget {
   const SaleForm({
     required this.customers,
@@ -143,34 +142,31 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(16),
-    child: Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 24),
-          _buildDateSection(),
-          const SizedBox(height: 16),
-          _buildCustomerSection(),
-          const SizedBox(height: 16),
-          _buildQatTypeSection(),
-          const SizedBox(height: 16),
-          _buildQuantityPriceSection(),
-          const SizedBox(height: 16),
-          _buildPaymentMethodSection(),
-          const SizedBox(height: 16),
-          _buildDiscountSection(),
-          const SizedBox(height: 16),
-          _buildSummaryCard(),
-          const SizedBox(height: 16),
-          _buildNotesSection(),
-          const SizedBox(height: 24),
-          _buildActionButtons(),
-        ],
-      ),
+  Widget build(BuildContext context) => Form(
+    key: _formKey,
+    child: ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildHeader(),
+        const SizedBox(height: 20),
+        _buildDateSection(),
+        const SizedBox(height: 14),
+        _buildCustomerSection(),
+        const SizedBox(height: 14),
+        _buildQatTypeSection(),
+        const SizedBox(height: 14),
+        _buildQuantityPriceSection(),
+        const SizedBox(height: 14),
+        _buildPaymentMethodSection(),
+        const SizedBox(height: 14),
+        _buildDiscountSection(),
+        const SizedBox(height: 14),
+        _buildSummaryCard(),
+        const SizedBox(height: 14),
+        _buildNotesSection(),
+        const SizedBox(height: 20),
+        _buildActionButtons(),
+      ],
     ),
   );
 
@@ -178,41 +174,43 @@ class _SaleFormState extends State<SaleForm> {
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       gradient: LinearGradient(
-        colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
+        colors: [
+          AppColors.primary.withOpacity(0.12),
+          AppColors.primary.withOpacity(0.06),
+        ],
       ),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
     ),
     child: Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withOpacity(0.2),
+                AppColors.primary.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.shopping_cart, color: Colors.white, size: 28),
+          child: const Icon(Icons.shopping_cart_rounded, color: AppColors.primary, size: 24),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.initialData != null
-                    ? 'تعديل عملية بيع'
-                    : 'إضافة عملية بيع',
-                style: AppTextStyles.headlineSmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                widget.initialData != null ? 'تعديل عملية بيع' : 'إضافة عملية بيع',
+                style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 'أدخل تفاصيل عملية البيع',
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white.withOpacity(0.9),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -255,73 +253,84 @@ class _SaleFormState extends State<SaleForm> {
         ),
 
         if (_availableUnits.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border.withOpacity(0.1)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.straighten,
+                    Icon(
+                      Icons.straighten_rounded,
                       color: AppColors.primary,
-                      size: 20,
+                      size: 18,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'اختر الوحدة',
-                      style: AppTextStyles.titleMedium.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: _availableUnits.map((unit) {
                     final isSelected = _selectedUnit == unit;
-                    return ChoiceChip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getUnitIcon(unit),
-                            size: 18,
-                            color: isSelected
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(unit),
-                        ],
-                      ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          _onUnitChanged(unit);
-                        }
+                    return GestureDetector(
+                      onTap: () {
+                        _onUnitChanged(unit);
+                        HapticFeedback.lightImpact();
                       },
-                      backgroundColor: AppColors.surface,
-                      selectedColor: AppColors.primary,
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.textPrimary,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? LinearGradient(
+                                  colors: [
+                                    AppColors.primary.withOpacity(0.15),
+                                    AppColors.primary.withOpacity(0.08),
+                                  ],
+                                )
+                              : null,
+                          color: isSelected ? null : AppColors.background.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary.withOpacity(0.3)
+                                : AppColors.border.withOpacity(0.15),
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _getUnitIcon(unit),
+                              size: 16,
+                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              unit,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),
@@ -335,22 +344,11 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   Widget _buildQuantityPriceSection() => Container(
-    padding: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [AppColors.surface, AppColors.surface.withOpacity(0.5)],
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-      ),
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.primary.withOpacity(0.08),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ],
+      border: Border.all(color: AppColors.border.withOpacity(0.1)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,38 +356,35 @@ class _SaleFormState extends State<SaleForm> {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.shopping_basket,
+                Icons.shopping_basket_rounded,
                 color: AppColors.primary,
-                size: 20,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Text(
               'الكمية والسعر',
-              style: AppTextStyles.titleMedium.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
 
         QuantityInput(
           value: double.tryParse(_quantityController.text) ?? 0.0,
-          onChanged: (value) {
-            _quantityController.text = value.toString();
-          },
+          onChanged: (value) => _quantityController.text = value.toString(),
           label: _selectedUnit != null ? 'الكمية ($_selectedUnit)' : 'الكمية',
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         AppTextField.currency(
           controller: _priceController,
@@ -403,28 +398,28 @@ class _SaleFormState extends State<SaleForm> {
         if (_quantityController.text.isNotEmpty &&
             _priceController.text.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.only(top: 12),
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                color: AppColors.success.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.success.withOpacity(0.2)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.calculate,
+                      Icon(
+                        Icons.calculate_rounded,
                         color: AppColors.success,
-                        size: 18,
+                        size: 16,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'المجموع الفرعي',
-                        style: AppTextStyles.bodyMedium.copyWith(
+                        style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.success,
                           fontWeight: FontWeight.w600,
                         ),
@@ -433,9 +428,9 @@ class _SaleFormState extends State<SaleForm> {
                   ),
                   Text(
                     '${((double.tryParse(_quantityController.text) ?? 0) * (double.tryParse(_priceController.text) ?? 0)).toStringAsFixed(2)} ريال',
-                    style: AppTextStyles.titleMedium.copyWith(
+                    style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.success,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -469,14 +464,12 @@ class _SaleFormState extends State<SaleForm> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.success.withOpacity(0.1),
-            AppColors.success.withOpacity(0.05),
+            AppColors.success.withOpacity(0.08),
+            AppColors.success.withOpacity(0.03),
           ],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.success.withOpacity(0.2)),
       ),
       child: Column(
         children: [
@@ -484,13 +477,23 @@ class _SaleFormState extends State<SaleForm> {
             'المجموع الفرعي',
             '${subtotal.toStringAsFixed(2)} ريال',
           ),
-          const Divider(height: 16),
+          const SizedBox(height: 8),
+          Container(
+            height: 1,
+            color: AppColors.border.withOpacity(0.1),
+          ),
+          const SizedBox(height: 8),
           _buildSummaryRow(
             'الخصم',
             '${discount.toStringAsFixed(2)} ريال',
             color: AppColors.danger,
           ),
-          const Divider(height: 16),
+          const SizedBox(height: 8),
+          Container(
+            height: 1,
+            color: AppColors.border.withOpacity(0.1),
+          ),
+          const SizedBox(height: 8),
           _buildSummaryRow(
             'الإجمالي',
             '${total.toStringAsFixed(2)} ريال',
@@ -511,19 +514,17 @@ class _SaleFormState extends State<SaleForm> {
     children: [
       Text(
         label,
-        style: (isTotal ? AppTextStyles.titleMedium : AppTextStyles.bodyMedium)
+        style: (isTotal ? AppTextStyles.bodyLarge : AppTextStyles.bodyMedium)
             .copyWith(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
             ),
       ),
       Text(
         value,
-        style: (isTotal ? AppTextStyles.titleLarge : AppTextStyles.titleMedium)
+        style: (isTotal ? AppTextStyles.bodyLarge : AppTextStyles.bodyMedium)
             .copyWith(
-              color:
-                  color ??
-                  (isTotal ? AppColors.success : AppColors.textPrimary),
-              fontWeight: FontWeight.bold,
+              color: color ?? (isTotal ? AppColors.success : AppColors.textPrimary),
+              fontWeight: FontWeight.w600,
             ),
       ),
     ],
@@ -542,7 +543,7 @@ class _SaleFormState extends State<SaleForm> {
         Expanded(
           child: AppButton.secondary(text: 'إلغاء', onPressed: widget.onCancel),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
       ],
       Expanded(
         flex: 2,
@@ -589,16 +590,17 @@ class _SaleFormState extends State<SaleForm> {
 
         if (!stockCheck.isAvailable) {
           if (!mounted) return;
-
+          
           // عرض رسالة تحذيرية مع تفاصيل المخزون
-          final confirmSale = await showDialog<bool>(
+          await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Row(
-                children: const [
-                  Icon(Icons.warning, color: AppColors.warning, size: 28),
-                  SizedBox(width: 12),
-                  Text('تحذير: نقص في المخزون'),
+                children: [
+                  Icon(Icons.warning_rounded, color: AppColors.warning, size: 24),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text('تحذير: نقص في المخزون')),
                 ],
               ),
               content: Column(
@@ -609,24 +611,24 @@ class _SaleFormState extends State<SaleForm> {
                     stockCheck.message,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.danger,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.border),
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border.withOpacity(0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'تفاصيل المخزون:',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            fontWeight: FontWeight.bold,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -658,7 +660,7 @@ class _SaleFormState extends State<SaleForm> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Text(
                     'لا يمكن إتمام عملية البيع. يرجى شراء كمية إضافية أو تقليل الكمية المطلوبة.',
                     style: AppTextStyles.bodySmall.copyWith(
@@ -675,7 +677,7 @@ class _SaleFormState extends State<SaleForm> {
               ],
             ),
           );
-
+          
           // منع البيع
           return;
         }
@@ -723,9 +725,9 @@ class _SaleFormState extends State<SaleForm> {
           ),
           Text(
             value,
-            style: AppTextStyles.bodyMedium.copyWith(
+            style: AppTextStyles.bodySmall.copyWith(
               color: color,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -736,13 +738,13 @@ class _SaleFormState extends State<SaleForm> {
   IconData _getUnitIcon(String unit) {
     switch (unit) {
       case 'ربطة':
-        return Icons.shopping_bag;
+        return Icons.shopping_bag_rounded;
       case 'كيس':
-        return Icons.inventory_2;
+        return Icons.inventory_2_rounded;
       case 'كيلو':
-        return Icons.scale;
+        return Icons.scale_rounded;
       default:
-        return Icons.category;
+        return Icons.category_rounded;
     }
   }
 }
