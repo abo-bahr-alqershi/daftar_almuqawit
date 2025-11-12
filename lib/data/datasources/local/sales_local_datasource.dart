@@ -66,4 +66,13 @@ class SalesLocalDataSource extends BaseLocalDataSource<SaleModel> {
       orderBy: '${SalesTable.cDate} DESC',
     );
   }
+
+  /// جلب المبيعات حسب نوع القات
+  Future<List<SaleModel>> getByQatType(int qatTypeId) async {
+    return await getWhere(
+      where: '${SalesTable.cQatTypeId} = ? AND ${SalesTable.cStatus} = ?',
+      whereArgs: [qatTypeId, 'نشط'],
+      orderBy: '${SalesTable.cDate} DESC, ${SalesTable.cTime} DESC',
+    );
+  }
 }

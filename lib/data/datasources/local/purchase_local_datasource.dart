@@ -57,4 +57,13 @@ class PurchaseLocalDataSource extends BaseLocalDataSource<PurchaseModel> {
       orderBy: '${PurchasesTable.cTime} DESC',
     );
   }
+
+  /// جلب المشتريات حسب نوع القات
+  Future<List<PurchaseModel>> getByQatType(int qatTypeId) async {
+    return await getWhere(
+      where: '${PurchasesTable.cQatTypeId} = ? AND ${PurchasesTable.cStatus} = ?',
+      whereArgs: [qatTypeId, 'نشط'],
+      orderBy: '${PurchasesTable.cDate} DESC, ${PurchasesTable.cTime} DESC',
+    );
+  }
 }

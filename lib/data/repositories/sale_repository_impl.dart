@@ -115,5 +115,11 @@ class SaleRepositoryImpl implements SalesRepository {
   }
 
   @override
+  Future<List<Sale>> getByQatType(int qatTypeId) async {
+    final models = await local.getByQatType(qatTypeId);
+    return models.map(_fromModel).toList();
+  }
+
+  @override
   Future<void> update(Sale entity) => local.update(_toModel(entity));
 }

@@ -78,6 +78,7 @@ import '../../domain/usecases/sales/update_sale.dart';
 import '../../domain/usecases/sales/delete_sale.dart';
 import '../../domain/usecases/sales/quick_sale.dart';
 import '../../domain/usecases/sales/cancel_sale.dart';
+import '../../domain/usecases/sales/check_stock_availability.dart';
 // Debts
 import '../../domain/usecases/debts/add_debt.dart';
 import '../../domain/usecases/debts/get_debts.dart';
@@ -213,6 +214,10 @@ class ServiceLocator {
     sl.registerLazySingleton<DeleteSale>(() => DeleteSale(sl()));
     sl.registerLazySingleton<QuickSale>(() => QuickSale(sl()));
     sl.registerLazySingleton<CancelSale>(() => CancelSale(sl()));
+    sl.registerLazySingleton<CheckStockAvailability>(() => CheckStockAvailability(
+      purchaseRepository: sl<PurchaseRepository>(),
+      salesRepository: sl<SalesRepository>(),
+    ));
 
     // Debts
     sl.registerLazySingleton<AddDebt>(() => AddDebt(sl<DebtRepository>(), sl<CustomerRepository>()));

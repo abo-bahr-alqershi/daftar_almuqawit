@@ -76,47 +76,55 @@ class BackupOptions extends StatelessWidget {
           const SizedBox(height: AppDimensions.spaceL),
         ],
 
-        // خيار النسخ الاحتياطي الآن
-        _BackupOptionTile(
+        // زر النسخ الاحتياطي مع قائمة منسدلة
+        _buildDropdownButton(
+          context: context,
           icon: Icons.backup,
-          title: 'نسخ احتياطي الآن',
-          description: 'حفظ نسخة من بياناتك على السحابة',
+          title: 'إنشاء نسخة احتياطية',
+          description: 'حفظ نسخة من بياناتك',
           iconColor: AppColors.primary,
           iconBackgroundColor: AppColors.primaryLight.withOpacity(0.1),
-          onTap: onBackupNow,
+          options: [
+            _DropdownOption(
+              icon: Icons.phone_android,
+              title: 'نسخ احتياطي محلي',
+              description: 'حفظ النسخة على الجهاز',
+              onTap: onBackupNow,
+            ),
+            _DropdownOption(
+              icon: Icons.cloud_upload,
+              title: 'نسخ احتياطي إلى Google Drive',
+              description: 'رفع نسخة آمنة إلى حسابك',
+              onTap: onBackupToDrive,
+              iconColor: const Color(0xFF4285F4),
+            ),
+          ],
         ),
         const SizedBox(height: AppDimensions.spaceM),
 
-        // خيار النسخ الاحتياطي إلى Google Drive
-        _BackupOptionTile(
-          icon: Icons.cloud_upload,
-          title: 'نسخ احتياطي إلى Google Drive',
-          description: 'رفع نسخة آمنة إلى حسابك على Google Drive',
-          iconColor: const Color(0xFF4285F4), // Google Blue
-          iconBackgroundColor: const Color(0xFF4285F4).withOpacity(0.1),
-          onTap: onBackupToDrive,
-        ),
-        const SizedBox(height: AppDimensions.spaceM),
-
-        // خيار الاستعادة من Google Drive
-        _BackupOptionTile(
-          icon: Icons.cloud_download,
-          title: 'استعادة من Google Drive',
-          description: 'استرجاع نسخة احتياطية من حسابك على Drive',
-          iconColor: const Color(0xFF34A853), // Google Green
-          iconBackgroundColor: const Color(0xFF34A853).withOpacity(0.1),
-          onTap: onRestoreFromDrive,
-        ),
-        const SizedBox(height: AppDimensions.spaceM),
-
-        // خيار الاستعادة
-        _BackupOptionTile(
+        // زر الاستعادة مع قائمة منسدلة
+        _buildDropdownButton(
+          context: context,
           icon: Icons.restore,
           title: 'استعادة البيانات',
-          description: 'استرجاع البيانات من نسخة احتياطية سابقة',
+          description: 'استرجاع نسخة احتياطية سابقة',
           iconColor: AppColors.info,
           iconBackgroundColor: AppColors.infoLight,
-          onTap: onRestore,
+          options: [
+            _DropdownOption(
+              icon: Icons.phone_android,
+              title: 'استعادة محلية',
+              description: 'استرجاع من نسخة محفوظة على الجهاز',
+              onTap: onRestore,
+            ),
+            _DropdownOption(
+              icon: Icons.cloud_download,
+              title: 'استعادة من Google Drive',
+              description: 'استرجاع من حسابك على Drive',
+              onTap: onRestoreFromDrive,
+              iconColor: const Color(0xFF34A853),
+            ),
+          ],
         ),
         const SizedBox(height: AppDimensions.spaceM),
 
@@ -155,6 +163,113 @@ class BackupOptions extends StatelessWidget {
     );
   }
 
+  Widget _buildDropdownButton({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color iconColor,
+    required Color iconBackgroundColor,
+    required List<_DropdownOption> options,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: iconBackgroundColor,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusS),
+            ),
+            child: Icon(icon, color: iconColor, size: AppDimensions.iconM),
+          ),
+          title: Text(title, style: AppTextStyles.titleSmall),
+          subtitle: Text(
+            description,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          tilePadding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingM,
+            vertical: AppDimensions.paddingS,
+          ),
+          childrenPadding: const EdgeInsets.only(
+            right: AppDimensions.paddingM,
+            left: AppDimensions.paddingM,
+            bottom: AppDimensions.paddingS,
+          ),
+          children: options.map((option) {
+            return InkWell(
+              onTap: option.onTap,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusS),
+              child: Container(
+                padding: const EdgeInsets.all(AppDimensions.paddingM),
+                margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusS),
+                  border: Border.all(
+                    color: AppColors.border.withOpacity(0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      option.icon,
+                      color: option.iconColor ?? AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: AppDimensions.spaceM),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            option.title,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (option.description != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              option.description!,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_back_ios,
+                      color: AppColors.textSecondary,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -171,6 +286,23 @@ class BackupOptions extends StatelessWidget {
       return '${date.day}/${date.month}/${date.year}';
     }
   }
+}
+
+/// خيار في القائمة المنسدلة
+class _DropdownOption {
+  final IconData icon;
+  final String title;
+  final String? description;
+  final VoidCallback? onTap;
+  final Color? iconColor;
+
+  const _DropdownOption({
+    required this.icon,
+    required this.title,
+    this.description,
+    this.onTap,
+    this.iconColor,
+  });
 }
 
 /// عنصر خيار النسخ الاحتياطي

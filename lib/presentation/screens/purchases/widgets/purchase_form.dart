@@ -4,6 +4,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../domain/entities/purchase.dart';
 import '../../../../domain/entities/supplier.dart';
+import '../../../../domain/entities/qat_type.dart';
 import '../../../widgets/common/app_text_field.dart';
 import '../../../widgets/common/app_button.dart';
 import '../../../widgets/common/app_date_picker.dart';
@@ -14,6 +15,7 @@ import 'cost_calculator.dart';
 class PurchaseForm extends StatefulWidget {
   final Purchase? purchase;
   final List<Supplier> suppliers;
+  final List<QatType> qatTypes;
   final void Function(Purchase) onSubmit;
   final VoidCallback? onCancel;
 
@@ -21,6 +23,7 @@ class PurchaseForm extends StatefulWidget {
     super.key,
     this.purchase,
     required this.suppliers,
+    required this.qatTypes,
     required this.onSubmit,
     this.onCancel,
   });
@@ -38,8 +41,11 @@ class _PurchaseFormState extends State<PurchaseForm> {
   late final TextEditingController _notesController;
 
   int? _selectedSupplierId;
+  int? _selectedQatTypeId;
   String _selectedUnit = 'ربطة';
   String _paymentMethod = 'نقد';
+  List<String> _availableUnits = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
+  Map<String, double?> _unitBuyPrices = {};
   String _paymentStatus = 'مدفوع';
   DateTime _selectedDate = DateTime.now();
   DateTime? _dueDate;
@@ -72,6 +78,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
 
     if (widget.purchase != null) {
       _selectedSupplierId = widget.purchase!.supplierId;
+      _selectedQatTypeId = widget.purchase!.qatTypeId;
       _selectedUnit = widget.purchase!.unit;
       _paymentMethod = widget.purchase!.paymentMethod;
       _paymentStatus = widget.purchase!.paymentStatus;
@@ -79,6 +86,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
       if (widget.purchase!.dueDate != null) {
         _dueDate = DateTime.parse(widget.purchase!.dueDate!);
       }
+      _onQatTypeChanged(_selectedQatTypeId?.toString());
       _calculateTotal();
     }
 
@@ -95,6 +103,52 @@ class _PurchaseFormState extends State<PurchaseForm> {
     _invoiceNumberController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _onQatTypeChanged(String? qatTypeId) {
+    setState(() {
+      _selectedQatTypeId = qatTypeId != null ? int.tryParse(qatTypeId) : null;
+      _selectedUnit = 'ربطة';
+      _availableUnits = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
+      _unitBuyPrices = {};
+      _unitPriceController.clear();
+
+      if (qatTypeId != null && widget.qatTypes.isNotEmpty) {
+        final selectedQatType = widget.qatTypes.firstWhere(
+          (qt) => qt.id.toString() == qatTypeId,
+          orElse: () => widget.qatTypes.first,
+        );
+
+        if (selectedQatType.availableUnits != null &&
+            selectedQatType.availableUnits!.isNotEmpty) {
+          _availableUnits = List<String>.from(selectedQatType.availableUnits!);
+
+          if (selectedQatType.unitPrices != null) {
+            for (final unit in _availableUnits) {
+              final unitPrice = selectedQatType.unitPrices![unit];
+              _unitBuyPrices[unit] = unitPrice?.buyPrice;
+            }
+          }
+
+          if (_availableUnits.isNotEmpty) {
+            _selectedUnit = _availableUnits.first;
+            _onUnitChanged(_selectedUnit);
+          }
+        }
+      }
+    });
+  }
+
+  void _onUnitChanged(String? unit) {
+    setState(() {
+      _selectedUnit = unit ?? 'ربطة';
+      if (unit != null && _unitBuyPrices.containsKey(unit)) {
+        final defaultPrice = _unitBuyPrices[unit];
+        if (defaultPrice != null && defaultPrice > 0) {
+          _unitPriceController.text = defaultPrice.toString();
+        }
+      }
+    });
   }
 
   void _calculateTotal() {
@@ -128,8 +182,20 @@ class _PurchaseFormState extends State<PurchaseForm> {
 
       setState(() => _isSubmitting = true);
 
+      if (_selectedQatTypeId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يرجى اختيار نوع القات'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+        return;
+      }
+
       final selectedSupplier = widget.suppliers
           .firstWhere((s) => s.id == _selectedSupplierId);
+      final selectedQatType = widget.qatTypes
+          .firstWhere((qt) => qt.id == _selectedQatTypeId);
 
       final purchase = Purchase(
         id: widget.purchase?.id,
@@ -137,6 +203,8 @@ class _PurchaseFormState extends State<PurchaseForm> {
         time: TimeOfDay.now().format(context),
         supplierId: _selectedSupplierId,
         supplierName: selectedSupplier.name,
+        qatTypeId: _selectedQatTypeId,
+        qatTypeName: selectedQatType.name,
         quantity: double.parse(_quantityController.text),
         unit: _selectedUnit,
         unitPrice: double.parse(_unitPriceController.text),
@@ -197,6 +265,10 @@ class _PurchaseFormState extends State<PurchaseForm> {
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
+            // قسم اختيار نوع القات
+            _buildQatTypeSection(),
+            const SizedBox(height: AppDimensions.spaceM),
+
             Row(
               children: [
                 Expanded(
@@ -245,7 +317,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
                               vertical: AppDimensions.paddingS,
                             ),
                           ),
-                          items: _units.map((unit) {
+                          items: _availableUnits.map((unit) {
                             return DropdownMenuItem(
                               value: unit,
                               child: Text(unit, style: AppTextStyles.bodyMedium),
@@ -253,7 +325,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
                           }).toList(),
                           onChanged: (value) {
                             if (value != null) {
-                              setState(() => _selectedUnit = value);
+                              _onUnitChanged(value);
                             }
                           },
                         ),
@@ -393,6 +465,52 @@ class _PurchaseFormState extends State<PurchaseForm> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQatTypeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'نوع القات',
+          style: AppTextStyles.labelMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+            border: Border.all(color: AppColors.border, width: 1.5),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedQatTypeId?.toString(),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingM,
+                vertical: AppDimensions.paddingS,
+              ),
+              hintText: 'اختر نوع القات',
+            ),
+            items: widget.qatTypes.map((qatType) {
+              return DropdownMenuItem(
+                value: qatType.id.toString(),
+                child: Text(qatType.name, style: AppTextStyles.bodyMedium),
+              );
+            }).toList(),
+            onChanged: _onQatTypeChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى اختيار نوع القات';
+              }
+              return null;
+            },
+          ),
+        ),
+      ],
     );
   }
 }

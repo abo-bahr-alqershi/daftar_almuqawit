@@ -66,5 +66,8 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
   Future<List<Purchase>> getTodayPurchases(String date) async => (await local.getToday(date)).map(_fromModel).toList();
 
   @override
+  Future<List<Purchase>> getByQatType(int qatTypeId) async => (await local.getByQatType(qatTypeId)).map(_fromModel).toList();
+
+  @override
   Future<void> update(Purchase entity) => local.update(_toModel(entity));
 }

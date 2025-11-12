@@ -7,4 +7,5 @@ abstract class PurchaseRepository extends BaseRepository<Purchase> {
   Future<List<Purchase>> getBySupplier(int supplierId);
   Future<List<Purchase>> getByDate(String date);
   Future<List<Purchase>> getTodayPurchases(String date);
+  Future<List<Purchase>> getByQatType(int qatTypeId);
 }

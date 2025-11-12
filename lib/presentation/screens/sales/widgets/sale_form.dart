@@ -3,6 +3,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/customer.dart';
 import '../../../../domain/entities/qat_type.dart';
+import '../../../../domain/usecases/sales/check_stock_availability.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../widgets/common/app_button.dart';
 import '../../../widgets/common/app_text_field.dart';
 import '../../../widgets/common/app_date_picker.dart';
@@ -550,7 +552,7 @@ class _SaleFormState extends State<SaleForm> {
     ],
   );
 
-  void _handleSave() {
+  void _handleSave() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedQatTypeId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -570,6 +572,122 @@ class _SaleFormState extends State<SaleForm> {
       final price = double.parse(_priceController.text);
       final discount = double.tryParse(_discountController.text) ?? 0.0;
 
+      // التحقق من المخزون قبل البيع
+      try {
+        final checkStock = sl<CheckStockAvailability>();
+        final stockCheck = await checkStock(
+          CheckStockParams(
+            qatTypeId: int.parse(_selectedQatTypeId!),
+            unit: _selectedUnit!,
+            requestedQuantity: quantity,
+            excludeSaleId: widget.initialData?['id'] as int?,
+          ),
+        );
+
+        if (!stockCheck.isAvailable) {
+          if (!mounted) return;
+          
+          // عرض رسالة تحذيرية مع تفاصيل المخزون
+          final confirmSale = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Row(
+                children: const [
+                  Icon(Icons.warning, color: AppColors.warning, size: 28),
+                  SizedBox(width: 12),
+                  Text('تحذير: نقص في المخزون'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    stockCheck.message,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.danger,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'تفاصيل المخزون:',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildStockInfoRow(
+                          'إجمالي المشتريات',
+                          '${stockCheck.purchasedQuantity} ${_selectedUnit}',
+                          AppColors.success,
+                        ),
+                        _buildStockInfoRow(
+                          'إجمالي المبيعات',
+                          '${stockCheck.soldQuantity} ${_selectedUnit}',
+                          AppColors.info,
+                        ),
+                        _buildStockInfoRow(
+                          'الكمية المتاحة',
+                          '${stockCheck.availableQuantity} ${_selectedUnit}',
+                          AppColors.primary,
+                        ),
+                        _buildStockInfoRow(
+                          'الكمية المطلوبة',
+                          '${stockCheck.requestedQuantity} ${_selectedUnit}',
+                          AppColors.warning,
+                        ),
+                        _buildStockInfoRow(
+                          'النقص',
+                          '${stockCheck.shortage.toStringAsFixed(2)} ${_selectedUnit}',
+                          AppColors.danger,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'لا يمكن إتمام عملية البيع. يرجى شراء كمية إضافية أو تقليل الكمية المطلوبة.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('حسناً'),
+                ),
+              ],
+            ),
+          );
+          
+          // منع البيع
+          return;
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('خطأ في التحقق من المخزون: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
+
+      // إذا كان المخزون متوفراً، متابعة عملية البيع
       widget.onSubmit({
         'date': _selectedDate.toString().split(' ')[0],
         'time': TimeOfDay.now().format(context),
@@ -586,6 +704,30 @@ class _SaleFormState extends State<SaleForm> {
         'notes': _notesController.text.isEmpty ? null : _notesController.text,
       });
     }
+  }
+
+  Widget _buildStockInfoRow(String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   IconData _getUnitIcon(String unit) {
