@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import 'dart:math' as math;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/sale.dart';
 
-/// معاينة الفاتورة - تصميم Tesla/iOS متطور
+/// معاينة الفاتورة - تصميم راقي هادئ
 class ReceiptPreview extends StatefulWidget {
   final Sale sale;
   final String? storeName;
@@ -30,141 +28,61 @@ class ReceiptPreview extends StatefulWidget {
 }
 
 class _ReceiptPreviewState extends State<ReceiptPreview>
-    with TickerProviderStateMixin {
-  late AnimationController _slideAnimationController;
-  late AnimationController _fadeAnimationController;
-  late AnimationController _stampAnimationController;
-  late Animation<Offset> _slideAnimation;
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _stampScaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-  }
-
-  void _initializeAnimations() {
-    _slideAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-
-    _fadeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
     );
-
-    _stampAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _slideAnimationController,
-            curve: Curves.easeOutCubic,
-          ),
-        );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeAnimationController, curve: Curves.easeIn),
-    );
-
-    _stampScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _stampAnimationController,
-        curve: Curves.elasticOut,
-      ),
-    );
-
-    _slideAnimationController.forward();
-    _fadeAnimationController.forward();
-
-    Future.delayed(const Duration(milliseconds: 800), () {
-      _stampAnimationController.forward();
-    });
+    _animationController.forward();
   }
 
   @override
   void dispose() {
-    _slideAnimationController.dispose();
-    _fadeAnimationController.dispose();
-    _stampAnimationController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _slideAnimation,
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 400),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, AppColors.surface],
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 400),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Paper Texture Background
-              _buildPaperTexture(),
-
-              // Receipt Content
-              _buildReceiptContent(),
-
-              // Stamp Effect
-              _buildStampEffect(),
-            ],
-          ),
+          ],
+        ),
+        child: Column(
+          children: [
+            _buildReceiptHeader(),
+            _buildDivider(),
+            _buildReceiptDetails(),
+            _buildItemsList(),
+            _buildTotalsSection(),
+            _buildReceiptFooter(),
+            _buildActionButtons(),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPaperTexture() {
-    return Positioned.fill(child: CustomPaint(painter: _PaperTexturePainter()));
-  }
-
-  Widget _buildReceiptContent() {
-    return Column(
-      children: [
-        // Header
-        _buildReceiptHeader(),
-
-        // Divider with Style
-        _buildStyledDivider(),
-
-        // Receipt Details
-        _buildReceiptDetails(),
-
-        // Items List
-        _buildItemsList(),
-
-        // Totals Section
-        _buildTotalsSection(),
-
-        // Footer
-        _buildReceiptFooter(),
-
-        // Action Buttons
-        _buildActionButtons(),
-      ],
     );
   }
 
@@ -174,71 +92,60 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.1),
-            AppColors.primary.withOpacity(0.05),
+            AppColors.primary.withOpacity(0.08),
+            AppColors.primary.withOpacity(0.03),
           ],
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          // Store Logo
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeOutBack,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.primaryDark],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.store, color: Colors.white, size: 36),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // Store Name
-          Text(
-            widget.storeName ?? 'دفتر المقاولات',
-            style: AppTextStyles.h2.copyWith(
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.2),
+                  AppColors.primary.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: AppColors.primary,
+              size: 32,
             ),
           ),
-
+          const SizedBox(height: 16),
+          Text(
+            widget.storeName ?? 'دفتر المقاولات',
+            style: AppTextStyles.h3.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+            ),
+          ),
           if (widget.storeAddress != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               widget.storeAddress!,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textSecondary,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
-
           if (widget.storePhone != null) ...[
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.phone, size: 14, color: AppColors.textSecondary),
+                Icon(
+                  Icons.phone_rounded,
+                  size: 14,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   widget.storePhone!,
@@ -254,21 +161,17 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
     );
   }
 
-  Widget _buildStyledDivider() {
+  Widget _buildDivider() {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: List.generate(
-          30,
-          (index) => Expanded(
-            child: Container(
-              height: 2,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              color: index % 2 == 0
-                  ? AppColors.border.withOpacity(0.3)
-                  : Colors.transparent,
-            ),
-          ),
+      height: 1,
+      margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            AppColors.border.withOpacity(0.3),
+            Colors.transparent,
+          ],
         ),
       ),
     );
@@ -282,24 +185,44 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
           _buildDetailRow(
             'رقم الفاتورة',
             '#${widget.sale.invoiceNumber ?? widget.sale.id ?? 'N/A'}',
-            Icons.receipt,
+            Icons.tag_rounded,
           ),
-          _buildDetailRow('التاريخ', widget.sale.date, Icons.calendar_today),
-          _buildDetailRow('الوقت', widget.sale.time, Icons.access_time),
-          if (widget.sale.customerName != null)
-            _buildDetailRow('العميل', widget.sale.customerName!, Icons.person),
+          const SizedBox(height: 12),
+          _buildDetailRow(
+            'التاريخ',
+            widget.sale.date,
+            Icons.calendar_today_rounded,
+          ),
+          const SizedBox(height: 12),
+          _buildDetailRow(
+            'الوقت',
+            widget.sale.time,
+            Icons.access_time_rounded,
+          ),
+          if (widget.sale.customerName != null) ...[
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              'العميل',
+              widget.sale.customerName!,
+              Icons.person_outline_rounded,
+            ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
@@ -330,20 +253,21 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
       margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.background.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.2)),
+        border: Border.all(color: AppColors.border.withOpacity(0.1)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.shopping_basket, color: AppColors.primary, size: 20),
+              Icon(Icons.inventory_2_rounded, color: AppColors.primary, size: 18),
               const SizedBox(width: 8),
               Text(
-                'التفاصيل',
+                'تفاصيل المنتج',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -365,29 +289,37 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
               Text(
                 '${(widget.sale.quantity * widget.sale.unitPrice).toStringAsFixed(2)} ريال',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
           if (widget.sale.discount > 0) ...[
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'الخصم',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.danger,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'الخصم',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.danger,
+                    ),
                   ),
-                ),
-                Text(
-                  '- ${widget.sale.discount} ريال',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.danger,
+                  Text(
+                    '- ${widget.sale.discount} ريال',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.danger,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ],
@@ -402,12 +334,12 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.05),
-            AppColors.accent.withOpacity(0.02),
+            AppColors.primary.withOpacity(0.08),
+            AppColors.primary.withOpacity(0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
       ),
       child: Column(
         children: [
@@ -416,30 +348,26 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
             children: [
               Text(
                 'المجموع الكلي',
-                style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: widget.sale.totalAmount),
-                duration: const Duration(milliseconds: 1000),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) {
-                  return Text(
-                    '${value.toStringAsFixed(2)} ريال',
-                    style: AppTextStyles.h2.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  );
-                },
+              Text(
+                '${widget.sale.totalAmount.toStringAsFixed(2)} ريال',
+                style: AppTextStyles.h3.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: _getPaymentStatusColor().withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -455,6 +383,7 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
                   style: TextStyle(
                     color: _getPaymentStatusColor(),
                     fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -470,29 +399,29 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
       margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.background.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.1)),
       ),
       child: Column(
         children: [
           Icon(
-            Icons.favorite,
-            color: AppColors.danger.withOpacity(0.5),
-            size: 24,
+            Icons.favorite_rounded,
+            color: AppColors.danger.withOpacity(0.4),
+            size: 20,
           ),
           const SizedBox(height: 8),
           Text(
             'شكراً لتعاملكم معنا',
             style: AppTextStyles.bodyMedium.copyWith(
-              fontStyle: FontStyle.italic,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             'نتطلع لخدمتكم مجدداً',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint),
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textHint,
+            ),
           ),
         ],
       ),
@@ -505,77 +434,84 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
       child: Row(
         children: [
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
                 widget.onPrint?.call();
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+              child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.print_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'طباعة',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              icon: const Icon(Icons.print),
-              label: const Text('طباعة'),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {
+            child: GestureDetector(
+              onTap: () {
                 HapticFeedback.lightImpact();
                 widget.onShare?.call();
               },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary),
+              child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.share_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'مشاركة',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              icon: const Icon(Icons.share),
-              label: const Text('مشاركة'),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStampEffect() {
-    return Positioned(
-      top: 100,
-      right: 30,
-      child: AnimatedBuilder(
-        animation: _stampScaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _stampScaleAnimation.value,
-            child: Transform.rotate(
-              angle: -math.pi / 12,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.success, width: 3),
-                ),
-                child: Text(
-                  'مدفوع',
-                  style: TextStyle(
-                    color: AppColors.success,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }
@@ -597,36 +533,15 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
     switch (widget.sale.paymentMethod) {
       case 'نقد':
       case 'نقدي':
-        return Icons.money;
+        return Icons.payments_rounded;
       case 'آجل':
-        return Icons.schedule;
+        return Icons.schedule_rounded;
       case 'بطاقة':
-        return Icons.credit_card;
+        return Icons.credit_card_rounded;
       case 'تحويل':
-        return Icons.account_balance;
+        return Icons.account_balance_rounded;
       default:
-        return Icons.payment;
+        return Icons.payment_rounded;
     }
   }
-}
-
-// رسام نسيج الورق
-class _PaperTexturePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    // رسم نسيج الورق
-    for (int i = 0; i < 20; i++) {
-      paint.color = AppColors.border.withOpacity(0.02);
-      canvas.drawLine(
-        Offset(0, size.height * i / 20),
-        Offset(size.width, size.height * i / 20),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

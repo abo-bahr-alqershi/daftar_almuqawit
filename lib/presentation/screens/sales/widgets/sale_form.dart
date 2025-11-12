@@ -143,31 +143,34 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   @override
-  Widget build(BuildContext context) => Form(
-    key: _formKey,
-    child: ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildHeader(),
-        const SizedBox(height: 24),
-        _buildDateSection(),
-        const SizedBox(height: 16),
-        _buildCustomerSection(),
-        const SizedBox(height: 16),
-        _buildQatTypeSection(),
-        const SizedBox(height: 16),
-        _buildQuantityPriceSection(),
-        const SizedBox(height: 16),
-        _buildPaymentMethodSection(),
-        const SizedBox(height: 16),
-        _buildDiscountSection(),
-        const SizedBox(height: 16),
-        _buildSummaryCard(),
-        const SizedBox(height: 16),
-        _buildNotesSection(),
-        const SizedBox(height: 24),
-        _buildActionButtons(),
-      ],
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(16),
+    child: Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildDateSection(),
+          const SizedBox(height: 16),
+          _buildCustomerSection(),
+          const SizedBox(height: 16),
+          _buildQatTypeSection(),
+          const SizedBox(height: 16),
+          _buildQuantityPriceSection(),
+          const SizedBox(height: 16),
+          _buildPaymentMethodSection(),
+          const SizedBox(height: 16),
+          _buildDiscountSection(),
+          const SizedBox(height: 16),
+          _buildSummaryCard(),
+          const SizedBox(height: 16),
+          _buildNotesSection(),
+          const SizedBox(height: 24),
+          _buildActionButtons(),
+        ],
+      ),
     ),
   );
 
@@ -586,7 +589,7 @@ class _SaleFormState extends State<SaleForm> {
 
         if (!stockCheck.isAvailable) {
           if (!mounted) return;
-          
+
           // عرض رسالة تحذيرية مع تفاصيل المخزون
           final confirmSale = await showDialog<bool>(
             context: context,
@@ -672,7 +675,7 @@ class _SaleFormState extends State<SaleForm> {
               ],
             ),
           );
-          
+
           // منع البيع
           return;
         }

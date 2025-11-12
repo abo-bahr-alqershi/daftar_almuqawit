@@ -1,21 +1,16 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/theme/app_dimensions.dart';
 import '../../../domain/entities/purchase.dart';
 import '../../blocs/purchases/purchases_bloc.dart';
 import '../../blocs/purchases/purchases_event.dart';
-import '../../widgets/common/app_button.dart';
 import '../../widgets/common/confirm_dialog.dart';
-import 'widgets/purchase_item_card.dart';
-import 'widgets/purchase_summary.dart';
-import 'widgets/cost_calculator.dart';
-import 'widgets/supplier_selector.dart';
 import 'edit_purchase_screen.dart';
 
-/// شاشة تفاصيل عملية الشراء الكاملة
+/// شاشة تفاصيل عملية الشراء - تصميم راقي متطور
 class PurchaseDetailsScreen extends StatefulWidget {
   final Purchase purchase;
 
@@ -28,7 +23,755 @@ class PurchaseDetailsScreen extends StatefulWidget {
   State<PurchaseDetailsScreen> createState() => _PurchaseDetailsScreenState();
 }
 
-class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
+class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _animationController.forward();
+
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    final statusColor = _getPaymentStatusColor(widget.purchase.paymentStatus);
+
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            _buildGradientBackground(),
+            
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                _buildModernAppBar(topPadding, statusColor),
+                
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        if (widget.purchase.status != 'نشط')
+                          _buildCancelledBanner(),
+                        
+                        const SizedBox(height: 20),
+                        _buildMainInfoCard(statusColor),
+                        
+                        const SizedBox(height: 16),
+                        _buildQuantityPriceCard(),
+                        
+                        const SizedBox(height: 16),
+                        _buildPaymentCard(statusColor),
+                        
+                        if (widget.purchase.notes != null && widget.purchase.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          _buildNotesCard(),
+                        ],
+                        
+                        if (widget.purchase.remainingAmount > 0 && widget.purchase.status == 'نشط') ...[
+                          const SizedBox(height: 24),
+                          _buildPayButton(),
+                        ],
+                        
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientBackground() => Container(
+    height: 400,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.purchases.withOpacity(0.08),
+          AppColors.info.withOpacity(0.05),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildModernAppBar(double topPadding, Color statusColor) {
+    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 120,
+      pinned: true,
+      backgroundColor: AppColors.surface.withOpacity(opacity),
+      elevation: opacity * 2,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+          ),
+          child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+        ),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.pop(context);
+        },
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(70, 10, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [statusColor.withOpacity(0.2), statusColor.withOpacity(0.1)],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(Icons.shopping_cart_rounded, color: statusColor, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'تفاصيل المشترى',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 20,
+                              ),
+                            ),
+                            Text(
+                              '#${widget.purchase.id}',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        if (widget.purchase.status == 'نشط')
+          _buildActionButton(Icons.edit_rounded, _editPurchase),
+        _buildActionButton(Icons.print_rounded, _printInvoice),
+        _buildMenuButton(),
+        const SizedBox(width: 12),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
+    return IconButton(
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        ),
+        child: Icon(icon, color: AppColors.textPrimary, size: 20),
+      ),
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        onPressed();
+      },
+    );
+  }
+
+  Widget _buildMenuButton() {
+    return PopupMenuButton<String>(
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        ),
+        child: const Icon(Icons.more_vert_rounded, color: AppColors.textPrimary, size: 20),
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'cancel':
+            _cancelPurchase();
+            break;
+          case 'delete':
+            _deletePurchase();
+            break;
+        }
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      itemBuilder: (context) => [
+        if (widget.purchase.status == 'نشط')
+          const PopupMenuItem(
+            value: 'cancel',
+            child: Row(
+              children: [
+                Icon(Icons.cancel_rounded, color: AppColors.warning, size: 20),
+                SizedBox(width: 12),
+                Text('إلغاء المشترى'),
+              ],
+            ),
+          ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_rounded, color: AppColors.danger, size: 20),
+              SizedBox(width: 12),
+              Text('حذف المشترى'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCancelledBanner() {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 600),
+      tween: Tween(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.warning.withOpacity(0.15), AppColors.warning.withOpacity(0.05)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.info_rounded, color: AppColors.warning, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'هذا المشترى تم إلغاؤه',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMainInfoCard(Color statusColor) {
+    return _AnimatedCard(
+      delay: 100,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'معلومات الشراء',
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [statusColor, statusColor.withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    widget.purchase.paymentStatus,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildDetailRow(Icons.tag_rounded, 'رقم العملية', '#${widget.purchase.id}', AppColors.primary),
+            _buildDetailRow(Icons.calendar_today_rounded, 'التاريخ', widget.purchase.date, AppColors.info),
+            _buildDetailRow(Icons.access_time_rounded, 'الوقت', widget.purchase.time, AppColors.accent),
+            _buildDetailRow(Icons.person_outline_rounded, 'المورد', widget.purchase.supplierName ?? 'غير محدد', AppColors.success),
+            if (widget.purchase.qatTypeName != null)
+              _buildDetailRow(Icons.category_rounded, 'نوع القات', widget.purchase.qatTypeName!, AppColors.purchases),
+            if (widget.purchase.invoiceNumber != null)
+              _buildDetailRow(Icons.receipt_long_rounded, 'رقم الفاتورة', widget.purchase.invoiceNumber!, AppColors.info),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantityPriceCard() {
+    return _AnimatedCard(
+      delay: 200,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'تفاصيل الكمية والسعر',
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricBox(
+                    icon: Icons.inventory_2_rounded,
+                    label: 'الكمية',
+                    value: '${widget.purchase.quantity}',
+                    unit: widget.purchase.unit,
+                    color: AppColors.info,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildMetricBox(
+                    icon: Icons.attach_money_rounded,
+                    label: 'سعر الوحدة',
+                    value: widget.purchase.unitPrice.toStringAsFixed(0),
+                    unit: 'ر.ي',
+                    color: AppColors.purchases,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.purchases.withOpacity(0.1), AppColors.purchases.withOpacity(0.05)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.purchases.withOpacity(0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'الإجمالي',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${widget.purchase.totalAmount.toStringAsFixed(0)} ر.ي',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          color: AppColors.purchases,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (widget.purchase.remainingAmount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'متبقي',
+                            style: TextStyle(fontSize: 11, color: AppColors.danger),
+                          ),
+                          Text(
+                            '${widget.purchase.remainingAmount.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentCard(Color statusColor) {
+    return _AnimatedCard(
+      delay: 300,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'معلومات الدفع',
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildDetailRow(Icons.payment_rounded, 'طريقة الدفع', widget.purchase.paymentMethod, AppColors.primary),
+            if (widget.purchase.dueDate != null)
+              _buildDetailRow(Icons.event_rounded, 'تاريخ الاستحقاق', widget.purchase.dueDate!, AppColors.warning),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotesCard() {
+    return _AnimatedCard(
+      delay: 400,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.note_rounded, color: AppColors.info, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'ملاحظات',
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.purchase.notes!,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPayButton() {
+    return _AnimatedCard(
+      delay: 500,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          Navigator.pushNamed(
+            context,
+            '/debt-payment',
+            arguments: {
+              'purchaseId': widget.purchase.id,
+              'supplierId': widget.purchase.supplierId,
+              'remainingAmount': widget.purchase.remainingAmount,
+            },
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.success, AppColors.success],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.success.withOpacity(0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.payment_rounded, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              const Text(
+                'سداد المبلغ المتبقي',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricBox({
+    required IconData icon,
+    required String label,
+    required String value,
+    required String unit,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 24, color: color),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: color.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _editPurchase() async {
     final result = await Navigator.push(
       context,
@@ -36,7 +779,6 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
         builder: (context) => EditPurchaseScreen(purchaseId: widget.purchase.id?.toString() ?? '0'),
       ),
     );
-
     if (result == true && mounted) {
       Navigator.pop(context, true);
     }
@@ -51,14 +793,9 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
       cancelText: 'إلغاء',
       isDangerous: true,
     );
-
-    if (confirmed == true && widget.purchase.id != null) {
-      if (mounted) {
-        context.read<PurchasesBloc>().add(
-          DeletePurchaseEvent(widget.purchase.id!),
-        );
-        Navigator.of(context).pop(true);
-      }
+    if (confirmed == true && widget.purchase.id != null && mounted) {
+      context.read<PurchasesBloc>().add(DeletePurchaseEvent(widget.purchase.id!));
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -71,379 +808,27 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
       cancelText: 'رجوع',
       isDangerous: true,
     );
-
-    if (confirmed == true && widget.purchase.id != null) {
-      if (mounted) {
-        context.read<PurchasesBloc>().add(
-          CancelPurchaseEvent(widget.purchase.id!),
-        );
-        Navigator.of(context).pop(true);
-      }
+    if (confirmed == true && widget.purchase.id != null && mounted) {
+      context.read<PurchasesBloc>().add(CancelPurchaseEvent(widget.purchase.id!));
+      Navigator.of(context).pop(true);
     }
   }
 
   void _printInvoice() {
+    HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('جاري طباعة الفاتورة...'),
-        backgroundColor: AppColors.info,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(
-            'تفاصيل المشترى',
-            style: AppTextStyles.headlineMedium,
-          ),
-          backgroundColor: AppColors.primary,
-          elevation: 0,
-          actions: [
-            if (widget.purchase.status == 'نشط') ...[
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: _editPurchase,
-                tooltip: 'تعديل',
-              ),
-            ],
-            IconButton(
-              icon: const Icon(Icons.print),
-              onPressed: _printInvoice,
-              tooltip: 'طباعة',
-            ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                switch (value) {
-                  case 'cancel':
-                    _cancelPurchase();
-                    break;
-                  case 'delete':
-                    _deletePurchase();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                if (widget.purchase.status == 'نشط')
-                  const PopupMenuItem(
-                    value: 'cancel',
-                    child: Row(
-                      children: [
-                        Icon(Icons.cancel, color: AppColors.warning),
-                        SizedBox(width: 8),
-                        Text('إلغاء المشترى'),
-                      ],
-                    ),
-                  ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: AppColors.danger),
-                      SizedBox(width: 8),
-                      Text('حذف المشترى'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.print_rounded, color: Colors.white),
+            SizedBox(width: 12),
+            Text('جاري طباعة الفاتورة...'),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimensions.paddingM),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.purchase.status != 'نشط')
-                Container(
-                  padding: const EdgeInsets.all(AppDimensions.paddingM),
-                  decoration: BoxDecoration(
-                    color: AppColors.warning.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                    border: Border.all(color: AppColors.warning),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info, color: AppColors.warning),
-                      const SizedBox(width: AppDimensions.spaceM),
-                      Expanded(
-                        child: Text(
-                          'هذا المشترى تم إلغاؤه',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.warning,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              if (widget.purchase.status != 'نشط')
-                const SizedBox(height: AppDimensions.spaceM),
-
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingL),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'معلومات الشراء',
-                            style: AppTextStyles.headlineSmall,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getPaymentStatusColor(widget.purchase.paymentStatus)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _getPaymentStatusColor(widget.purchase.paymentStatus),
-                              ),
-                            ),
-                            child: Text(
-                              widget.purchase.paymentStatus,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: _getPaymentStatusColor(widget.purchase.paymentStatus),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        Icons.tag,
-                        'رقم العملية',
-                        '#${widget.purchase.id}',
-                      ),
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        Icons.calendar_today,
-                        'التاريخ',
-                        widget.purchase.date,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        Icons.access_time,
-                        'الوقت',
-                        widget.purchase.time,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        Icons.person,
-                        'المورد',
-                        widget.purchase.supplierName ?? 'غير محدد',
-                      ),
-                      if (widget.purchase.qatTypeName != null) ...[
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          Icons.category,
-                          'نوع القات',
-                          widget.purchase.qatTypeName!,
-                        ),
-                      ],
-                      if (widget.purchase.invoiceNumber != null) ...[
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          Icons.receipt_long,
-                          'رقم الفاتورة',
-                          widget.purchase.invoiceNumber!,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppDimensions.spaceM),
-
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingL),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'تفاصيل الكمية والسعر',
-                        style: AppTextStyles.headlineSmall,
-                      ),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        Icons.inventory_2,
-                        'الكمية',
-                        '${widget.purchase.quantity} ${widget.purchase.unit}',
-                      ),
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        Icons.attach_money,
-                        'سعر الوحدة',
-                        '${widget.purchase.unitPrice.toStringAsFixed(2)} ريال',
-                      ),
-                      const SizedBox(height: 12),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        Icons.calculate,
-                        'الإجمالي',
-                        '${widget.purchase.totalAmount.toStringAsFixed(2)} ريال',
-                        isHighlighted: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppDimensions.spaceM),
-
-              CostCalculator(
-                totalAmount: widget.purchase.totalAmount,
-                paidAmount: widget.purchase.paidAmount,
-                remainingAmount: widget.purchase.remainingAmount,
-              ),
-
-              const SizedBox(height: AppDimensions.spaceM),
-
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingL),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'معلومات الدفع',
-                        style: AppTextStyles.headlineSmall,
-                      ),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        Icons.payment,
-                        'طريقة الدفع',
-                        widget.purchase.paymentMethod,
-                      ),
-                      if (widget.purchase.dueDate != null) ...[
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          Icons.event,
-                          'تاريخ الاستحقاق',
-                          widget.purchase.dueDate!,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              if (widget.purchase.notes != null &&
-                  widget.purchase.notes!.isNotEmpty) ...[
-                const SizedBox(height: AppDimensions.spaceM),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingL),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.notes, color: AppColors.textSecondary),
-                            const SizedBox(width: 8),
-                            Text(
-                              'ملاحظات',
-                              style: AppTextStyles.headlineSmall,
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Text(
-                          widget.purchase.notes!,
-                          style: AppTextStyles.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-
-              if (widget.purchase.remainingAmount > 0 &&
-                  widget.purchase.status == 'نشط') ...[
-                const SizedBox(height: AppDimensions.spaceL),
-                AppButton.primary(
-                  text: 'سداد المبلغ المتبقي',
-                  icon: Icons.payment,
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/debt-payment',
-                      arguments: {
-                        'purchaseId': widget.purchase.id,
-                        'supplierId': widget.purchase.supplierId,
-                        'remainingAmount': widget.purchase.remainingAmount,
-                      },
-                    );
-                  },
-                  fullWidth: true,
-                ),
-              ],
-            ],
-          ),
-        ),
+        backgroundColor: AppColors.info,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    IconData icon,
-    String label,
-    String value, {
-    bool isHighlighted = false,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: AppColors.textSecondary),
-        const SizedBox(width: 12),
-        Text(
-          '$label: ',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: isHighlighted
-                ? AppTextStyles.headlineSmall.copyWith(
-                    color: AppColors.primary,
-                  )
-                : AppTextStyles.bodyMedium,
-            textAlign: TextAlign.left,
-          ),
-        ),
-      ],
     );
   }
 
@@ -458,5 +843,30 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen> {
       default:
         return AppColors.textSecondary;
     }
+  }
+}
+
+class _AnimatedCard extends StatelessWidget {
+  final Widget child;
+  final int delay;
+
+  const _AnimatedCard({required this.child, this.delay = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 600 + delay),
+      tween: Tween(begin: 0, end: 1),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 }

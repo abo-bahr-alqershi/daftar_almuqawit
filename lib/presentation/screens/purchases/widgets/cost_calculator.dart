@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:math' as math;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/utils/currency_utils.dart';
 
-/// بطاقة حاسبة التكلفة والدفع
-class CostCalculator extends StatelessWidget {
+/// بطاقة حاسبة التكلفة والدفع - تصميم راقي متطور
+class CostCalculator extends StatefulWidget {
   final double totalAmount;
   final double paidAmount;
   final double remainingAmount;
@@ -18,171 +18,286 @@ class CostCalculator extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final paymentPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+  State<CostCalculator> createState() => _CostCalculatorState();
+}
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingL),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                  ),
-                  child: const Icon(
-                    Icons.calculate,
-                    color: AppColors.info,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.spaceM),
-                Text(
-                  'ملخص الدفع',
-                  style: AppTextStyles.headlineSmall.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+class _CostCalculatorState extends State<CostCalculator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _progressAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    final paymentPercentage = widget.totalAmount > 0
+        ? (widget.paidAmount / widget.totalAmount)
+        : 0.0;
+
+    _progressAnimation = Tween<double>(begin: 0, end: paymentPercentage).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) => Transform.scale(
+        scale: _scaleAnimation.value,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
             ),
-            const SizedBox(height: AppDimensions.spaceL),
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.paddingM),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                border: Border.all(
-                  color: AppColors.primary.withOpacity(0.2),
-                  width: 1.5,
-                ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
-              child: Column(
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  _buildRow(
-                    icon: Icons.shopping_cart,
-                    label: 'إجمالي المشتريات',
-                    value: CurrencyUtils.format(totalAmount),
-                    color: AppColors.primary,
-                    isLarge: true,
-                  ),
-                  const Divider(height: 24),
-                  _buildRow(
-                    icon: Icons.check_circle,
-                    label: 'المبلغ المدفوع',
-                    value: CurrencyUtils.format(paidAmount),
-                    color: AppColors.success,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildRow(
-                    icon: Icons.pending,
-                    label: 'المبلغ المتبقي',
-                    value: CurrencyUtils.format(remainingAmount),
-                    color: remainingAmount > 0 ? AppColors.debt : AppColors.success,
-                  ),
-                ],
-              ),
-            ),
-            if (remainingAmount > 0) ...[
-              const SizedBox(height: AppDimensions.spaceM),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'نسبة الدفع',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.purchases.withOpacity(0.2),
+                          AppColors.purchases.withOpacity(0.1),
+                        ],
                       ),
-                      Text(
-                        '${paymentPercentage.toStringAsFixed(1)}%',
-                        style: AppTextStyles.titleMedium.copyWith(
-                          color: _getProgressColor(paymentPercentage.toDouble()),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.calculate_rounded,
+                      color: AppColors.purchases,
+                      size: 24,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: paymentPercentage / 100,
-                      backgroundColor: AppColors.disabled.withOpacity(0.2),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _getProgressColor(paymentPercentage.toDouble()),
-                      ),
-                      minHeight: 8,
+                  const SizedBox(width: 12),
+                  Text(
+                    'ملخص الدفع',
+                    style: AppTextStyles.h3.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+              
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.purchases.withOpacity(0.1),
+                      AppColors.purchases.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.purchases.withOpacity(0.2)),
+                ),
+                child: Column(
+                  children: [
+                    _buildAmountRow(
+                      icon: Icons.shopping_cart_rounded,
+                      label: 'إجمالي المشتريات',
+                      amount: widget.totalAmount,
+                      color: AppColors.purchases,
+                      isLarge: true,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            AppColors.border.withOpacity(0.3),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildAmountRow(
+                      icon: Icons.check_circle_rounded,
+                      label: 'المبلغ المدفوع',
+                      amount: widget.paidAmount,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildAmountRow(
+                      icon: Icons.pending_rounded,
+                      label: 'المبلغ المتبقي',
+                      amount: widget.remainingAmount,
+                      color: widget.remainingAmount > 0
+                          ? AppColors.danger
+                          : AppColors.success,
+                    ),
+                  ],
+                ),
+              ),
+              
+              if (widget.remainingAmount > 0) ...[
+                const SizedBox(height: 20),
+                _buildProgressSection(),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRow({
+  Widget _buildAmountRow({
     required IconData icon,
     required String label,
-    required String value,
+    required double amount,
     required Color color,
     bool isLarge = false,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: isLarge ? 22 : 18,
-                color: color,
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  style: (isLarge
-                          ? AppTextStyles.titleMedium
-                          : AppTextStyles.bodyMedium)
-                      .copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            value,
-            style: (isLarge
-                    ? AppTextStyles.headlineSmall
-                    : AppTextStyles.titleMedium)
-                .copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
+              child: Icon(icon, size: isLarge ? 20 : 18, color: color),
             ),
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: isLarge ? 15 : 14,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 1200),
+          tween: Tween(begin: 0, end: amount),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Text(
+              '${value.toStringAsFixed(0)} ر.ي',
+              style: TextStyle(
+                fontSize: isLarge ? 22 : 18,
+                color: color,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressSection() {
+    final percentage = (widget.paidAmount / widget.totalAmount) * 100;
+    final progressColor = _getProgressColor(percentage);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'نسبة الدفع',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _progressAnimation,
+              builder: (context, child) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: progressColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${(_progressAnimation.value * 100).toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: progressColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 8,
+          decoration: BoxDecoration(
+            color: progressColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: AnimatedBuilder(
+            animation: _progressAnimation,
+            builder: (context, child) {
+              return FractionallySizedBox(
+                widthFactor: _progressAnimation.value,
+                alignment: Alignment.centerRight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [progressColor, progressColor.withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: progressColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -190,13 +305,9 @@ class CostCalculator extends StatelessWidget {
   }
 
   Color _getProgressColor(double percentage) {
-    if (percentage >= 80) {
-      return AppColors.success;
-    } else if (percentage >= 50) {
-      return AppColors.warning;
-    } else {
-      return AppColors.danger;
-    }
+    if (percentage >= 80) return AppColors.success;
+    if (percentage >= 50) return AppColors.warning;
+    return AppColors.danger;
   }
 }
 

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import 'dart:math' as math;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/customer.dart';
 
-/// محدد العميل - تصميم Tesla/iOS متطور
+/// محدد العميل - تصميم راقي هادئ
 class CustomerSelector extends StatefulWidget {
   final String? selectedCustomerId;
   final ValueChanged<String?> onChanged;
@@ -32,54 +30,26 @@ class CustomerSelector extends StatefulWidget {
 }
 
 class _CustomerSelectorState extends State<CustomerSelector>
-    with TickerProviderStateMixin {
-  late AnimationController _buttonAnimationController;
-  late AnimationController _searchAnimationController;
-  late Animation<double> _buttonScaleAnimation;
-  late Animation<double> _searchSlideAnimation;
-
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  late AnimationController _animationController;
   List<Customer> _filteredCustomers = [];
-  bool _isSearching = false;
+  bool _isFocused = false;
 
   @override
   void initState() {
     super.initState();
     _filteredCustomers = widget.customers;
-    _initializeAnimations();
-  }
-
-  void _initializeAnimations() {
-    _buttonAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 150),
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
       vsync: this,
-    );
-
-    _searchAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _buttonScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(
-        parent: _buttonAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _searchSlideAnimation = Tween<double>(begin: -50, end: 0).animate(
-      CurvedAnimation(
-        parent: _searchAnimationController,
-        curve: Curves.easeOutCubic,
-      ),
     );
   }
 
   @override
   void dispose() {
-    _buttonAnimationController.dispose();
-    _searchAnimationController.dispose();
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -98,528 +68,460 @@ class _CustomerSelectorState extends State<CustomerSelector>
 
   void _showCustomerBottomSheet() {
     HapticFeedback.mediumImpact();
-    setState(() => _isSearching = false);
     _searchController.clear();
     _filteredCustomers = widget.customers;
-    _searchAnimationController.forward();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildModernBottomSheet(),
-    );
-  }
-
-  Widget _buildModernBottomSheet() {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Handle Bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 50,
-            height: 5,
-            decoration: BoxDecoration(
-              color: AppColors.border.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(3),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-
-          // Header
-          _buildSheetHeader(),
-
-          // Search Bar
-          _buildAnimatedSearchBar(),
-
-          // Content
-          Expanded(child: _buildCustomersList()),
-
-          // Add New Customer Button
-          if (widget.onAddNewCustomer != null) _buildAddNewCustomerButton(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSheetHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary.withOpacity(0.05), Colors.transparent],
+            
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary.withOpacity(0.2),
+                          AppColors.primary.withOpacity(0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_search_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'اختر العميل',
+                      style: AppTextStyles.h3.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.close, size: 20),
+                    ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _isFocused
+                        ? AppColors.primary.withOpacity(0.3)
+                        : AppColors.border.withOpacity(0.2),
+                  ),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  style: AppTextStyles.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'ابحث عن عميل...',
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textHint,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              _filterCustomers('');
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                  onChanged: _filterCustomers,
+                  onTap: () => setState(() => _isFocused = true),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            Expanded(
+              child: _buildCustomersList(),
+            ),
+            
+            if (widget.onAddNewCustomer != null) ...[
+              Container(
+                margin: const EdgeInsets.all(20),
+                child: _buildAddNewButton(),
+              ),
+            ],
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryDark],
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.people_alt, color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'اختر العميل',
-                  style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${widget.customers.length} عميل متاح',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.close, color: AppColors.textSecondary),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedSearchBar() {
-    return AnimatedBuilder(
-      animation: _searchSlideAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _searchSlideAnimation.value),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _isSearching
-                    ? AppColors.primary
-                    : AppColors.border.withOpacity(0.2),
-                width: _isSearching ? 2 : 1,
-              ),
-              boxShadow: _isSearching
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.1),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  color: _isSearching ? AppColors.primary : AppColors.textHint,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'ابحث بالاسم أو رقم الهاتف...',
-                      hintStyle: TextStyle(
-                        color: AppColors.textHint,
-                        fontSize: 14,
-                      ),
-                      border: InputBorder.none,
-                    ),
-                    onChanged: _filterCustomers,
-                    onTap: () {
-                      setState(() => _isSearching = true);
-                    },
-                  ),
-                ),
-                if (_searchController.text.isNotEmpty)
-                  IconButton(
-                    icon: Icon(Icons.clear, color: AppColors.textSecondary),
-                    onPressed: () {
-                      _searchController.clear();
-                      _filterCustomers('');
-                      setState(() => _isSearching = false);
-                    },
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
   Widget _buildCustomersList() {
     if (widget.allowAnonymous || _filteredCustomers.isNotEmpty) {
       return ListView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
           if (widget.allowAnonymous) _buildAnonymousOption(),
-
           if (widget.allowAnonymous && _filteredCustomers.isNotEmpty)
-            _buildSectionDivider('العملاء المسجلين'),
-
-          ..._filteredCustomers.asMap().entries.map((entry) {
-            final index = entry.key;
-            final customer = entry.value;
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 300 + (index * 50)),
-              curve: Curves.easeOutBack,
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(50 * (1 - value), 0),
-                  child: Opacity(
-                    opacity: value,
-                    child: _buildCustomerTile(customer),
-                  ),
-                );
-              },
+            const SizedBox(height: 8),
+          ..._filteredCustomers.map((customer) {
+            final isSelected = widget.selectedCustomerId == customer.id?.toString();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildCustomerTile(customer, isSelected),
             );
           }),
         ],
       );
     }
 
-    return _buildEmptyState();
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.person_off_rounded,
+              size: 48,
+              color: AppColors.textHint,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'لا يوجد عملاء',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAnonymousOption() {
     final isSelected = widget.selectedCustomerId == null;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      decoration: BoxDecoration(
-        gradient: isSelected
-            ? LinearGradient(
-                colors: [
-                  AppColors.success.withOpacity(0.1),
-                  AppColors.success.withOpacity(0.05),
-                ],
-              )
-            : null,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isSelected
-              ? AppColors.success
-              : AppColors.border.withOpacity(0.2),
-          width: isSelected ? 2 : 1,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onChanged(null);
+        Navigator.pop(context);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    AppColors.success.withOpacity(0.1),
+                    AppColors.success.withOpacity(0.05),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.success.withOpacity(0.3)
+                : AppColors.border.withOpacity(0.1),
+            width: isSelected ? 2 : 1,
+          ),
         ),
-      ),
-      child: ListTile(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onChanged(null);
-          Navigator.pop(context);
-        },
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? const LinearGradient(
+                        colors: [AppColors.success, AppColors.info],
+                      )
+                    : LinearGradient(
+                        colors: [
+                          AppColors.success.withOpacity(0.1),
+                          AppColors.info.withOpacity(0.1),
+                        ],
+                      ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.store_rounded,
+                color: isSelected ? Colors.white : AppColors.success,
+                size: 24,
+              ),
             ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.store, color: Colors.white, size: 24),
-        ),
-        title: Text(
-          'بيع مباشر',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Text(
-          'بدون تسجيل عميل',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-        trailing: isSelected
-            ? Container(
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'بيع مباشر',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? AppColors.success
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'بدون تسجيل عميل',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.success,
+                  color: AppColors.success.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 18),
-              )
-            : null,
-      ),
-    );
-  }
-
-  Widget _buildCustomerTile(Customer customer) {
-    final isSelected = widget.selectedCustomerId == customer.id?.toString();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary.withOpacity(0.05)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isSelected
-              ? AppColors.primary
-              : AppColors.border.withOpacity(0.2),
-          width: isSelected ? 2 : 1,
-        ),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [],
-      ),
-      child: ListTile(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onChanged(customer.id?.toString());
-          Navigator.pop(context);
-        },
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: _buildCustomerAvatar(customer),
-        title: Text(
-          customer.name,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (customer.phone != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    Icon(Icons.phone, size: 13, color: AppColors.textHint),
-                    const SizedBox(width: 4),
-                    Text(
-                      customer.phone!,
-                      style: TextStyle(color: AppColors.textHint, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            if (customer.totalDebt != null && customer.totalDebt! > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'دين: ${customer.totalDebt!.toStringAsFixed(0)} ريال',
-                    style: TextStyle(
-                      color: AppColors.danger,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.success,
+                  size: 18,
                 ),
               ),
           ],
         ),
-        trailing: isSelected
-            ? Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 18),
-              )
-            : Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: AppColors.textHint,
-              ),
       ),
     );
   }
 
-  Widget _buildCustomerAvatar(Customer customer) {
-    return Hero(
-      tag: 'customer-avatar-${customer.id}',
-      child: Container(
-        width: 48,
-        height: 48,
+  Widget _buildCustomerTile(Customer customer, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onChanged(customer.id?.toString());
+        Navigator.pop(context);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary.withOpacity(0.8),
-              AppColors.accent.withOpacity(0.6),
-            ],
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.1),
+                    AppColors.primary.withOpacity(0.05),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary.withOpacity(0.3)
+                : AppColors.border.withOpacity(0.1),
+            width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(12),
         ),
-        child: Center(
-          child: Text(
-            customer.name.substring(0, 1).toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionDivider(String title) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 20,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.accent],
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? const LinearGradient(
+                        colors: [AppColors.primary, AppColors.accent],
+                      )
+                    : LinearGradient(
+                        colors: [
+                          AppColors.primary.withOpacity(0.1),
+                          AppColors.accent.withOpacity(0.1),
+                        ],
+                      ),
+                borderRadius: BorderRadius.circular(14),
               ),
-              borderRadius: BorderRadius.circular(2),
+              child: Center(
+                child: Text(
+                  customer.name.substring(0, 1).toUpperCase(),
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              height: 1,
-              color: AppColors.border.withOpacity(0.2),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.1),
-                        AppColors.accent.withOpacity(0.05),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    customer.name,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  if (customer.phone != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone_rounded,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          customer.phone!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                     ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.person_search,
-                    size: 60,
-                    color: AppColors.textHint,
-                  ),
+                  ],
+                  if (customer.totalDebt != null && customer.totalDebt! > 0) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'دين: ${customer.totalDebt!.toStringAsFixed(0)} ريال',
+                        style: TextStyle(
+                          color: AppColors.danger,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'لا يوجد عملاء',
-            style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'لم يتم العثور على أي عميل',
-            style: TextStyle(color: AppColors.textHint, fontSize: 14),
-          ),
-        ],
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.success,
+                  size: 18,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAddNewCustomerButton() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+  Widget _buildAddNewButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        Navigator.pop(context);
+        widget.onAddNewCustomer?.call();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.primary, AppColors.primaryDark],
           ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: () {
-          HapticFeedback.mediumImpact();
-          Navigator.pop(context);
-          widget.onAddNewCustomer?.call();
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        icon: const Icon(Icons.person_add),
-        label: const Text(
-          'إضافة عميل جديد',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_rounded, color: Colors.white, size: 24),
+            const SizedBox(width: 8),
+            const Text(
+              'إضافة عميل جديد',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -633,144 +535,108 @@ class _CustomerSelectorState extends State<CustomerSelector>
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'العميل',
-          style: AppTextStyles.labelMedium.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          children: [
+            const Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Text(
+              'العميل',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        AnimatedBuilder(
-          animation: _buttonScaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _buttonScaleAnimation.value,
-              child: GestureDetector(
-                onTapDown: (_) => _buttonAnimationController.forward(),
-                onTapUp: (_) {
-                  _buttonAnimationController.reverse();
-                  if (widget.enabled) _showCustomerBottomSheet();
-                },
-                onTapCancel: () => _buttonAnimationController.reverse(),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: widget.enabled ? _showCustomerBottomSheet : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: widget.enabled
+                  ? AppColors.surface
+                  : AppColors.background.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.errorText != null
+                    ? AppColors.danger
+                    : AppColors.border.withOpacity(0.2),
+                width: widget.errorText != null ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: widget.enabled
-                          ? [
-                              AppColors.surface,
-                              AppColors.surface.withOpacity(0.95),
-                            ]
-                          : [
-                              AppColors.disabled.withOpacity(0.1),
-                              AppColors.disabled.withOpacity(0.05),
-                            ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: widget.errorText != null
-                          ? AppColors.danger
-                          : AppColors.border.withOpacity(0.2),
-                      width: widget.errorText != null ? 2 : 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.errorText != null
-                            ? AppColors.danger.withOpacity(0.1)
-                            : Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: selectedCustomer != null || 
+                           (widget.selectedCustomerId == null && widget.allowAnonymous)
+                        ? AppColors.primary.withOpacity(0.1)
+                        : AppColors.background,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Row(
-                    children: [
-                      _buildSelectedIcon(selectedCustomer != null),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              selectedCustomer?.name ??
-                                  (widget.selectedCustomerId == null &&
-                                          widget.allowAnonymous
-                                      ? 'بيع مباشر'
-                                      : 'اختر العميل'),
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color:
-                                    selectedCustomer != null ||
-                                        (widget.selectedCustomerId == null &&
-                                            widget.allowAnonymous)
-                                    ? AppColors.textPrimary
-                                    : AppColors.textHint,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (selectedCustomer?.phone != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  selectedCustomer!.phone!,
-                                  style: TextStyle(
-                                    color: AppColors.textHint,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_drop_down,
-                        color: AppColors.textSecondary,
-                      ),
-                    ],
+                  child: Icon(
+                    selectedCustomer != null ? Icons.person_rounded : Icons.store_rounded,
+                    size: 20,
+                    color: selectedCustomer != null ||
+                           (widget.selectedCustomerId == null && widget.allowAnonymous)
+                        ? AppColors.primary
+                        : AppColors.textHint,
                   ),
                 ),
-              ),
-            );
-          },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    selectedCustomer?.name ??
+                        (widget.selectedCustomerId == null && widget.allowAnonymous
+                            ? 'بيع مباشر'
+                            : 'اختر العميل'),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: selectedCustomer != null ||
+                             (widget.selectedCustomerId == null && widget.allowAnonymous)
+                          ? AppColors.textPrimary
+                          : AppColors.textHint,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_drop_down_rounded,
+                  color: AppColors.textSecondary,
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
         ),
         if (widget.errorText != null) ...[
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.error_outline, size: 16, color: AppColors.danger),
+              const Icon(Icons.error_rounded, size: 14, color: AppColors.danger),
               const SizedBox(width: 4),
               Text(
                 widget.errorText!,
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.danger,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
         ],
       ],
-    );
-  }
-
-  Widget _buildSelectedIcon(bool hasCustomer) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: hasCustomer
-              ? [AppColors.primary, AppColors.primaryDark]
-              : [AppColors.success, AppColors.success.withOpacity(0.8)],
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(
-        hasCustomer ? Icons.person : Icons.store,
-        color: Colors.white,
-        size: 24,
-      ),
     );
   }
 }
