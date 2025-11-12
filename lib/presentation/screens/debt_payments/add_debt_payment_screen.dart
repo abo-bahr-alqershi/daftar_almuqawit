@@ -4,57 +4,47 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/validators.dart';
-import '../../../domain/entities/debt.dart';
-import '../../blocs/debts/debts_bloc.dart';
-import '../../blocs/debts/debts_event.dart';
-import '../../blocs/debts/debts_state.dart';
-import '../../blocs/customers/customers_bloc.dart';
-import '../../blocs/customers/customers_event.dart';
-import '../../blocs/customers/customers_state.dart';
+import '../../../domain/entities/debt_payment.dart';
+import '../../blocs/debts/payment_bloc.dart';
+import '../../blocs/debts/payment_event.dart';
+import '../../blocs/debts/payment_state.dart';
 import '../../widgets/common/confirm_dialog.dart';
-import './widgets/debt_form.dart';
+import './widgets/payment_form.dart';
 
-/// شاشة إضافة دين جديد - تصميم راقي هادئ
-class AddDebtScreen extends StatefulWidget {
-  const AddDebtScreen({super.key});
+/// شاشة إضافة دفعة دين - تصميم راقي هادئ
+class AddDebtPaymentScreen extends StatefulWidget {
+  final int debtId;
+
+  const AddDebtPaymentScreen({
+    super.key,
+    required this.debtId,
+  });
 
   @override
-  State<AddDebtScreen> createState() => _AddDebtScreenState();
+  State<AddDebtPaymentScreen> createState() => _AddDebtPaymentScreenState();
 }
 
-class _AddDebtScreenState extends State<AddDebtScreen> {
-  final _formKey = GlobalKey<DebtFormState>();
+class _AddDebtPaymentScreenState extends State<AddDebtPaymentScreen> {
+  final _formKey = GlobalKey<PaymentFormState>();
 
-  @override
-  void initState() {
-    super.initState();
-    context.read<CustomersBloc>().add(LoadCustomers());
-  }
-
-  Future<void> _submitDebt() async {
+  Future<void> _submitPayment() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
     final formData = _formKey.currentState!.getFormData();
 
-    final debt = Debt(
-      personType: 'عميل',
-      personId: formData['customerId'],
-      personName: formData['customerName'],
-      customerPhone: formData['customerPhone'],
-      transactionType: formData['debtType'],
-      originalAmount: formData['amount'],
-      remainingAmount: formData['amount'],
-      date: formData['date'].toString().split(' ')[0],
-      dueDate: formData['dueDate']?.toString().split(' ')[0],
+    final payment = DebtPayment(
+      debtId: widget.debtId,
+      amount: formData['amount'],
+      paymentDate: formData['date'].toString().split(' ')[0],
+      paymentTime: formData['time'] ?? TimeOfDay.now().format(context),
+      paymentMethod: formData['paymentMethod'] ?? 'نقد',
       notes: formData['notes'],
-      status: 'غير مسدد',
     );
 
     if (mounted) {
-      context.read<DebtsBloc>().add(AddDebtEvent(debt));
+      context.read<PaymentBloc>().add(AddPaymentEvent(payment));
     }
   }
 
@@ -72,17 +62,17 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
               slivers: [
                 _buildAppBar(context),
                 SliverToBoxAdapter(
-                  child: BlocConsumer<DebtsBloc, DebtsState>(
+                  child: BlocConsumer<PaymentBloc, PaymentState>(
                     listener: (context, state) {
-                      if (state is DebtOperationSuccess) {
-                        _showSuccessMessage(context, 'تمت إضافة الدين بنجاح');
+                      if (state is PaymentAdded) {
+                        _showSuccessMessage(context, state.message);
                         Navigator.of(context).pop(true);
-                      } else if (state is DebtsError) {
+                      } else if (state is PaymentError) {
                         _showErrorMessage(context, state.message);
                       }
                     },
                     builder: (context, state) {
-                      final isLoading = state is DebtsLoading;
+                      final isLoading = state is PaymentLoading;
 
                       return Padding(
                         padding: const EdgeInsets.all(20),
@@ -91,30 +81,21 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                           children: [
                             _buildInfoCard(),
                             const SizedBox(height: 20),
-                            BlocBuilder<CustomersBloc, CustomersState>(
-                              builder: (context, customerState) {
-                                final customers = customerState is CustomersLoaded
-                                    ? customerState.customers
-                                    : [];
-
-                                return DebtForm(
-                                  key: _formKey,
-                                  customers: customers,
-                                  isLoading: isLoading,
-                                  onSubmit: _submitDebt,
-                                  onCancel: () async {
-                                    final confirm = await ConfirmDialog.show(
-                                      context,
-                                      title: 'إلغاء العملية',
-                                      message: 'هل تريد إلغاء إضافة الدين؟',
-                                      confirmText: 'نعم، إلغاء',
-                                      cancelText: 'لا، متابعة',
-                                    );
-                                    if (confirm == true && context.mounted) {
-                                      Navigator.of(context).pop();
-                                    }
-                                  },
+                            PaymentForm(
+                              key: _formKey,
+                              isLoading: isLoading,
+                              onSubmit: _submitPayment,
+                              onCancel: () async {
+                                final confirm = await ConfirmDialog.show(
+                                  context,
+                                  title: 'إلغاء العملية',
+                                  message: 'هل تريد إلغاء إضافة الدفعة؟',
+                                  confirmText: 'نعم، إلغاء',
+                                  cancelText: 'لا، متابعة',
                                 );
+                                if (confirm == true && context.mounted) {
+                                  Navigator.of(context).pop();
+                                }
                               },
                             ),
                             const SizedBox(height: 100),
@@ -140,8 +121,8 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.danger.withOpacity(0.08),
-            AppColors.warning.withOpacity(0.05),
+            AppColors.success.withOpacity(0.08),
+            AppColors.primary.withOpacity(0.05),
             Colors.transparent,
           ],
         ),
@@ -169,7 +150,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           final confirm = await ConfirmDialog.show(
             context,
             title: 'إلغاء العملية',
-            message: 'هل تريد إلغاء إضافة الدين؟',
+            message: 'هل تريد إلغاء إضافة الدفعة؟',
             confirmText: 'نعم، إلغاء',
             cancelText: 'لا، متابعة',
           );
@@ -201,12 +182,12 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                         height: 50,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [AppColors.danger, AppColors.warning],
+                            colors: [AppColors.success, AppColors.primary],
                           ),
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.danger.withOpacity(0.3),
+                              color: AppColors.success.withOpacity(0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -225,7 +206,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'إضافة دين',
+                              'إضافة دفعة',
                               style: AppTextStyles.h2.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -234,7 +215,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'تسجيل دين جديد على العميل',
+                              'تسجيل دفعة على الدين',
                               style: AppTextStyles.bodySmall.copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
@@ -284,7 +265,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'قم بتعبئة البيانات أدناه لتسجيل دين جديد',
+              'قم بتعبئة البيانات أدناه لتسجيل دفعة جديدة',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.info,
                 fontWeight: FontWeight.w600,

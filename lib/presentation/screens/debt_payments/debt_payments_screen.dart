@@ -745,6 +745,8 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
   void _showAddPaymentForm() {
     if (widget.debtId == null) return;
 
+    final formKey = GlobalKey<PaymentFormState>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -761,10 +763,21 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: PaymentForm(
-            debtId: widget.debtId!,
-            onSave: (payment) {
-              context.read<PaymentBloc>().add(AddPaymentEvent(payment));
-              Navigator.pop(context);
+            key: formKey,
+            onSubmit: () {
+              if (formKey.currentState?.validate() ?? false) {
+                final formData = formKey.currentState!.getFormData();
+                final payment = DebtPayment(
+                  debtId: widget.debtId!,
+                  amount: formData['amount'],
+                  paymentDate: formData['date'].toString().split(' ')[0],
+                  paymentTime: formData['time'] ?? '${TimeOfDay.now().hour}:${TimeOfDay.now().minute}',
+                  paymentMethod: formData['paymentMethod'] ?? 'نقد',
+                  notes: formData['notes'],
+                );
+                context.read<PaymentBloc>().add(AddPaymentEvent(payment));
+                Navigator.pop(context);
+              }
             },
             onCancel: () => Navigator.pop(context),
           ),

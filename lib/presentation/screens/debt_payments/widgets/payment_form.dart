@@ -12,31 +12,31 @@ import 'payment_method_selector.dart';
 /// نموذج إضافة أو تعديل دفعة
 /// يحتوي على جميع الحقول المطلوبة لإدخال بيانات الدفعة
 class PaymentForm extends StatefulWidget {
-  /// معرف الدين المراد الدفع له
-  final int debtId;
-  
   /// بيانات الدفعة للتعديل (null في حالة إضافة جديدة)
   final DebtPayment? initialPayment;
   
+  /// حالة التحميل
+  final bool isLoading;
+  
   /// دالة استدعاء عند الحفظ
-  final Function(DebtPayment payment) onSave;
+  final VoidCallback? onSubmit;
   
   /// دالة استدعاء عند الإلغاء
   final VoidCallback? onCancel;
 
   const PaymentForm({
     super.key,
-    required this.debtId,
     this.initialPayment,
-    required this.onSave,
+    this.isLoading = false,
+    this.onSubmit,
     this.onCancel,
   });
 
   @override
-  State<PaymentForm> createState() => _PaymentFormState();
+  PaymentFormState createState() => PaymentFormState();
 }
 
-class _PaymentFormState extends State<PaymentForm> {
+class PaymentFormState extends State<PaymentForm> {
   /// مفتاح النموذج للتحقق من الصحة
   final _formKey = GlobalKey<FormState>();
   
@@ -89,18 +89,24 @@ class _PaymentFormState extends State<PaymentForm> {
   /// معالج الحفظ
   void _handleSave() {
     if (_formKey.currentState?.validate() ?? false) {
-      final payment = DebtPayment(
-        id: widget.initialPayment?.id,
-        debtId: widget.debtId,
-        amount: double.parse(_amountController.text),
-        paymentDate: _selectedDate.toIso8601String().split('T')[0],
-        paymentTime: '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-        paymentMethod: _selectedPaymentMethod,
-        notes: _notesController.text.isEmpty ? null : _notesController.text,
-      );
-      
-      widget.onSave(payment);
+      widget.onSubmit?.call();
     }
+  }
+
+  /// الحصول على بيانات النموذج
+  Map<String, dynamic> getFormData() {
+    return {
+      'amount': double.parse(_amountController.text),
+      'date': _selectedDate,
+      'time': '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+      'paymentMethod': _selectedPaymentMethod,
+      'notes': _notesController.text.isEmpty ? null : _notesController.text,
+    };
+  }
+
+  /// التحقق من صحة النموذج
+  bool validate() {
+    return _formKey.currentState?.validate() ?? false;
   }
 
   /// عرض منتقي التاريخ
@@ -310,9 +316,10 @@ class _PaymentFormState extends State<PaymentForm> {
                     flex: 2,
                     child: AppButton.primary(
                       text: widget.initialPayment == null ? 'إضافة الدفعة' : 'حفظ التعديلات',
-                      onPressed: _handleSave,
+                      onPressed: widget.isLoading ? null : _handleSave,
                       fullWidth: true,
                       icon: Icons.check,
+                      isLoading: widget.isLoading,
                     ),
                   ),
                 ],

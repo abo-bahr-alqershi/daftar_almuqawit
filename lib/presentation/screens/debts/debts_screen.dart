@@ -1,20 +1,20 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../domain/entities/debt.dart';
 import '../../blocs/debts/debts_bloc.dart';
 import '../../blocs/debts/debts_event.dart';
 import '../../blocs/debts/debts_state.dart';
-import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/empty_widget.dart';
-import '../../widgets/common/error_widget.dart' as custom_error;
+import '../../widgets/common/confirm_dialog.dart';
 import './widgets/debt_card.dart';
 import './widgets/debt_filters.dart';
+import './add_debt_screen.dart';
 
-/// شاشة الديون الرئيسية
-/// 
-/// تعرض قائمة بجميع الديون مع إمكانية الفلترة والبحث
+/// شاشة الديون الرئيسية - تصميم راقي هادئ
 class DebtsScreen extends StatefulWidget {
   const DebtsScreen({super.key});
 
@@ -22,30 +22,86 @@ class DebtsScreen extends StatefulWidget {
   State<DebtsScreen> createState() => _DebtsScreenState();
 }
 
-class _DebtsScreenState extends State<DebtsScreen> {
-  String _selectedFilter = 'الكل';
-  String _selectedSortBy = 'التاريخ';
+class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
+  
+  String _selectedStatus = 'الكل';
+  String _selectedSort = 'التاريخ';
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _animationController.forward();
+
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
+
     _loadDebts();
   }
 
-  void _loadDebts() {
-    final event = _selectedFilter == 'معلقة'
-        ? LoadPendingDebts()
-        : _selectedFilter == 'متأخرة'
-            ? LoadOverdueDebts()
-            : LoadDebts();
-    context.read<DebtsBloc>().add(event);
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  void _showSearch(List debts) {
-    showSearch(
-      context: context,
-      delegate: DebtSearchDelegate(debts),
-    );
+  void _loadDebts() {
+    if (_selectedStatus == 'معلقة') {
+      context.read<DebtsBloc>().add(LoadPendingDebts());
+    } else if (_selectedStatus == 'متأخرة') {
+      context.read<DebtsBloc>().add(LoadOverdueDebts());
+    } else {
+      context.read<DebtsBloc>().add(LoadDebts());
+    }
+  }
+
+  List<Debt> _filterAndSortDebts(List<Debt> debts) {
+    var filteredDebts = debts;
+
+    if (_selectedStatus != 'الكل') {
+      filteredDebts = debts.where((debt) {
+        switch (_selectedStatus) {
+          case 'معلقة':
+            return debt.status == 'غير مسدد' || debt.status == 'مسدد جزئي';
+          case 'متأخرة':
+            if (debt.dueDate == null) return false;
+            final dueDate = DateTime.parse(debt.dueDate!);
+            return dueDate.isBefore(DateTime.now()) && debt.remainingAmount > 0;
+          case 'مدفوعة':
+            return debt.status == 'مسدد';
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    filteredDebts.sort((a, b) {
+      switch (_selectedSort) {
+        case 'المبلغ':
+          return b.originalAmount.compareTo(a.originalAmount);
+        case 'العميل':
+          return a.personName.compareTo(b.personName);
+        case 'الاستحقاق':
+          if (a.dueDate == null) return 1;
+          if (b.dueDate == null) return -1;
+          return DateTime.parse(a.dueDate!).compareTo(DateTime.parse(b.dueDate!));
+        case 'التاريخ':
+        default:
+          return DateTime.parse(b.date).compareTo(DateTime.parse(a.date));
+      }
+    });
+
+    return filteredDebts;
   }
 
   @override
@@ -53,378 +109,586 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('الديون', style: AppTextStyles.title),
-          backgroundColor: AppColors.danger,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                final state = context.read<DebtsBloc>().state;
-                if (state is DebtsLoaded) {
-                  _showSearch(state.debts);
-                }
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            _buildGradientBackground(),
+            RefreshIndicator(
+              onRefresh: () async {
+                _loadDebts();
+                await Future.delayed(const Duration(seconds: 1));
               },
-            ),
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: _showFilters,
-            ),
-          ],
-        ),
-        body: BlocBuilder<DebtsBloc, DebtsState>(
-          builder: (context, state) {
-            if (state is DebtsLoading) {
-              return const LoadingWidget(message: 'جاري تحميل الديون...');
-            }
+              color: AppColors.danger,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  _buildAppBar(context),
+                  BlocBuilder<DebtsBloc, DebtsState>(
+                    builder: (context, state) {
+                      if (state is DebtsLoading) {
+                        return const SliverFillRemaining(
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
 
-            if (state is DebtsError) {
-              return custom_error.ErrorWidget(
-                message: state.message,
-                onRetry: _loadDebts,
-              );
-            }
+                      if (state is DebtsError) {
+                        return SliverFillRemaining(
+                          child: _buildErrorState(state.message),
+                        );
+                      }
 
-            if (state is DebtsLoaded) {
-              if (state.debts.isEmpty) {
-                return EmptyWidget(
-                  title: 'لا توجد ديون',
-                  message: _getEmptyMessage(),
-                  icon: Icons.account_balance_wallet_outlined,
-                );
-              }
+                      if (state is DebtsLoaded) {
+                        final filteredDebts = _filterAndSortDebts(state.debts);
 
-              return Column(
-                children: [
-                  // إحصائيات الديون
-                  _buildStatisticsCard(state.debts),
-
-                  // قائمة الديون
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () async {
-                        _loadDebts();
-                      },
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: state.debts.length,
-                        itemBuilder: (context, index) {
-                          final debt = state.debts[index];
-                          final isOverdue = debt.dueDate != null &&
-                              DateTime.parse(debt.dueDate!)
-                                  .isBefore(DateTime.now()) &&
-                              debt.remainingAmount > 0;
-                          final daysOverdue = isOverdue
-                              ? DateTime.now()
-                                  .difference(DateTime.parse(debt.dueDate!))
-                                  .inDays
-                              : 0;
-
-                          return DebtCard(
-                            debt: debt,
-                            isOverdue: isOverdue,
-                            daysOverdue: daysOverdue,
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/debt-details',
-                                arguments: debt.id,
-                              );
-                            },
-                            onPayment: debt.remainingAmount > 0
-                                ? () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/debt-payment',
-                                      arguments: {
-                                        'debtId': debt.id.toString(),
-                                        'remainingAmount':
-                                            debt.remainingAmount,
-                                      },
-                                    );
-                                  }
-                                : null,
-                            onReminder: debt.remainingAmount > 0 &&
-                                    debt.customerPhone != null
-                                ? () {
-                                    _sendReminder(debt);
-                                  }
-                                : null,
+                        if (filteredDebts.isEmpty) {
+                          return SliverFillRemaining(
+                            child: _buildEmptyState(),
                           );
-                        },
-                      ),
-                    ),
+                        }
+
+                        return SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              _buildStatsCards(state.debts),
+                              const SizedBox(height: 8),
+                              _buildFilterSection(),
+                              const SizedBox(height: 8),
+                              _buildDebtsList(filteredDebts),
+                              const SizedBox(height: 80),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return const SliverFillRemaining(
+                        child: Center(child: Text('لا توجد بيانات')),
+                      );
+                    },
                   ),
                 ],
-              );
-            }
-
-            return const Center(child: Text('حدث خطأ في تحميل البيانات'));
-          },
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.pushNamed(context, '/add-debt');
-          },
-          backgroundColor: AppColors.danger,
-          icon: const Icon(Icons.add),
-          label: const Text('إضافة دين'),
+              ),
+            ),
+            _buildAddButton(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStatisticsCard(List debts) {
-    final totalDebts = debts.length;
-    final totalAmount = debts.fold<double>(
-      0,
-      (sum, debt) => sum + (debt.remainingAmount ?? 0),
-    );
-    final overdueDebts = debts.where((debt) {
-      return debt.dueDate != null &&
-          DateTime.parse(debt.dueDate!).isBefore(DateTime.now()) &&
-          debt.remainingAmount > 0;
-    }).length;
-
+  Widget _buildGradientBackground() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      height: 400,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.danger,
-            AppColors.danger.withOpacity(0.8),
-          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [
+            AppColors.danger.withOpacity(0.08),
+            AppColors.warning.withOpacity(0.05),
+            Colors.transparent,
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context) {
+    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 140,
+      pinned: true,
+      backgroundColor: AppColors.surface.withOpacity(opacity),
+      elevation: opacity * 4,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+          ),
+          child: const Icon(Icons.arrow_back_rounded, size: 20),
+        ),
+        onPressed: () => Navigator.pop(context),
+      ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.filter_list_rounded, size: 20),
+          ),
+          onPressed: () => _showFiltersDialog(),
+        ),
+        const SizedBox(width: 8),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.danger, AppColors.warning],
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.danger.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'الديون',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 24,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'إدارة ومتابعة الديون',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsCards(List<Debt> debts) {
+    final totalDebts = debts.length;
+    final overdueDebts = debts.where((d) {
+      if (d.dueDate == null) return false;
+      final dueDate = DateTime.parse(d.dueDate!);
+      return dueDate.isBefore(DateTime.now()) && d.remainingAmount > 0;
+    }).length;
+    final totalAmount = debts.fold<double>(0, (sum, d) => sum + d.remainingAmount);
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatCard(
+              title: 'إجمالي الديون',
+              value: totalDebts.toString(),
+              icon: Icons.list_alt_rounded,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatCard(
+              title: 'المتأخرة',
+              value: overdueDebts.toString(),
+              icon: Icons.warning_rounded,
+              gradient: const LinearGradient(
+                colors: [AppColors.danger, AppColors.warning],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatCard(
+              title: 'المبلغ المتبقي',
+              value: Formatters.formatCurrency(totalAmount),
+              icon: Icons.account_balance_wallet_rounded,
+              gradient: const LinearGradient(
+                colors: [AppColors.warning, Color(0xFFFF8F00)],
+              ),
+              isAmount: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _FilterChip(
+                    label: 'الكل',
+                    isSelected: _selectedStatus == 'الكل',
+                    onTap: () {
+                      setState(() => _selectedStatus = 'الكل');
+                      _loadDebts();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'معلقة',
+                    isSelected: _selectedStatus == 'معلقة',
+                    onTap: () {
+                      setState(() => _selectedStatus = 'معلقة');
+                      _loadDebts();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'متأخرة',
+                    isSelected: _selectedStatus == 'متأخرة',
+                    onTap: () {
+                      setState(() => _selectedStatus = 'متأخرة');
+                      _loadDebts();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'مدفوعة',
+                    isSelected: _selectedStatus == 'مدفوعة',
+                    onTap: () {
+                      setState(() => _selectedStatus = 'مدفوعة');
+                      _loadDebts();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtsList(List<Debt> debts) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: debts.length,
+      itemBuilder: (context, index) {
+        final debt = debts[index];
+        return DebtCard(
+          debt: debt,
+          onTap: () => _navigateToDetails(debt),
+          onPayTap: () => _navigateToPayment(debt),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.danger.withOpacity(0.1),
+                  AppColors.warning.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 60,
+              color: AppColors.danger.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'لا توجد ديون',
+            style: AppTextStyles.h3.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _selectedStatus == 'الكل'
+                ? 'لم يتم تسجيل أي دين بعد'
+                : 'لا توجد ديون $_selectedStatus',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 60,
+            color: AppColors.danger,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.danger,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _loadDebts,
+            icon: const Icon(Icons.refresh),
+            label: const Text('إعادة المحاولة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddButton() {
+    return Positioned(
+      bottom: 20,
+      left: 20,
+      right: 20,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.danger, AppColors.warning],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.danger.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _navigateToAdd(),
+            borderRadius: BorderRadius.circular(16),
+            child: const Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_rounded, color: Colors.white, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    'إضافة دين جديد',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFiltersDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DebtFilters(
+        selectedStatus: _selectedStatus,
+        selectedSortBy: _selectedSort,
+        onStatusChanged: (status) {
+          setState(() => _selectedStatus = status);
+          _loadDebts();
+          Navigator.pop(context);
+        },
+        onSortChanged: (sort) {
+          setState(() => _selectedSort = sort);
+        },
+      ),
+    );
+  }
+
+  void _navigateToAdd() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddDebtScreen()),
+    );
+    if (result == true) {
+      _loadDebts();
+    }
+  }
+
+  void _navigateToDetails(Debt debt) async {
+    // Navigate to details
+  }
+
+  void _navigateToPayment(Debt debt) async {
+    // Navigate to payment
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Gradient gradient;
+  final bool isAmount;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.gradient,
+    this.isAmount = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.danger.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatItem(
-                'إجمالي الديون',
-                '$totalDebts',
-                Icons.account_balance_wallet,
-              ),
-              _buildStatItem(
-                'متأخرة',
-                '$overdueDebts',
-                Icons.warning,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.textOnDark.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'إجمالي المبلغ المتبقي',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.textOnDark.withOpacity(0.9),
-                  ),
-                ),
-                Text(
-                  '${totalAmount.toStringAsFixed(0)} ريال',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: AppColors.textOnDark,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 11,
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTextStyles.h3.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: isAmount ? 14 : 20,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, color: AppColors.textOnDark, size: 32),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: AppTextStyles.headlineLarge.copyWith(
-            color: AppColors.textOnDark,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnDark.withOpacity(0.9),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showFilters() {
-    showDebtFilters(
-      context: context,
-      selectedFilter: _selectedFilter,
-      selectedSortBy: _selectedSortBy,
-      onFilterChanged: (filter) {
-        setState(() {
-          _selectedFilter = filter;
-        });
-        _loadDebts();
-      },
-      onSortChanged: (sortBy) {
-        setState(() {
-          _selectedSortBy = sortBy;
-        });
-      },
-    );
-  }
-
-  void _sendReminder(dynamic debt) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم إرسال تذكير إلى ${debt.customerName}'),
-        backgroundColor: AppColors.success,
-      ),
-    );
-  }
-
-  String _getEmptyMessage() {
-    switch (_selectedFilter) {
-      case 'معلقة':
-        return 'لا توجد ديون معلقة حالياً';
-      case 'متأخرة':
-        return 'لا توجد ديون متأخرة';
-      case 'مدفوعة':
-        return 'لا توجد ديون مدفوعة';
-      default:
-        return 'لم يتم تسجيل أي ديون بعد';
-    }
-  }
 }
 
-/// مندوب البحث عن الديون
-class DebtSearchDelegate extends SearchDelegate<dynamic> {
-  final List debts;
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  DebtSearchDelegate(this.debts);
-
-  @override
-  String get searchFieldLabel => 'ابحث عن دين...';
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_forward),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    final results = debts.where((debt) {
-      final personName = debt.personName?.toLowerCase() ?? '';
-      final amount = debt.remainingAmount?.toString() ?? '';
-      final status = debt.status?.toLowerCase() ?? '';
-      final searchLower = query.toLowerCase();
-      
-      return personName.contains(searchLower) ||
-          amount.contains(searchLower) ||
-          status.contains(searchLower);
-    }).toList();
-
-    if (results.isEmpty) {
-      return const Center(
-        child: Text('لا توجد نتائج'),
-      );
-    }
-
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: results.length,
-        itemBuilder: (context, index) {
-          final debt = results[index];
-          final isOverdue = debt.dueDate != null &&
-              DateTime.parse(debt.dueDate!)
-                  .isBefore(DateTime.now()) &&
-              debt.remainingAmount > 0;
-          final daysOverdue = isOverdue
-              ? DateTime.now()
-                  .difference(DateTime.parse(debt.dueDate!))
-                  .inDays
-              : 0;
-
-          return DebtCard(
-            debt: debt,
-            isOverdue: isOverdue,
-            daysOverdue: daysOverdue,
-            onTap: () {
-              close(context, debt);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final suggestions = debts.where((debt) {
-      final personName = debt.personName?.toLowerCase() ?? '';
-      final searchLower = query.toLowerCase();
-      
-      return personName.contains(searchLower);
-    }).toList();
-
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: ListView.builder(
-        itemCount: suggestions.length > 5 ? 5 : suggestions.length,
-        itemBuilder: (context, index) {
-          final debt = suggestions[index];
-          return ListTile(
-            leading: const Icon(Icons.account_balance_wallet, color: AppColors.danger),
-            title: Text(debt.personName ?? 'عميل'),
-            subtitle: Text('${debt.remainingAmount ?? 0} ريال - ${debt.status ?? "غير محدد"}'),
-            onTap: () {
-              query = debt.personName ?? '';
-              showResults(context);
-            },
-          );
-        },
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.danger : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.danger : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
