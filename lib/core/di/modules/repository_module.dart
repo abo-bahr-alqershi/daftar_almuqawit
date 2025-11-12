@@ -15,6 +15,8 @@ import '../../../domain/repositories/statistics_repository.dart';
 import '../../../domain/repositories/sync_repository.dart';
 import '../../../domain/repositories/backup_repository.dart';
 import '../../../domain/repositories/inventory_repository.dart';
+import '../../../domain/repositories/returns_repository.dart';
+import '../../../domain/repositories/damaged_items_repository.dart';
 
 import '../../../data/repositories/supplier_repository_impl.dart';
 import '../../../data/repositories/customer_repository_impl.dart';
@@ -29,6 +31,8 @@ import '../../../data/repositories/statistics_repository_impl.dart';
 import '../../../data/repositories/sync_repository_impl.dart';
 import '../../../data/repositories/backup_repository_impl.dart';
 import '../../../data/repositories/inventory_repository_impl.dart';
+import '../../../data/repositories/returns_repository_impl.dart';
+import '../../../data/repositories/damaged_items_repository_impl.dart';
 
 class RepositoryModule {
   static Future<void> register(GetIt sl) async {
@@ -45,6 +49,15 @@ class RepositoryModule {
     // تحديث PurchaseRepository و SalesRepository ليستخدموا InventoryRepository
     sl.registerLazySingleton<PurchaseRepository>(() => PurchaseRepositoryImpl(sl(), inventoryRepository: sl()));
     sl.registerLazySingleton<SalesRepository>(() => SaleRepositoryImpl(sl(), inventoryRepository: sl()));
+    
+    // إضافة ReturnsRepository و DamagedItemsRepository
+    sl.registerLazySingleton<ReturnsRepository>(() => ReturnsRepositoryImpl(
+      localDataSource: sl(),
+      inventoryRepository: sl(),
+    ));
+    sl.registerLazySingleton<DamagedItemsRepository>(() => DamagedItemsRepositoryImpl(
+      localDataSource: sl(),
+    ));
     
     sl.registerLazySingleton<DebtRepository>(() => DebtRepositoryImpl(sl()));
     sl.registerLazySingleton<DebtPaymentRepository>(() => DebtPaymentRepositoryImpl(sl()));

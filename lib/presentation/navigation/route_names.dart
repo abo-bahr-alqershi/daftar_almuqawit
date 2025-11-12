@@ -49,8 +49,18 @@ class RouteNames {
   static const String saleDetails = '/sales/details';
   static const String quickSale = '/sales/quick';
 
-  // ========== Inventory Routes ==========
+  // ========== Inventory Routes  // المخزون
   static const String inventory = '/inventory';
+  
+  // المردودات
+  static const String returns = '/returns';
+  static const String addReturn = '/add-return';
+  static const String returnDetails = '/return-details';
+  
+  // البضاعة التالفة
+  static const String damagedItems = '/damaged-items';
+  static const String addDamagedItem = '/add-damaged-item';
+  static const String damageDetails = '/damage-details';
   static const String inventoryList = '/inventory/list';
   static const String inventoryDetails = '/inventory/details';
   static const String inventoryTransactions = '/inventory/transactions';

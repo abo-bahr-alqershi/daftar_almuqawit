@@ -145,3 +145,138 @@ class CheckStockAvailabilityEvent extends InventoryEvent {
   @override
   List<Object?> get props => [qatTypeId, unit, requiredQuantity, warehouseId];
 }
+
+// ================= أحداث المردودات =================
+
+/// حدث تحميل المردودات
+class LoadReturnsEvent extends InventoryEvent {
+  final String? returnType; // مردود_مبيعات، مردود_مشتريات، null للكل
+  final String? status; // معلق، مؤكد، ملغي، null للكل
+
+  const LoadReturnsEvent({
+    this.returnType,
+    this.status,
+  });
+
+  @override
+  List<Object?> get props => [returnType, status];
+}
+
+/// حدث إضافة مردود
+class AddReturnEvent extends InventoryEvent {
+  final int qatTypeId;
+  final String qatTypeName;
+  final String unit;
+  final double quantity;
+  final double unitPrice;
+  final String returnReason;
+  final String returnType;
+  final int? customerId;
+  final String? customerName;
+  final int? supplierId;
+  final String? supplierName;
+  final int? originalSaleId;
+  final int? originalPurchaseId;
+
+  const AddReturnEvent({
+    required this.qatTypeId,
+    required this.qatTypeName,
+    required this.unit,
+    required this.quantity,
+    required this.unitPrice,
+    required this.returnReason,
+    required this.returnType,
+    this.customerId,
+    this.customerName,
+    this.supplierId,
+    this.supplierName,
+    this.originalSaleId,
+    this.originalPurchaseId,
+  });
+
+  @override
+  List<Object?> get props => [
+    qatTypeId, qatTypeName, unit, quantity, unitPrice,
+    returnReason, returnType, customerId, customerName,
+    supplierId, supplierName, originalSaleId, originalPurchaseId,
+  ];
+}
+
+/// حدث تأكيد مردود
+class ConfirmReturnEvent extends InventoryEvent {
+  final int returnId;
+
+  const ConfirmReturnEvent(this.returnId);
+
+  @override
+  List<Object?> get props => [returnId];
+}
+
+// ================= أحداث البضاعة التالفة =================
+
+/// حدث تحميل البضاعة التالفة
+class LoadDamagedItemsEvent extends InventoryEvent {
+  final String? damageType; // تلف_طبيعي، تلف_بشري، إلخ
+  final String? severityLevel; // طفيف، متوسط، كبير، كارثي
+  final String? status; // تحت_المراجعة، مؤكد، تم_التعامل_معه
+
+  const LoadDamagedItemsEvent({
+    this.damageType,
+    this.severityLevel,
+    this.status,
+  });
+
+  @override
+  List<Object?> get props => [damageType, severityLevel, status];
+}
+
+/// حدث إضافة بضاعة تالفة
+class AddDamagedItemEvent extends InventoryEvent {
+  final int qatTypeId;
+  final String qatTypeName;
+  final String unit;
+  final double quantity;
+  final double unitCost;
+  final String damageReason;
+  final String damageType;
+  final String severityLevel;
+  final bool isInsuranceCovered;
+  final double? insuranceAmount;
+  final String? responsiblePerson;
+  final String? batchNumber;
+  final String? expiryDate;
+
+  const AddDamagedItemEvent({
+    required this.qatTypeId,
+    required this.qatTypeName,
+    required this.unit,
+    required this.quantity,
+    required this.unitCost,
+    required this.damageReason,
+    required this.damageType,
+    required this.severityLevel,
+    this.isInsuranceCovered = false,
+    this.insuranceAmount,
+    this.responsiblePerson,
+    this.batchNumber,
+    this.expiryDate,
+  });
+
+  @override
+  List<Object?> get props => [
+    qatTypeId, qatTypeName, unit, quantity, unitCost,
+    damageReason, damageType, severityLevel, isInsuranceCovered,
+    insuranceAmount, responsiblePerson, batchNumber, expiryDate,
+  ];
+}
+
+/// حدث تأكيد تلف
+class ConfirmDamageEvent extends InventoryEvent {
+  final int damageId;
+  final String? actionTaken;
+
+  const ConfirmDamageEvent(this.damageId, {this.actionTaken});
+
+  @override
+  List<Object?> get props => [damageId, actionTaken];
+}

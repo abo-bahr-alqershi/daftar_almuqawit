@@ -95,10 +95,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
         throw Exception('عنصر المخزون موجود مسبقاً');
       }
 
-      // الحصول على اسم نوع القات
-      final qatType = await qatTypeLocalDataSource.getQatTypeById(inventory.qatTypeId!);
+      // إنشاء عنصر المخزون مع التواريخ
       final inventoryWithName = inventory.copyWith(
-        qatTypeName: qatType?.name ?? 'غير محدد',
+        qatTypeName: inventory.qatTypeName ?? 'غير محدد',
         createdAt: DateTime.now().toIso8601String(),
         updatedAt: DateTime.now().toIso8601String(),
       );
@@ -327,10 +326,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       if (inventory == null) {
         // إنشاء عنصر مخزون جديد
-        final qatType = await qatTypeLocalDataSource.getQatTypeById(qatTypeId);
         inventory = Inventory(
           qatTypeId: qatTypeId,
-          qatTypeName: qatType?.name ?? 'غير محدد',
+          qatTypeName: 'نوع القات $qatTypeId',
           unit: unit,
           currentQuantity: 0,
           availableQuantity: 0,
@@ -457,10 +455,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       var inventory = await getInventoryByQatType(qatTypeId, unit);
       
       if (inventory == null) {
-        final qatType = await qatTypeLocalDataSource.getQatTypeById(qatTypeId);
         inventory = Inventory(
           qatTypeId: qatTypeId,
-          qatTypeName: qatType?.name ?? 'غير محدد',
+          qatTypeName: 'نوع القات $qatTypeId',
           unit: unit,
           currentQuantity: 0,
           availableQuantity: 0,

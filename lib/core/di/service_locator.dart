@@ -86,6 +86,17 @@ import '../../domain/usecases/inventory/update_inventory_item.dart';
 import '../../domain/usecases/inventory/adjust_inventory_quantity.dart';
 import '../../domain/usecases/inventory/get_inventory_transactions.dart';
 import '../../domain/usecases/inventory/get_inventory_statistics.dart';
+
+// Returns
+import '../../domain/usecases/returns/add_return.dart';
+import '../../domain/usecases/returns/get_returns_list.dart';
+import '../../domain/usecases/returns/confirm_return.dart';
+import '../../domain/usecases/returns/get_returns_statistics.dart';
+
+// Damaged Items
+import '../../domain/usecases/damaged_items/add_damaged_item.dart';
+import '../../domain/usecases/damaged_items/get_damaged_items_list.dart';
+import '../../domain/usecases/damaged_items/get_damage_statistics.dart';
 // Debts
 import '../../domain/usecases/debts/add_debt.dart';
 import '../../domain/usecases/debts/get_debts.dart';
@@ -287,6 +298,17 @@ class ServiceLocator {
     sl.registerLazySingleton<AdjustInventoryQuantity>(() => AdjustInventoryQuantity(sl()));
     sl.registerLazySingleton<GetInventoryTransactions>(() => GetInventoryTransactions(sl()));
     sl.registerLazySingleton<GetInventoryStatistics>(() => GetInventoryStatistics(sl()));
+
+    // Returns
+    sl.registerLazySingleton<AddReturn>(() => AddReturn(sl()));
+    sl.registerLazySingleton<GetReturnsList>(() => GetReturnsList(sl()));
+    sl.registerLazySingleton<ConfirmReturn>(() => ConfirmReturn(sl()));
+    sl.registerLazySingleton<GetReturnsStatistics>(() => GetReturnsStatistics(sl()));
+
+    // Damaged Items
+    sl.registerLazySingleton<AddDamagedItem>(() => AddDamagedItem(sl()));
+    sl.registerLazySingleton<GetDamagedItemsList>(() => GetDamagedItemsList(sl()));
+    sl.registerLazySingleton<GetDamageStatistics>(() => GetDamageStatistics(sl()));
 
     // Sync
     sl.registerLazySingleton<SyncAll>(() => SyncAll(sl()));

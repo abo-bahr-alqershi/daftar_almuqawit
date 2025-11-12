@@ -38,6 +38,13 @@ import '../../../domain/usecases/inventory/update_inventory_item.dart';
 import '../../../domain/usecases/inventory/adjust_inventory_quantity.dart';
 import '../../../domain/usecases/inventory/get_inventory_transactions.dart';
 import '../../../domain/usecases/inventory/get_inventory_statistics.dart';
+import '../../../domain/usecases/returns/add_return.dart';
+import '../../../domain/usecases/returns/get_returns_list.dart';
+import '../../../domain/usecases/returns/confirm_return.dart';
+import '../../../domain/usecases/returns/get_returns_statistics.dart';
+import '../../../domain/usecases/damaged_items/add_damaged_item.dart';
+import '../../../domain/usecases/damaged_items/get_damaged_items_list.dart';
+import '../../../domain/usecases/damaged_items/get_damage_statistics.dart';
 import '../../../presentation/blocs/accounting/accounting_bloc.dart';
 import '../../../presentation/blocs/accounting/cash_management_bloc.dart';
 import '../../../presentation/blocs/app/app_bloc.dart';
@@ -252,6 +259,13 @@ class BlocModule {
       getInventoryStatistics: sl<GetInventoryStatistics>(),
       updateInventoryItem: sl<UpdateInventoryItem>(),
       adjustInventoryQuantity: sl<AdjustInventoryQuantity>(),
+      addReturn: sl<AddReturn>(),
+      getReturnsList: sl<GetReturnsList>(),
+      confirmReturn: sl<ConfirmReturn>(),
+      getReturnsStatistics: sl<GetReturnsStatistics>(),
+      addDamagedItem: sl<AddDamagedItem>(),
+      getDamagedItemsList: sl<GetDamagedItemsList>(),
+      getDamageStatistics: sl<GetDamageStatistics>(),
     ));
   }
 }

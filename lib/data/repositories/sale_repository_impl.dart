@@ -54,14 +54,14 @@ class SaleRepositoryImpl implements SalesRepository {
       // التحقق من توفر المخزون أولاً
       if (inventoryRepository != null) {
         final isAvailable = await inventoryRepository!.isStockAvailable(
-          entity.qatTypeId,
+          entity.qatTypeId ?? 0,
           entity.unit,
           entity.quantity,
         );
         
         if (!isAvailable) {
           final availableQty = await inventoryRepository!.getAvailableQuantity(
-            entity.qatTypeId,
+            entity.qatTypeId ?? 0,
             entity.unit,
           );
           throw Exception('الكمية المتاحة ($availableQty ${entity.unit}) غير كافية للبيع');
@@ -76,11 +76,11 @@ class SaleRepositoryImpl implements SalesRepository {
       if (inventoryRepository != null && entity.quantity > 0) {
         try {
           await inventoryRepository!.updateStockFromSale(
-            entity.qatTypeId,
+            entity.qatTypeId ?? 0,
             entity.unit,
             entity.quantity,
             'SAL-$id',
-            id,
+            id ?? 0,
           );
         } catch (e) {
           _logger.error('خطأ في تحديث المخزون من البيع', error: e);

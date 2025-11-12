@@ -15,6 +15,8 @@ import '../../../data/datasources/local/supplier_local_datasource.dart';
 import '../../../data/datasources/local/sync_local_datasource.dart';
 import '../../../data/datasources/local/search_local_datasource.dart';
 import '../../../data/datasources/local/inventory_local_datasource.dart';
+import '../../../data/datasources/local/returns_local_datasource.dart';
+import '../../../data/datasources/local/damaged_items_local_datasource.dart';
 import '../../../data/database/database_helper.dart';
 
 class DatabaseModule {
@@ -32,5 +34,7 @@ class DatabaseModule {
     sl.registerLazySingleton<SyncLocalDataSource>(() => SyncLocalDataSource(sl<DatabaseHelper>()));
     sl.registerLazySingleton<SearchLocalDataSource>(() => SearchLocalDataSource(sl<DatabaseHelper>()));
     sl.registerLazySingleton<InventoryLocalDataSource>(() => InventoryLocalDataSource(sl<DatabaseHelper>()));
+    sl.registerLazySingleton<ReturnsLocalDataSource>(() => ReturnsLocalDataSource(sl<DatabaseHelper>()));
+    sl.registerLazySingleton<DamagedItemsLocalDataSource>(() => DamagedItemsLocalDataSource(sl<DatabaseHelper>()));
   }
 }

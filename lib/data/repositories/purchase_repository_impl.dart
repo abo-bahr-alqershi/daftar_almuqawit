@@ -53,12 +53,12 @@ class PurchaseRepositoryImpl implements PurchaseRepository {
     if (inventoryRepository != null && entity.quantity > 0) {
       try {
         await inventoryRepository!.updateStockFromPurchase(
-          entity.qatTypeId,
+          entity.qatTypeId ?? 0,
           entity.unit,
           entity.quantity,
           entity.unitPrice,
           'PUR-$purchaseId',
-          purchaseId,
+          purchaseId ?? 0,
         );
       } catch (e) {
         // في حالة فشل تحديث المخزون، نسجل الخطأ لكن لا نلغي العملية

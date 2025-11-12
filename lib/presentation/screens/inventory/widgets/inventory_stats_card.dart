@@ -109,13 +109,6 @@ class InventoryStatsCard extends StatelessWidget {
 
 /// بطاقة إحصائية واحدة
 class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String? subtitle;
-  final IconData icon;
-  final Color color;
-  final bool isWarning;
-
   const _StatCard({
     required this.title,
     required this.value,
@@ -124,6 +117,13 @@ class _StatCard extends StatelessWidget {
     required this.color,
     this.isWarning = false,
   });
+
+  final String title;
+  final String value;
+  final String? subtitle;
+  final IconData icon;
+  final Color color;
+  final bool isWarning;
 
   @override
   Widget build(BuildContext context) {
@@ -137,11 +137,11 @@ class _StatCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color.withOpacity(0.1),
-              color.withOpacity(0.05),
+              color.withAlpha(25),
+              color.withAlpha(13),
             ],
           ),
-          border: isWarning ? Border.all(color: color.withOpacity(0.3), width: 2) : null,
+          border: isWarning ? Border.all(color: color.withAlpha(76), width: 2) : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +152,7 @@ class _StatCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
+                    color: color.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, color: color, size: 20),

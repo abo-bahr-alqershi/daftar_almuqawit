@@ -18,7 +18,10 @@ import 'tables/sync_queue_table.dart';
 import 'tables/metadata_table.dart';
 import 'tables/inventory_table.dart';
 import 'tables/inventory_transactions_table.dart';
+import 'tables/returns_table.dart';
+import 'tables/damaged_items_table.dart';
 import 'migrations/migration_manager.dart';
+import 'migrations/add_inventory_tables_migration.dart';
 
 /// مساعد إدارة قاعدة البيانات المحلية
 /// 
@@ -42,7 +45,11 @@ class DatabaseHelper {
 
   /// تهيئة القاعدة قبل تشغيل التطبيق
   static Future<void> init() async {
-    await instance.database;
+    final db = await instance.database;
+    
+    // تشغيل migration للجداول الجديدة
+    await AddInventoryTablesMigration.migrate(db);
+    
     instance._isInitialized = true;
   }
 
@@ -81,6 +88,8 @@ class DatabaseHelper {
     batch.execute(MetadataTable.create);
     batch.execute(InventoryTable.create);
     batch.execute(InventoryTransactionsTable.create);
+    batch.execute(ReturnsTable.create);
+    batch.execute(DamagedItemsTable.create);
     await batch.commit(noResult: true);
     
     // إضافة الفهارس
@@ -89,6 +98,12 @@ class DatabaseHelper {
       indexBatch.execute(index);
     }
     for (final index in InventoryTransactionsTable.indexes) {
+      indexBatch.execute(index);
+    }
+    for (final index in ReturnsTable.indexes) {
+      indexBatch.execute(index);
+    }
+    for (final index in DamagedItemsTable.indexes) {
       indexBatch.execute(index);
     }
     await indexBatch.commit(noResult: true);

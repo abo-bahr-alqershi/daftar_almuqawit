@@ -150,6 +150,89 @@ enum InventoryOperationType {
   transfer,
 }
 
+// ================= حالات المردودات والتالف =================
+
+/// حالة تحميل المردودات بنجاح
+class ReturnsLoadedState extends InventoryState {
+  final List<dynamic> returns; // سيكون List<ReturnItem>
+  final String? currentFilter;
+
+  const ReturnsLoadedState({
+    required this.returns,
+    this.currentFilter,
+  });
+
+  @override
+  List<Object?> get props => [returns, currentFilter];
+}
+
+/// حالة تحميل البضاعة التالفة بنجاح
+class DamagedItemsLoadedState extends InventoryState {
+  final List<dynamic> damagedItems; // سيكون List<DamagedItem>
+  final String? currentFilter;
+
+  const DamagedItemsLoadedState({
+    required this.damagedItems,
+    this.currentFilter,
+  });
+
+  @override
+  List<Object?> get props => [damagedItems, currentFilter];
+}
+
+/// حالة نجاح عملية المردود
+class ReturnOperationSuccess extends InventoryState {
+  final String message;
+  final String operationType; // add, confirm, cancel
+
+  const ReturnOperationSuccess({
+    required this.message,
+    required this.operationType,
+  });
+
+  @override
+  List<Object?> get props => [message, operationType];
+}
+
+/// حالة نجاح عملية التلف
+class DamageOperationSuccess extends InventoryState {
+  final String message;
+  final String operationType; // add, confirm, handle
+
+  const DamageOperationSuccess({
+    required this.message,
+    required this.operationType,
+  });
+
+  @override
+  List<Object?> get props => [message, operationType];
+}
+
+/// حالة مركبة للوحة المردودات والتلف
+class InventoryReturnsAndDamagesState extends InventoryState {
+  final List<dynamic> recentReturns;
+  final List<dynamic> recentDamages;
+  final List<dynamic> pendingReturns;
+  final List<dynamic> criticalDamages;
+  final Map<String, dynamic> returnsStatistics;
+  final Map<String, dynamic> damagesStatistics;
+
+  const InventoryReturnsAndDamagesState({
+    required this.recentReturns,
+    required this.recentDamages,
+    required this.pendingReturns,
+    required this.criticalDamages,
+    required this.returnsStatistics,
+    required this.damagesStatistics,
+  });
+
+  @override
+  List<Object?> get props => [
+    recentReturns, recentDamages, pendingReturns, 
+    criticalDamages, returnsStatistics, damagesStatistics,
+  ];
+}
+
 /// أنواع أخطاء المخزون
 enum InventoryErrorType {
   general,
@@ -158,4 +241,6 @@ enum InventoryErrorType {
   notFound,
   insufficientStock,
   permission,
+  returnError,
+  damageError,
 }

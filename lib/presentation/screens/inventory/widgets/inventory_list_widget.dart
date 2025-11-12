@@ -55,12 +55,6 @@ class InventoryListWidget extends StatelessWidget {
 
 /// بطاقة عنصر المخزون
 class _InventoryItemCard extends StatelessWidget {
-  final Inventory item;
-  final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onAdjustQuantity;
-  final bool showLowStockWarning;
-
   const _InventoryItemCard({
     required this.item,
     this.onTap,
@@ -68,6 +62,12 @@ class _InventoryItemCard extends StatelessWidget {
     this.onAdjustQuantity,
     this.showLowStockWarning = false,
   });
+
+  final Inventory item;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onAdjustQuantity;
+  final bool showLowStockWarning;
 
   @override
   Widget build(BuildContext context) {

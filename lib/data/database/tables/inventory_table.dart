@@ -15,17 +15,25 @@ class InventoryTable {
   
   // الكميات
   static const String cCurrentQuantity = 'current_quantity'; // الكمية الحالية
+  static const String cReservedQuantity = 'reserved_quantity'; // الكمية المحجوزة
   static const String cAvailableQuantity = 'available_quantity'; // الكمية المتاحة للبيع
   static const String cMinimumQuantity = 'minimum_quantity'; // الحد الأدنى للتنبيه
+  static const String cMaximumQuantity = 'maximum_quantity'; // الحد الأقصى
+  
+  // معلومات المخزن
+  static const String cWarehouseId = 'warehouse_id';
+  static const String cWarehouseName = 'warehouse_name';
   
   // معلومات إضافية
   static const String cLastPurchaseDate = 'last_purchase_date';
   static const String cLastSaleDate = 'last_sale_date';
   static const String cAverageCost = 'average_cost'; // متوسط سعر التكلفة
+  static const String cNotes = 'notes';
   
   // معلومات التتبع
   static const String cCreatedAt = 'created_at';
   static const String cUpdatedAt = 'updated_at';
+  static const String cLastUpdatedBy = 'last_updated_by';
 
   static const String create = '''
     CREATE TABLE $table (
@@ -34,14 +42,20 @@ class InventoryTable {
       $cQatTypeName TEXT NOT NULL,
       $cUnit TEXT NOT NULL,
       $cCurrentQuantity REAL NOT NULL DEFAULT 0,
+      $cReservedQuantity REAL NOT NULL DEFAULT 0,
       $cAvailableQuantity REAL NOT NULL DEFAULT 0,
       $cMinimumQuantity REAL DEFAULT 0,
+      $cMaximumQuantity REAL DEFAULT 0,
+      $cWarehouseId INTEGER DEFAULT 1,
+      $cWarehouseName TEXT DEFAULT 'المخزن الرئيسي',
       $cLastPurchaseDate TEXT,
       $cLastSaleDate TEXT,
       $cAverageCost REAL DEFAULT 0,
+      $cNotes TEXT,
       $cCreatedAt TEXT NOT NULL,
       $cUpdatedAt TEXT NOT NULL,
-      UNIQUE($cQatTypeId, $cUnit)
+      $cLastUpdatedBy TEXT,
+      UNIQUE($cQatTypeId, $cUnit, $cWarehouseId)
     )
   ''';
 

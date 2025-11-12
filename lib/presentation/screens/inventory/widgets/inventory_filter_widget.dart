@@ -149,14 +149,14 @@ class _InventoryFilterWidgetState extends State<InventoryFilterWidget> {
 
 /// نافذة حوار التصفية
 class InventoryFilterDialog extends StatelessWidget {
-  final InventoryFilterType currentFilter;
-  final Function(InventoryFilterType, Map<String, dynamic>?)? onFilterChanged;
-
   const InventoryFilterDialog({
     super.key,
     this.currentFilter = InventoryFilterType.all,
     this.onFilterChanged,
   });
+
+  final InventoryFilterType currentFilter;
+  final Function(InventoryFilterType, Map<String, dynamic>?)? onFilterChanged;
 
   @override
   Widget build(BuildContext context) {
