@@ -19,10 +19,7 @@ import 'edit_customer_screen.dart';
 class CustomerDetailsScreen extends StatefulWidget {
   final Customer customer;
 
-  const CustomerDetailsScreen({
-    super.key,
-    required this.customer,
-  });
+  const CustomerDetailsScreen({super.key, required this.customer});
 
   @override
   State<CustomerDetailsScreen> createState() => _CustomerDetailsScreenState();
@@ -34,33 +31,33 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
   late AnimationController _headerAnimationController;
   late AnimationController _statsAnimationController;
   late AnimationController _tabsAnimationController;
-  
+
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
 
   @override
   void initState() {
     super.initState();
-    
+
     // تهيئة التحكم في التبويبات
     _tabController = TabController(length: 3, vsync: this);
-    
+
     // تهيئة controllers الأنيميشن
     _headerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _statsAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _tabsAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     // بدء الأنيميشن
     _headerAnimationController.forward();
     Future.delayed(const Duration(milliseconds: 200), () {
@@ -69,7 +66,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _tabsAnimationController.forward();
     });
-    
+
     // مراقبة التمرير
     _scrollController.addListener(() {
       setState(() {
@@ -98,7 +95,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           children: [
             // خلفية متدرجة راقية
             _buildGradientBackground(),
-            
+
             // المحتوى الرئيسي
             CustomScrollView(
               controller: _scrollController,
@@ -108,12 +105,10 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               slivers: [
                 // SliverAppBar مع تأثيرات gradient راقية
                 _buildModernSliverAppBar(),
-                
+
                 // بطاقات الإحصائيات
-                SliverToBoxAdapter(
-                  child: _buildStatsSection(),
-                ),
-                
+                SliverToBoxAdapter(child: _buildStatsSection()),
+
                 // TabBar بتصميم iOS/Tesla
                 SliverPersistentHeader(
                   pinned: true,
@@ -122,7 +117,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                     animation: _tabsAnimationController,
                   ),
                 ),
-                
+
                 // محتوى التبويبات
                 SliverFillRemaining(
                   child: TabBarView(
@@ -136,7 +131,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 ),
               ],
             ),
-            
+
             // أزرار الإجراءات العائمة
             _buildFloatingActions(),
           ],
@@ -164,7 +159,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
   // SliverAppBar متطور مع gradient راقي
   Widget _buildModernSliverAppBar() {
     final opacity = (_scrollOffset / 120).clamp(0.0, 1.0);
-    
+
     return SliverAppBar(
       expandedHeight: 220,
       pinned: true,
@@ -176,9 +171,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           decoration: BoxDecoration(
             color: AppColors.surface.withOpacity(0.9),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.border.withOpacity(0.3),
-            ),
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -199,19 +192,15 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         },
       ),
       actions: [
-        _buildActionButton(
-          Icons.edit_outlined,
-          () {
-            HapticFeedback.mediumImpact();
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => EditCustomerScreen(
-                  customer: widget.customer,
-                ),
-              ),
-            );
-          },
-        ),
+        _buildActionButton(Icons.edit_outlined, () {
+          HapticFeedback.mediumImpact();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  EditCustomerScreen(customer: widget.customer),
+            ),
+          );
+        }),
         _buildActionButton(
           widget.customer.isBlocked ? Icons.lock_open : Icons.lock_outline,
           () => _toggleBlockStatus(context),
@@ -241,7 +230,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
-                  
+
                   // Hero animation للصورة الشخصية
                   Hero(
                     tag: 'customer-avatar-${widget.customer.id}',
@@ -250,10 +239,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                       height: 90,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary,
-                            AppColors.primaryDark,
-                          ],
+                          colors: [AppColors.primary, AppColors.primaryDark],
                         ),
                         borderRadius: BorderRadius.circular(28),
                         boxShadow: [
@@ -278,9 +264,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // اسم العميل
                   Text(
                     widget.customer.name,
@@ -290,9 +276,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                       fontSize: 24,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // حالة العميل
                   _buildStatusChip(widget.customer),
                 ],
@@ -313,9 +299,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           decoration: BoxDecoration(
             color: AppColors.surface.withOpacity(0.9),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.border.withOpacity(0.3),
-            ),
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -324,11 +308,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            color: AppColors.textPrimary,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppColors.textPrimary, size: 20),
         ),
         onPressed: onPressed,
       ),
@@ -348,7 +328,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 child: _buildAnimatedStatCard(
                   delay: 0,
                   label: 'إجمالي المشتريات',
-                  value: '${widget.customer.totalPurchases.toStringAsFixed(0)} ريال',
+                  value:
+                      '${widget.customer.totalPurchases.toStringAsFixed(0)} ريال',
                   icon: Icons.shopping_cart_rounded,
                   gradient: const LinearGradient(
                     colors: [Color(0xFF667eea), Color(0xFF764ba2)],
@@ -360,7 +341,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 child: _buildAnimatedStatCard(
                   delay: 100,
                   label: 'الدين الحالي',
-                  value: '${widget.customer.currentDebt.toStringAsFixed(0)} ريال',
+                  value:
+                      '${widget.customer.currentDebt.toStringAsFixed(0)} ريال',
                   icon: Icons.account_balance_wallet_rounded,
                   gradient: LinearGradient(
                     colors: widget.customer.currentDebt > 0
@@ -371,9 +353,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // الصف الثاني من الإحصائيات
           Row(
             children: [
@@ -381,7 +363,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 child: _buildAnimatedStatCard(
                   delay: 200,
                   label: 'حد الائتمان',
-                  value: '${widget.customer.creditLimit.toStringAsFixed(0)} ريال',
+                  value:
+                      '${widget.customer.creditLimit.toStringAsFixed(0)} ريال',
                   icon: Icons.credit_card_rounded,
                   gradient: const LinearGradient(
                     colors: [Color(0xFFfa709a), Color(0xFFfee140)],
@@ -402,7 +385,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               ),
             ],
           ),
-          
+
           // مؤشر استخدام الائتمان
           if (widget.customer.creditLimit > 0) ...[
             const SizedBox(height: 20),
@@ -423,26 +406,20 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
     return AnimatedBuilder(
       animation: _statsAnimationController,
       builder: (context, child) {
-        final delayedAnimation = Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).animate(
+        // حساب begin و end بشكل صحيح مع التأكد من عدم تجاوز 1.0
+        final begin = (delay / 400).clamp(0.0, 1.0);
+        final end = ((delay + 200) / 400).clamp(0.0, 1.0);
+
+        final delayedAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
           CurvedAnimation(
             parent: _statsAnimationController,
-            curve: Interval(
-              delay / 400,
-              (delay + 200) / 400,
-              curve: Curves.easeOutCubic,
-            ),
+            curve: Interval(begin, end, curve: Curves.easeOutCubic),
           ),
         );
-        
+
         return Transform.translate(
           offset: Offset(0, 30 * (1 - delayedAnimation.value)),
-          child: Opacity(
-            opacity: delayedAnimation.value,
-            child: child,
-          ),
+          child: Opacity(opacity: delayedAnimation.value, child: child),
         );
       },
       child: Container(
@@ -472,11 +449,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: Icon(icon, color: Colors.white, size: 24),
             ),
             const SizedBox(height: 12),
             Text(
@@ -504,7 +477,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
   Widget _buildCreditUtilizationCard() {
     final utilization = widget.customer.creditUtilizationPercentage;
     Color progressColor;
-    
+
     if (utilization >= 100) {
       progressColor = const Color(0xFFf5576c);
     } else if (utilization >= 80) {
@@ -512,7 +485,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
     } else {
       progressColor = const Color(0xFF00f2fe);
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -634,23 +607,15 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           fontWeight: FontWeight.w700,
           fontSize: 14,
         ),
-        unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(
-          fontSize: 14,
-        ),
+        unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(fontSize: 14),
         onTap: (index) => HapticFeedback.selectionClick(),
         tabs: const [
-          Tab(
-            icon: Icon(Icons.info_outline, size: 20),
-            text: 'التفاصيل',
-          ),
+          Tab(icon: Icon(Icons.info_outline, size: 20), text: 'التفاصيل'),
           Tab(
             icon: Icon(Icons.account_balance_wallet, size: 20),
             text: 'الديون',
           ),
-          Tab(
-            icon: Icon(Icons.history, size: 20),
-            text: 'السجل',
-          ),
+          Tab(icon: Icon(Icons.history, size: 20), text: 'السجل'),
         ],
       ),
     );
@@ -666,9 +631,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         children: [
           // بطاقة المعلومات الأساسية
           _buildModernInfoCard(),
-          
+
           const SizedBox(height: 20),
-          
+
           // تقييم العميل
           CustomerRatingWidget(
             initialRating: 0,
@@ -678,9 +643,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
             readOnly: false,
             showLabel: true,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // الإجراءات السريعة
           _buildQuickActionsCard(),
         ],
@@ -713,7 +678,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
             ),
           ),
           const SizedBox(height: 20),
-          
+
           _buildModernInfoRow(
             Icons.phone_rounded,
             'رقم الهاتف',
@@ -722,8 +687,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               colors: [Color(0xFF667eea), Color(0xFF764ba2)],
             ),
           ),
-          
-          if (widget.customer.nickname != null && 
+
+          if (widget.customer.nickname != null &&
               widget.customer.nickname!.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildModernInfoRow(
@@ -735,8 +700,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               ),
             ),
           ],
-          
-          if (widget.customer.notes != null && 
+
+          if (widget.customer.notes != null &&
               widget.customer.notes!.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildModernInfoRow(
@@ -764,9 +729,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.3),
-        ),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -837,7 +800,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
             ),
           ),
           const SizedBox(height: 20),
-          
+
           _buildQuickActionButton(
             'إضافة عملية بيع',
             Icons.add_shopping_cart_rounded,
@@ -853,9 +816,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               );
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           _buildQuickActionButton(
             'سداد دين',
             Icons.payment_rounded,
@@ -891,7 +854,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
     VoidCallback? onPressed,
   ) {
     final isEnabled = onPressed != null;
-    
+
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(16),
@@ -971,9 +934,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
             const SizedBox(height: 24),
             Text(
               'قريباً',
-              style: AppTextStyles.h2.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
@@ -991,11 +952,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   // تبويب السجل
   Widget _buildHistoryTab() {
-    return const CustomerHistoryTab(
-      sales: [],
-      payments: [],
-      isLoading: false,
-    );
+    return const CustomerHistoryTab(sales: [], payments: [], isLoading: false);
   }
 
   Widget _buildStatusChip(Customer customer) {
@@ -1170,7 +1127,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   void _toggleBlockStatus(BuildContext context) async {
     HapticFeedback.mediumImpact();
-    
+
     final action = widget.customer.isBlocked ? 'إلغاء حظر' : 'حظر';
     final confirmed = await showDialog<bool>(
       context: context,
@@ -1187,10 +1144,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       if (context.mounted) {
         HapticFeedback.heavyImpact();
         context.read<CustomersBloc>().add(
-          BlockCustomerEvent(
-            widget.customer.id!,
-            !widget.customer.isBlocked,
-          ),
+          BlockCustomerEvent(widget.customer.id!, !widget.customer.isBlocked),
         );
         Navigator.of(context).pop();
       }
@@ -1199,7 +1153,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   void _showMoreActionsSheet(BuildContext context) {
     HapticFeedback.mediumImpact();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1214,10 +1168,7 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget tabBar;
   final AnimationController animation;
 
-  _StickyTabBarDelegate({
-    required this.tabBar,
-    required this.animation,
-  });
+  _StickyTabBarDelegate({required this.tabBar, required this.animation});
 
   @override
   double get minExtent => 72;
@@ -1233,10 +1184,7 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   ) {
     return FadeTransition(
       opacity: animation,
-      child: Container(
-        color: AppColors.background,
-        child: tabBar,
-      ),
+      child: Container(color: AppColors.background, child: tabBar),
     );
   }
 
@@ -1277,14 +1225,14 @@ class _MoreActionsBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           Text(
             'المزيد من الإجراءات',
             style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           _buildActionItem(
             context,
             Icons.share_rounded,
@@ -1297,7 +1245,7 @@ class _MoreActionsBottomSheet extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
-          
+
           _buildActionItem(
             context,
             Icons.print_rounded,
@@ -1310,7 +1258,7 @@ class _MoreActionsBottomSheet extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
-          
+
           _buildActionItem(
             context,
             Icons.delete_rounded,
@@ -1323,7 +1271,7 @@ class _MoreActionsBottomSheet extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
-          
+
           const SizedBox(height: 20),
         ],
       ),
@@ -1346,9 +1294,7 @@ class _MoreActionsBottomSheet extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.border.withOpacity(0.3),
-          ),
+          border: Border.all(color: AppColors.border.withOpacity(0.3)),
         ),
         child: Row(
           children: [
@@ -1422,10 +1368,7 @@ class SyncDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           if (!isSyncing)
-            ElevatedButton(
-              onPressed: onSync,
-              child: const Text('مزامنة الآن'),
-            ),
+            ElevatedButton(onPressed: onSync, child: const Text('مزامنة الآن')),
         ],
       ),
     );
