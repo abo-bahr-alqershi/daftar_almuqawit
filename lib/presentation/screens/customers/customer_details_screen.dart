@@ -588,6 +588,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       ),
       child: TabBar(
         controller: _tabController,
+        // زيادة ارتفاع الـ Tab لاستيعاب Icon و Text
+        indicatorSize: TabBarIndicatorSize.tab,
+        isScrollable: false,
         indicator: BoxDecoration(
           gradient: const LinearGradient(
             colors: [AppColors.primary, AppColors.primaryDark],
@@ -605,17 +608,27 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         unselectedLabelColor: AppColors.textSecondary,
         labelStyle: AppTextStyles.bodyMedium.copyWith(
           fontWeight: FontWeight.w700,
-          fontSize: 14,
+          fontSize: 12, // تصغير الخط قليلاً
         ),
-        unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(fontSize: 14),
+        unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         onTap: (index) => HapticFeedback.selectionClick(),
         tabs: const [
-          Tab(icon: Icon(Icons.info_outline, size: 20), text: 'التفاصيل'),
           Tab(
-            icon: Icon(Icons.account_balance_wallet, size: 20),
+            icon: Icon(Icons.info_outline, size: 18),
+            iconMargin: EdgeInsets.only(bottom: 2),
+            text: 'التفاصيل',
+          ),
+          Tab(
+            icon: Icon(Icons.account_balance_wallet, size: 18),
+            iconMargin: EdgeInsets.only(bottom: 2),
             text: 'الديون',
           ),
-          Tab(icon: Icon(Icons.history, size: 20), text: 'السجل'),
+          Tab(
+            icon: Icon(Icons.history, size: 18),
+            iconMargin: EdgeInsets.only(bottom: 2),
+            text: 'السجل',
+          ),
         ],
       ),
     );
