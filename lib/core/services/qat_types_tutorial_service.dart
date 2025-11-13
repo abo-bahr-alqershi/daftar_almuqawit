@@ -142,25 +142,32 @@ class QatTypesTutorialService {
                 title: 'أدخل اسم نوع القات',
                 description: 'الآن يمكنك الكتابة في الحقل أعلاه\nأدخل اسم نوع القات ثم اضغط "التالي"',
                 onNext: () async {
-                  // إلغاء التركيز
+                  // إلغاء التركيز وإخفاء لوحة المفاتيح
                   FocusScope.of(context).unfocus();
+                  
+                  // تأخير إضافي لضمان إخفاء لوحة المفاتيح تماماً
+                  await Future.delayed(const Duration(milliseconds: 500));
                   
                   currentTarget++;
                   if (currentTarget < targetKeys.length) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
                     
+                    // الانتقال للخطوة التالية أولاً
+                    controller.next();
+                    
+                    // تأخير قبل طلب التركيز للحقل التالي لضمان اكتمال الانتقال
+                    await Future.delayed(const Duration(milliseconds: 600));
+                    
                     // طلب التركيز للحقل التالي
                     if (currentTarget < fieldIds.length) {
                       final nextFocusNode = _focusNodes[fieldIds[currentTarget]];
-                      if (nextFocusNode != null) {
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        if (context.mounted) {
-                          FocusScope.of(context).requestFocus(nextFocusNode);
-                        }
+                      if (nextFocusNode != null && context.mounted) {
+                        FocusScope.of(context).requestFocus(nextFocusNode);
                       }
                     }
+                  } else {
+                    controller.next();
                   }
-                  controller.next();
                 },
                 showSkip: true,
                 onSkip: () {
@@ -207,7 +214,11 @@ class QatTypesTutorialService {
                 title: 'أدخل الأسعار',
                 description: 'الآن يمكنك إدخال سعر الشراء في الحقل أعلاه\nأدخل السعر ثم اضغط "التالي"',
                 onNext: () async {
+                  // إلغاء التركيز وإخفاء لوحة المفاتيح
                   FocusScope.of(context).unfocus();
+                  
+                  // تأخير لضمان إخفاء لوحة المفاتيح
+                  await Future.delayed(const Duration(milliseconds: 500));
                   
                   currentTarget++;
                   if (currentTarget < targetKeys.length) {
@@ -216,24 +227,32 @@ class QatTypesTutorialService {
                   controller.next();
                 },
                 onPrevious: () async {
+                  // إلغاء التركيز وإخفاء لوحة المفاتيح
                   FocusScope.of(context).unfocus();
+                  
+                  // تأخير لضمان إخفاء لوحة المفاتيح
+                  await Future.delayed(const Duration(milliseconds: 500));
                   
                   currentTarget--;
                   if (currentTarget >= 0) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
                     
+                    // الانتقال للخطوة السابقة أولاً
+                    controller.previous();
+                    
+                    // تأخير قبل طلب التركيز للحقل السابق
+                    await Future.delayed(const Duration(milliseconds: 600));
+                    
                     // طلب التركيز للحقل السابق
                     if (currentTarget < fieldIds.length) {
                       final prevFocusNode = _focusNodes[fieldIds[currentTarget]];
-                      if (prevFocusNode != null) {
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        if (context.mounted) {
-                          FocusScope.of(context).requestFocus(prevFocusNode);
-                        }
+                      if (prevFocusNode != null && context.mounted) {
+                        FocusScope.of(context).requestFocus(prevFocusNode);
                       }
                     }
+                  } else {
+                    controller.previous();
                   }
-                  controller.previous();
                 },
                 showSkip: true,
                 onSkip: () {
@@ -282,18 +301,22 @@ class QatTypesTutorialService {
                   if (currentTarget >= 0) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
                     
+                    // الانتقال للخطوة السابقة أولاً
+                    controller.previous();
+                    
+                    // تأخير قبل طلب التركيز للحقل السابق
+                    await Future.delayed(const Duration(milliseconds: 600));
+                    
                     // طلب التركيز للحقل السابق
                     if (currentTarget < fieldIds.length) {
                       final prevFocusNode = _focusNodes[fieldIds[currentTarget]];
-                      if (prevFocusNode != null) {
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        if (context.mounted) {
-                          FocusScope.of(context).requestFocus(prevFocusNode);
-                        }
+                      if (prevFocusNode != null && context.mounted) {
+                        FocusScope.of(context).requestFocus(prevFocusNode);
                       }
                     }
+                  } else {
+                    controller.previous();
                   }
-                  controller.previous();
                 },
                 isLastStep: true,
                 showSkip: false,
