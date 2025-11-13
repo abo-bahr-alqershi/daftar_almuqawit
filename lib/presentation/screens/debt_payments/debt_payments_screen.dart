@@ -16,10 +16,7 @@ import 'widgets/payment_form.dart';
 class DebtPaymentsScreen extends StatefulWidget {
   final int? debtId;
 
-  const DebtPaymentsScreen({
-    super.key,
-    this.debtId,
-  });
+  const DebtPaymentsScreen({super.key, this.debtId});
 
   @override
   State<DebtPaymentsScreen> createState() => _DebtPaymentsScreenState();
@@ -49,7 +46,9 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
 
     if (widget.debtId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<PaymentBloc>().add(LoadPaymentsByDebtEvent(widget.debtId!));
+        context.read<PaymentBloc>().add(
+          LoadPaymentsByDebtEvent(widget.debtId!),
+        );
       });
     }
   }
@@ -96,13 +95,13 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
                               state is PaymentAdded
                                   ? 'تم إضافة الدفعة بنجاح'
                                   : state is PaymentUpdated
-                                      ? 'تم تعديل الدفعة بنجاح'
-                                      : 'تم حذف الدفعة بنجاح',
+                                  ? 'تم تعديل الدفعة بنجاح'
+                                  : 'تم حذف الدفعة بنجاح',
                             );
                             if (widget.debtId != null) {
                               context.read<PaymentBloc>().add(
-                                    LoadPaymentsByDebtEvent(widget.debtId!),
-                                  );
+                                LoadPaymentsByDebtEvent(widget.debtId!),
+                              );
                             }
                           } else if (state is PaymentError) {
                             _showErrorMessage(state.message);
@@ -113,7 +112,9 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
                             return _buildShimmerStats();
                           }
                           if (state is PaymentsLoaded) {
-                            final filteredPayments = _filterPayments(state.payments);
+                            final filteredPayments = _filterPayments(
+                              state.payments,
+                            );
                             return Column(
                               children: [
                                 _buildStatsCard(filteredPayments),
@@ -264,8 +265,8 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
             HapticFeedback.lightImpact();
             if (widget.debtId != null) {
               context.read<PaymentBloc>().add(
-                    LoadPaymentsByDebtEvent(widget.debtId!),
-                  );
+                LoadPaymentsByDebtEvent(widget.debtId!),
+              );
             }
           },
         ),
@@ -274,21 +275,19 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
     );
   }
 
-  Widget _buildIconButton(
-    IconData icon, {
-    required VoidCallback onPressed,
-  }) => IconButton(
-    icon: Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
-      child: Icon(icon, color: AppColors.textPrimary, size: 20),
-    ),
-    onPressed: onPressed,
-  );
+  Widget _buildIconButton(IconData icon, {required VoidCallback onPressed}) =>
+      IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+          ),
+          child: Icon(icon, color: AppColors.textPrimary, size: 20),
+        ),
+        onPressed: onPressed,
+      );
 
   Widget _buildSectionTitle(String title, IconData icon) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -321,9 +320,14 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
   );
 
   Widget _buildStatsCard(List<DebtPayment> payments) {
-    final totalAmount = payments.fold(0.0, (sum, payment) => sum + payment.amount);
+    final totalAmount = payments.fold(
+      0.0,
+      (sum, payment) => sum + payment.amount,
+    );
     final cashPayments = payments.where((p) => p.paymentMethod == 'نقد').length;
-    final transferPayments = payments.where((p) => p.paymentMethod == 'تحويل').length;
+    final transferPayments = payments
+        .where((p) => p.paymentMethod == 'تحويل')
+        .length;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -771,7 +775,9 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
                   debtId: widget.debtId!,
                   amount: formData['amount'],
                   paymentDate: formData['date'].toString().split(' ')[0],
-                  paymentTime: formData['time'] ?? '${TimeOfDay.now().hour}:${TimeOfDay.now().minute}',
+                  paymentTime:
+                      formData['time'] ??
+                      '${TimeOfDay.now().hour}:${TimeOfDay.now().minute}',
                   paymentMethod: formData['paymentMethod'] ?? 'نقد',
                   notes: formData['notes'],
                 );

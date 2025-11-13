@@ -10,6 +10,7 @@ import '../../blocs/statistics/reports_event.dart';
 import '../../blocs/statistics/reports_state.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/error_widget.dart' as custom_error;
+import 'widgets/report_card.dart';
 import 'widgets/profit_card.dart';
 import 'widgets/chart_widget.dart';
 import 'widgets/export_options.dart';
@@ -460,7 +461,7 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                                     Container(
                                       width: 8,
                                       height: 8,
-                                      decoration: const BoxDecoration( // تصحيح من BoxShadow إلى BoxDecoration
+                                      decoration: const BoxShadow(
                                         color: AppColors.success,
                                         shape: BoxShape.circle,
                                         boxShadow: [
@@ -717,17 +718,17 @@ class _DailyReportScreenState extends State<DailyReportScreen>
               ],
             ),
             const SizedBox(height: 16),
-            _buildStatItem(
-              icon: Icons.payment_rounded,
-              label: 'المصروفات',
+            ReportCard(
+              title: 'المصروفات',
               value: (stats['totalExpenses'] as num?)?.toDouble() ?? 0.0,
+              icon: Icons.payment_rounded,
               color: AppColors.expense,
             ),
             const SizedBox(height: 12),
-            _buildStatItem(
-              icon: Icons.account_balance_wallet_rounded,
-              label: 'الرصيد النقدي',
+            ReportCard(
+              title: 'الرصيد النقدي',
               value: (stats['cashBalance'] as num?)?.toDouble() ?? 0.0,
+              icon: Icons.account_balance_wallet_rounded,
               color: AppColors.info,
             ),
           ],

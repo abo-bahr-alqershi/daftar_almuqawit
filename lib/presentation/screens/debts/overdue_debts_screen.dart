@@ -525,8 +525,8 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
             ),
             child: DebtCard(
               debt: debt,
-              isOverdue: true,
-              daysOverdue: _getDaysOverdue(debt),
+              // isOverdue: true, // DebtCard يحسبها تلقائياً
+              // daysOverdue: _getDaysOverdue(debt), // DebtCard يحسبها تلقائياً
               onTap: () {
                 HapticFeedback.lightImpact();
                 Navigator.pushNamed(
@@ -535,7 +535,7 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
                   arguments: debt.id,
                 );
               },
-              onPayment: () {
+              onPayTap: () { // تغيير من onPayment إلى onPayTap
                 HapticFeedback.lightImpact();
                 Navigator.pushNamed(
                   context,
@@ -546,7 +546,7 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
                   },
                 );
               },
-              onReminder: () {
+              onReminderTap: () { // تغيير من onReminder إلى onReminderTap
                 HapticFeedback.lightImpact();
                 _sendReminder(debt.id?.toString() ?? '0');
               },

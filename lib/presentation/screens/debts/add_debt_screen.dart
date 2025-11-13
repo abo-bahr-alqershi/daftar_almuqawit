@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/validators.dart';
 import '../../../domain/entities/debt.dart';
+import '../../../domain/entities/customer.dart';
 import '../../blocs/debts/debts_bloc.dart';
 import '../../blocs/debts/debts_event.dart';
 import '../../blocs/debts/debts_state.dart';
@@ -95,7 +96,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                               builder: (context, customerState) {
                                 final customers = customerState is CustomersLoaded
                                     ? customerState.customers
-                                    : [];
+                                    : <Customer>[]; // تحديد النوع بشكل صريح
 
                                 return DebtForm(
                                   key: _formKey,

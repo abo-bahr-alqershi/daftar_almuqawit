@@ -11,6 +11,7 @@ import '../../blocs/debts/debts_event.dart';
 import '../../blocs/debts/debts_state.dart';
 import '../../blocs/debts/payment_bloc.dart';
 import '../../blocs/debts/payment_event.dart';
+import '../../blocs/debts/payment_state.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import './widgets/payment_history.dart';
 import './widgets/debt_timeline.dart';
@@ -453,7 +454,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
         if (state is PaymentsLoaded) {
           return PaymentHistory(
             payments: state.payments,
-            debtId: widget.debt.id!,
+            debtId: widget.debt.id!.toString(), // تحويل int إلى String
           );
         }
 
@@ -468,7 +469,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
         if (state is PaymentsLoaded) {
           return DebtTimeline(
             debt: widget.debt,
-            payments: state.payments,
+            // payments: state.payments, // DebtTimeline لا يحتاج payments
           );
         }
         return const Center(child: CircularProgressIndicator());
