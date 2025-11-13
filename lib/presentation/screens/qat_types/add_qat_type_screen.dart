@@ -9,7 +9,7 @@ import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
 import '../../blocs/qat_types/qat_types_state.dart';
 import './widgets/qat_type_form.dart';
-import '../../../core/services/qat_types_showcase_service.dart';
+import '../../../core/services/qat_types_tutorial_service.dart';
 
 /// شاشة إضافة نوع قات - تصميم راقي هادئ
 class AddQatTypeScreen extends StatefulWidget {
@@ -27,12 +27,12 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   final _formKey = GlobalKey<QatTypeFormState>();
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
-  
+
   // مفاتيح التعليمات التفاعلية
   final GlobalKey _nameFieldKey = GlobalKey();
   final GlobalKey _priceFieldKey = GlobalKey();
   final GlobalKey _saveButtonKey = GlobalKey();
-  
+
   bool _showTutorial = false;
 
   @override
@@ -47,12 +47,13 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _animationController.forward();
 
@@ -61,13 +62,18 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
         _scrollOffset = _scrollController.offset;
       });
     });
-    
+
     // التحقق من معاملات التعليمات
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      
-      if (args != null && args['showTutorial'] == true && args['operation'] == 'add') {
-        _showTutorial = true;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+      if (args != null &&
+          args['showTutorial'] == true &&
+          args['operation'] == 'add') {
+        setState(() {
+          _showTutorial = true;
+        });
         _startTutorial();
       }
     });
@@ -77,18 +83,26 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   void dispose() {
     _animationController.dispose();
     _scrollController.dispose();
+    QatTypesTutorialService.dispose();
     super.dispose();
   }
 
   void _startTutorial() {
-    if (!_showTutorial) return;
-    
-    QatTypesShowcaseService.instance.startAddTutorial(
-      context,
-      nameFieldKey: _nameFieldKey,
-      priceFieldKey: _priceFieldKey,
-      saveButtonKey: _saveButtonKey,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted && _showTutorial) {
+        await QatTypesTutorialService.showAddTutorial(
+          context: context,
+          nameFieldKey: _nameFieldKey,
+          priceFieldKey: _priceFieldKey,
+          saveButtonKey: _saveButtonKey,
+          scrollController: _scrollController,
+          onNext: () {},
+        );
+        setState(() {
+          _showTutorial = false;
+        });
+      }
+    });
   }
 
   Future<void> _submitQatType() async {
@@ -141,75 +155,81 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                     child: SlideTransition(
                       position: _slideAnimation,
                       child: BlocConsumer<QatTypesBloc, QatTypesState>(
-                        listener: (context, state) {
-                          if (state is QatTypeOperationSuccess) {
-                            HapticFeedback.heavyImpact();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.check_circle, color: Colors.white),
-                                    const SizedBox(width: 12),
-                                    Text(state.message),
-                                  ],
-                                ),
-                                backgroundColor: AppColors.success,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            );
-                            Navigator.of(context).pop(true);
-                          } else if (state is QatTypesError) {
-                            HapticFeedback.heavyImpact();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.error, color: Colors.white),
-                                    const SizedBox(width: 12),
-                                    Text(state.message),
-                                  ],
-                                ),
-                                backgroundColor: AppColors.danger,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        builder: (context, state) {
-                          final isLoading = state is QatTypesLoading;
+                            listener: (context, state) {
+                              if (state is QatTypeOperationSuccess) {
+                                HapticFeedback.heavyImpact();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(state.message),
+                                      ],
+                                    ),
+                                    backgroundColor: AppColors.success,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                                Navigator.of(context).pop(true);
+                              } else if (state is QatTypesError) {
+                                HapticFeedback.heavyImpact();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.error,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(state.message),
+                                      ],
+                                    ),
+                                    backgroundColor: AppColors.danger,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            builder: (context, state) {
+                              final isLoading = state is QatTypesLoading;
 
-                          return Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: QatTypeForm(
-                              key: _formKey,
-                              isLoading: isLoading,
-                              nameFieldKey: _nameFieldKey,
-                              priceFieldKey: _priceFieldKey,
-                              saveButtonKey: _saveButtonKey,
-                              onSubmit: _submitQatType,
-                              onCancel: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          );
-                        },
+                              return Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: QatTypeForm(
+                                  key: _formKey,
+                                  isLoading: isLoading,
+                                  nameFieldKey: _nameFieldKey,
+                                  priceFieldKey: _priceFieldKey,
+                                  saveButtonKey: _saveButtonKey,
+                                  onSubmit: _submitQatType,
+                                  onCancel: () {
+                                    HapticFeedback.lightImpact();
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
   }
 
   Widget _buildGradientBackground() => Container(

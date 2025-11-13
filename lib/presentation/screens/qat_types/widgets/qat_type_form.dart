@@ -34,6 +34,11 @@ class QatTypeFormState extends State<QatTypeForm> {
   final _buyPriceController = TextEditingController();
   final _sellPriceController = TextEditingController();
 
+  // FocusNodes للحقول
+  final _nameFocusNode = FocusNode();
+  final _buyPriceFocusNode = FocusNode();
+  final _sellPriceFocusNode = FocusNode();
+
   String _selectedQuality = 'ممتاز';
   String _selectedIcon = '🌿';
 
@@ -81,6 +86,9 @@ class QatTypeFormState extends State<QatTypeForm> {
     _nameController.dispose();
     _buyPriceController.dispose();
     _sellPriceController.dispose();
+    _nameFocusNode.dispose();
+    _buyPriceFocusNode.dispose();
+    _sellPriceFocusNode.dispose();
     for (var controller in _unitBuyPriceControllers.values) {
       controller.dispose();
     }
@@ -135,6 +143,7 @@ class QatTypeFormState extends State<QatTypeForm> {
               _buildTextField(
                 key: widget.nameFieldKey,
                 controller: _nameController,
+                focusNode: _nameFocusNode,
                 label: 'اسم النوع',
                 hint: 'مثال: قيفي رووس، عنسي عوارض',
                 icon: Icons.label_rounded,
@@ -174,6 +183,7 @@ class QatTypeFormState extends State<QatTypeForm> {
                     child: _buildTextField(
                       key: widget.priceFieldKey,
                       controller: _buyPriceController,
+                      focusNode: _buyPriceFocusNode,
                       label: 'سعر الشراء',
                       hint: '0',
                       icon: Icons.shopping_cart_rounded,
@@ -185,6 +195,7 @@ class QatTypeFormState extends State<QatTypeForm> {
                   Expanded(
                     child: _buildTextField(
                       controller: _sellPriceController,
+                      focusNode: _sellPriceFocusNode,
                       label: 'سعر البيع',
                       hint: '0',
                       icon: Icons.sell_rounded,
@@ -294,6 +305,7 @@ class QatTypeFormState extends State<QatTypeForm> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
+    FocusNode? focusNode,
   }) {
     return Container(
       key: key,
@@ -304,6 +316,7 @@ class QatTypeFormState extends State<QatTypeForm> {
       ),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: keyboardType,
         style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
         decoration: InputDecoration(

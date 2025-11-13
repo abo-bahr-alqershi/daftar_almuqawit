@@ -1,237 +1,649 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../theme/app_colors.dart';
 
-/// خدمة التعليمات المخصصة لعمليات أنواع القات
-/// تم تصميمها بدقة عالية لضمان التفاعل السليم
 class QatTypesTutorialService {
-  static QatTypesTutorialService? _instance;
-  static QatTypesTutorialService get instance =>
-      _instance ??= QatTypesTutorialService._();
-  QatTypesTutorialService._();
+  static TutorialCoachMark? _tutorial;
 
-  TutorialCoachMark? _tutorialCoachMark;
+  /// دالة مساعدة للتمرير الدقيق إلى العنصر المستهدف
+  static Future<void> _scrollToTarget(
+    GlobalKey key,
+    ScrollController? scrollController,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    
+    final context = key.currentContext;
+    if (context == null) return;
 
-  /// لون أنواع القات الثابت
-  static const Color qatTypesColor = Color(0xFF00BCD4);
+    try {
+      final RenderObject? renderObject = context.findRenderObject();
+      if (renderObject == null) return;
 
-  /// بدء تعليمات إضافة نوع قات جديد
-  void startAddTutorial(
-    BuildContext context, {
-    required GlobalKey formContainerKey,
-    required GlobalKey nameFieldKey,
-    required GlobalKey priceFieldKey,
-    required GlobalKey saveButtonKey,
-  }) {
-    final targets = _createAddTargets(
-      formContainerKey: formContainerKey,
-      nameFieldKey: nameFieldKey,
-      priceFieldKey: priceFieldKey,
-      saveButtonKey: saveButtonKey,
-    );
+      // استخدام RenderAbstractViewport للحصول على الموضع الدقيق
+      final RenderAbstractViewport viewport = 
+          RenderAbstractViewport.of(renderObject);
+      
+      if (viewport == null) return;
 
-    _showTutorial(context, targets);
+      // حساب الموضع الذي يجعل العنصر في الثلث العلوي من الشاشة
+      // 0.2 يعني 20% من أعلى الشاشة
+      final RevealedOffset revealedOffset = viewport.getOffsetToReveal(
+        renderObject,
+        0.2, // وضع العنصر في الثلث العلوي للرؤية الكاملة
+        rect: null,
+      );
+
+      // استخدام ScrollController إذا كان متاحاً
+      if (scrollController != null && scrollController.hasClients) {
+        final targetOffset = revealedOffset.offset.clamp(
+          scrollController.position.minScrollExtent,
+          scrollController.position.maxScrollExtent,
+        );
+
+        await scrollController.animateTo(
+          targetOffset,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+        
+        // انتظار استقرار التمرير والرسم
+        await Future.delayed(const Duration(milliseconds: 400));
+      } else {
+        // استخدام Scrollable.ensureVisible كخيار احتياطي
+        await Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          alignment: 0.2, // 20% من أعلى الشاشة
+          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        );
+        
+        await Future.delayed(const Duration(milliseconds: 400));
+      }
+    } catch (e) {
+      debugPrint('Error scrolling to target: $e');
+      // محاولة أخيرة باستخدام الطريقة البسيطة
+      try {
+        await Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          alignment: 0.2,
+        );
+        await Future.delayed(const Duration(milliseconds: 400));
+      } catch (e2) {
+        debugPrint('Fallback scroll also failed: $e2');
+      }
+    }
   }
 
-  /// إنشاء أهداف تعليمات الإضافة
-  List<TargetFocus> _createAddTargets({
-    required GlobalKey formContainerKey,
+  static Future<void> showAddTutorial({
+    required BuildContext context,
     required GlobalKey nameFieldKey,
     required GlobalKey priceFieldKey,
     required GlobalKey saveButtonKey,
-  }) {
-    return [
-      // الهدف الأول: مقدمة
-      _createIntroTarget(formContainerKey),
+    required VoidCallback onNext,
+    ScrollController? scrollController,
+  }) async {
+    // التمرير إلى الحقل الأول قبل عرض التعليمات
+    await _scrollToTarget(nameFieldKey, scrollController);
+    
+    int currentTarget = 0;
+    final targetKeys = [nameFieldKey, priceFieldKey, saveButtonKey];
+    
+    final targets = <TargetFocus>[];
 
-      // الهدف الثاني: حقل الاسم - تفاعلي
-      _createInteractiveTarget(
+    // الخطوة 1: حقل الاسم
+    targets.add(
+      TargetFocus(
         identify: "name_field",
         keyTarget: nameFieldKey,
-        title: "حقل اسم نوع القات 📝",
-        description:
-            "انقر هنا واكتب اسم نوع القات\n(مثال: قيفي رووس، عنسي عوارض)",
-        isInteractive: true,
+        alignSkip: Alignment.topLeft,
+        radius: 10,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false, // تعطيل النقر على التظليل
+        enableTargetTab: false, // تعطيل النقر على الهدف لمنع الانتقال التلقائي
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 1,
+                totalSteps: 3,
+                title: 'أدخل اسم نوع القات',
+                description: 'اكتب اسم نوع القات في الحقل أعلاه ثم اضغط "التالي"\n(مثال: قيفي رووس، عنسي عوارض)',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
       ),
+    );
 
-      // الهدف الثالث: حقل السعر - تفاعلي
-      _createInteractiveTarget(
+    // الخطوة 2: حقل السعر
+    targets.add(
+      TargetFocus(
         identify: "price_field",
         keyTarget: priceFieldKey,
-        title: "حقل سعر الشراء 💰",
-        description: "انقر هنا وأدخل سعر شراء هذا النوع\n(مثال: 1500، 2000)",
-        isInteractive: true,
+        alignSkip: Alignment.topLeft,
+        radius: 10,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false, // السماح بالتفاعل دون انتقال تلقائي
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 2,
+                totalSteps: 3,
+                title: 'أدخل الأسعار',
+                description: 'اكتب سعر الشراء والبيع في الحقول أعلاه ثم اضغط "التالي"',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
       ),
+    );
 
-      // الهدف الرابع: زر الحفظ - تفاعلي
-      _createInteractiveTarget(
+    // الخطوة 3: زر الحفظ
+    targets.add(
+      TargetFocus(
         identify: "save_button",
         keyTarget: saveButtonKey,
-        title: "زر الحفظ ✅",
-        description: "انقر هنا لحفظ نوع القات الجديد في النظام",
-        isInteractive: true,
+        alignSkip: Alignment.topLeft,
+        radius: 16,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 3,
+                totalSteps: 3,
+                title: 'احفظ نوع القات',
+                description: 'بعد إدخال جميع البيانات، اضغط على هذا الزر لحفظ نوع القات الجديد',
+                onNext: () {
+                  controller.skip();
+                  onNext();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                isLastStep: true,
+                showSkip: false,
+              );
+            },
+          ),
+        ],
       ),
-    ];
-  }
-
-  /// إنشاء هدف المقدمة (غير تفاعلي)
-  TargetFocus _createIntroTarget(GlobalKey keyTarget) {
-    return TargetFocus(
-      identify: "intro",
-      keyTarget: keyTarget,
-      enableOverlayTab: true, // السماح بالنقر على الخلفية
-      enableTargetTab: false, // منع النقر على العنصر
-      radius: 15,
-      shape: ShapeLightFocus.RRect,
-      contents: [
-        TargetContent(
-          align: ContentAlign.bottom,
-          builder: (context, controller) {
-            return _buildIntroContent(controller);
-          },
-        ),
-      ],
     );
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.textPrimary,
+      opacityShadow: 0.90,
+      paddingFocus: 2,
+      alignSkip: Alignment.topLeft,
+      textSkip: "تخطي",
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      onFinish: () {
+        _tutorial = null;
+      },
+      onSkip: () {
+        _tutorial = null;
+        return true;
+      },
+    );
+
+    _tutorial!.show(context: context);
   }
 
-  /// إنشاء هدف تفاعلي
-  TargetFocus _createInteractiveTarget({
-    required String identify,
-    required GlobalKey keyTarget,
+  static Future<void> showEditTutorial({
+    required BuildContext context,
+    required GlobalKey nameFieldKey,
+    required GlobalKey priceFieldKey,
+    required GlobalKey saveButtonKey,
+    required VoidCallback onNext,
+    ScrollController? scrollController,
+  }) async {
+    // التمرير إلى الحقل الأول قبل عرض التعليمات
+    await _scrollToTarget(nameFieldKey, scrollController);
+    
+    int currentTarget = 0;
+    final targetKeys = [nameFieldKey, priceFieldKey, saveButtonKey];
+    
+    final targets = <TargetFocus>[];
+
+    // الخطوة 1: حقل الاسم
+    targets.add(
+      TargetFocus(
+        identify: "name_field",
+        keyTarget: nameFieldKey,
+        alignSkip: Alignment.topLeft,
+        radius: 10,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false, // تعطيل الانتقال التلقائي
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 1,
+                totalSteps: 3,
+                title: 'تعديل اسم نوع القات',
+                description: 'يمكنك تعديل اسم نوع القات في الحقل أعلاه ثم اضغط "التالي"',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 2: حقل السعر
+    targets.add(
+      TargetFocus(
+        identify: "price_field",
+        keyTarget: priceFieldKey,
+        alignSkip: Alignment.topLeft,
+        radius: 10,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 2,
+                totalSteps: 3,
+                title: 'تعديل الأسعار',
+                description: 'يمكنك تعديل أسعار الشراء والبيع ثم اضغط "التالي"',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 3: زر الحفظ
+    targets.add(
+      TargetFocus(
+        identify: "save_button",
+        keyTarget: saveButtonKey,
+        alignSkip: Alignment.topLeft,
+        radius: 16,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 3,
+                totalSteps: 3,
+                title: 'احفظ التعديلات',
+                description: 'بعد إجراء التعديلات المطلوبة، اضغط على هذا الزر لحفظ التغييرات',
+                onNext: () {
+                  controller.skip();
+                  onNext();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                isLastStep: true,
+                showSkip: false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.textPrimary,
+      opacityShadow: 0.90,
+      paddingFocus: 2,
+      alignSkip: Alignment.topLeft,
+      textSkip: "تخطي",
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      onFinish: () {
+        _tutorial = null;
+      },
+      onSkip: () {
+        _tutorial = null;
+        return true;
+      },
+    );
+
+    _tutorial!.show(context: context);
+  }
+
+  static Future<void> showMainTutorial({
+    required BuildContext context,
+    required GlobalKey addButtonKey,
+    required GlobalKey searchFieldKey,
+    required GlobalKey filterButtonKey,
+    required GlobalKey listViewKey,
+    required VoidCallback onNext,
+    ScrollController? scrollController,
+  }) async {
+    // التمرير إلى العنصر الأول قبل عرض التعليمات
+    await _scrollToTarget(addButtonKey, scrollController);
+    
+    int currentTarget = 0;
+    final targetKeys = [addButtonKey, searchFieldKey, filterButtonKey, listViewKey];
+    
+    final targets = <TargetFocus>[];
+
+    // الخطوة 1: زر الإضافة
+    targets.add(
+      TargetFocus(
+        identify: "add_button",
+        keyTarget: addButtonKey,
+        alignSkip: Alignment.topLeft,
+        radius: 30,
+        shape: ShapeLightFocus.Circle,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 1,
+                totalSteps: 4,
+                title: 'إضافة نوع قات جديد',
+                description: 'اضغط على هذا الزر لإضافة نوع جديد من القات إلى المخزون',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 2: حقل البحث
+    targets.add(
+      TargetFocus(
+        identify: "search_field",
+        keyTarget: searchFieldKey,
+        alignSkip: Alignment.topLeft,
+        radius: 10,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 2,
+                totalSteps: 4,
+                title: 'البحث في الأنواع',
+                description: 'استخدم هذا الحقل للبحث عن أنواع القات المختلفة بسرعة',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 3: زر التصفية
+    targets.add(
+      TargetFocus(
+        identify: "filter_button",
+        keyTarget: filterButtonKey,
+        alignSkip: Alignment.topLeft,
+        radius: 16,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 3,
+                totalSteps: 4,
+                title: 'تصفية حسب الجودة',
+                description: 'استخدم هذا الزر لتصفية أنواع القات حسب درجة الجودة',
+                onNext: () async {
+                  currentTarget++;
+                  if (currentTarget < targetKeys.length) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.next();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () {
+                  controller.skip();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 4: قائمة الأنواع
+    targets.add(
+      TargetFocus(
+        identify: "list_view",
+        keyTarget: listViewKey,
+        alignSkip: Alignment.topLeft,
+        radius: 16,
+        shape: ShapeLightFocus.RRect,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        paddingFocus: 2,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                stepNumber: 4,
+                totalSteps: 4,
+                title: 'قائمة أنواع القات',
+                description: 'هنا تظهر جميع أنواع القات\nاضغط على أي بطاقة لعرض التفاصيل والتعديل',
+                onNext: () {
+                  controller.skip();
+                  onNext();
+                },
+                onPrevious: () async {
+                  currentTarget--;
+                  if (currentTarget >= 0) {
+                    await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                  }
+                  controller.previous();
+                },
+                isLastStep: true,
+                showSkip: false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.textPrimary,
+      opacityShadow: 0.90,
+      paddingFocus: 2,
+      alignSkip: Alignment.topLeft,
+      textSkip: "تخطي",
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      onFinish: () {
+        _tutorial = null;
+      },
+      onSkip: () {
+        _tutorial = null;
+        return true;
+      },
+    );
+
+    _tutorial!.show(context: context);
+  }
+
+  static Widget _buildStepContent({
+    required int stepNumber,
+    required int totalSteps,
     required String title,
     required String description,
-    required bool isInteractive,
+    required VoidCallback onNext,
+    VoidCallback? onPrevious,
+    VoidCallback? onSkip,
+    bool isLastStep = false,
+    bool showSkip = false,
   }) {
-    return TargetFocus(
-      identify: identify,
-      keyTarget: keyTarget,
-      enableOverlayTab: false, // منع النقر على الخلفية للعناصر التفاعلية
-      enableTargetTab: true, // السماح بالنقر على العنصر
-      radius: 8,
-      shape: ShapeLightFocus.RRect,
-      contents: [
-        TargetContent(
-          align: ContentAlign.bottom,
-          builder: (context, controller) {
-            return _buildInteractiveContent(
-              title: title,
-              description: description,
-              controller: controller,
-              isInteractive: isInteractive,
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  /// بناء محتوى المقدمة
-  Widget _buildIntroContent(TutorialCoachMarkController controller) {
     return Container(
-      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // أيقونة الترحيب
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: qatTypesColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.waving_hand,
-              color: qatTypesColor,
-              size: 32,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // العنوان
-          const Text(
-            "مرحباً بك في وضع التعلم! 👋",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: qatTypesColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-
-          // الوصف
-          const Text(
-            "سنتعلم معاً كيفية إضافة نوع قات جديد خطوة بخطوة.\nستتمكن من التفاعل مع الحقول مباشرة!",
-            style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-
-          // زر البدء
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => controller.next(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: qatTypesColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                "ابدأ التعلم",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // زر التخطي
-          TextButton(
-            onPressed: () => controller.skip(),
-            child: const Text(
-              "تخطي التعليمات",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// بناء محتوى تفاعلي
-  Widget _buildInteractiveContent({
-    required String title,
-    required String description,
-    required TutorialCoachMarkController controller,
-    required bool isInteractive,
-  }) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -239,85 +651,132 @@ class QatTypesTutorialService {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // العنوان
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: qatTypesColor,
-            ),
+          // مؤشر الخطوة
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.success],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'الخطوة $stepNumber من $totalSteps',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (showSkip) ...[
+                const Spacer(),
+                TextButton(
+                  onPressed: onSkip,
+                  child: const Text(
+                    'تخطي الكل',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
+
+          // العنوان
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isLastStep ? Icons.check_circle : Icons.touch_app,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
 
           // الوصف
           Text(
             description,
             style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              height: 1.4,
+              fontSize: 15,
+              height: 1.5,
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // تعليمات التفاعل
-          if (isInteractive) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.green.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.touch_app, color: Colors.green, size: 16),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "يمكنك التفاعل مع هذا العنصر مباشرة!",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          // أزرار التحكم
+          // الأزرار
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: () => controller.skip(),
-                child: const Text(
-                  "تخطي",
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-              ),
+              // زر السابق
+              if (onPrevious != null)
+                TextButton.icon(
+                  onPressed: onPrevious,
+                  icon: const Icon(Icons.arrow_forward, size: 18),
+                  label: const Text('السابق'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+
+              // زر التالي
               ElevatedButton(
-                onPressed: () => controller.next(),
+                onPressed: onNext,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: qatTypesColor,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
+                    horizontal: 24,
+                    vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: 4,
                 ),
-                child: const Text("التالي"),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isLastStep ? 'فهمت' : 'التالي',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (!isLastStep) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_back, size: 18),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -326,35 +785,7 @@ class QatTypesTutorialService {
     );
   }
 
-  /// عرض التعليمات
-  void _showTutorial(BuildContext context, List<TargetFocus> targets) {
-    _tutorialCoachMark = TutorialCoachMark(
-      targets: targets,
-      colorShadow: qatTypesColor,
-      textSkip: "تخطي",
-      paddingFocus: 8,
-      opacityShadow: 0.6,
-      imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-      hideSkip: false,
-      useSafeArea: true,
-      onFinish: () {
-        _tutorialCoachMark = null;
-      },
-      onSkip: () {
-        _tutorialCoachMark = null;
-        return true;
-      },
-    );
-
-    _tutorialCoachMark?.show(context: context);
+  static void dispose() {
+    _tutorial = null;
   }
-
-  /// إيقاف التعليمات
-  void stopTutorial() {
-    _tutorialCoachMark?.finish();
-    _tutorialCoachMark = null;
-  }
-
-  /// التحقق من وجود تعليمات نشطة
-  bool get isActive => _tutorialCoachMark != null;
 }

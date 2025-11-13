@@ -7,7 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../blocs/settings/settings_bloc.dart';
 import '../../../blocs/settings/settings_state.dart';
-import '../../../../core/services/qat_types_tutorial_manager.dart';
 
 /// شبكة القوائم الرئيسية - تصميم متطور
 class MenuGrid extends StatefulWidget {

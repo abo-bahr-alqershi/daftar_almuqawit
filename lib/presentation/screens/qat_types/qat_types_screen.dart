@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/qat_type.dart';
@@ -11,7 +12,7 @@ import '../../blocs/qat_types/qat_types_state.dart';
 import '../../navigation/route_names.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import './widgets/qat_type_card.dart';
-import '../../../core/services/tutorial_service.dart';
+import '../../../core/services/qat_types_tutorial_service.dart';
 
 /// شاشة أنواع القات الرئيسية - تصميم راقي هادئ
 class QatTypesScreen extends StatefulWidget {
@@ -28,14 +29,14 @@ class _QatTypesScreenState extends State<QatTypesScreen>
   double _scrollOffset = 0;
   String _selectedFilter = 'الكل';
   final TextEditingController _searchController = TextEditingController();
-  
+
   // مفاتيح التعليمات التفاعلية
   final GlobalKey _addButtonKey = GlobalKey();
   final GlobalKey _searchFieldKey = GlobalKey();
   final GlobalKey _filterButtonKey = GlobalKey();
   final GlobalKey _listViewKey = GlobalKey();
   final GlobalKey _firstItemKey = GlobalKey();
-  
+
   bool _showTutorial = false;
   String? _tutorialOperation;
 
@@ -56,13 +57,18 @@ class _QatTypesScreenState extends State<QatTypesScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QatTypesBloc>().add(LoadQatTypes());
-      
+
       // التحقق من معاملات التعليمات
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null && args['showTutorial'] == true) {
-        _showTutorial = true;
-        _tutorialOperation = args['operation'];
-        _startTutorial();
+        setState(() {
+          _showTutorial = true;
+          _tutorialOperation = args['operation'];
+        });
+        if (_tutorialOperation != 'edit') {
+          _startTutorial();
+        }
       }
     });
   }
@@ -72,52 +78,28 @@ class _QatTypesScreenState extends State<QatTypesScreen>
     _animationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
-    TutorialService.instance.stopTutorial();
+    QatTypesTutorialService.dispose();
     super.dispose();
   }
 
   void _startTutorial() {
-    if (!_showTutorial || _tutorialOperation == null) return;
-    
-    // تأخير بسيط للتأكد من بناء الواجهة
-    Future.delayed(const Duration(milliseconds: 500), () {
-      final targets = TutorialService.createQatTypesTargets(
-        operation: _tutorialOperation!,
-        keys: _getTutorialKeys(),
-      );
-      
-      TutorialService.instance.startQatTypesTutorial(
-        context,
-        operation: _tutorialOperation!,
-        targets: targets,
-      );
-    });
-  }
+    if (!_showTutorial) return;
 
-  Map<String, GlobalKey> _getTutorialKeys() {
-    switch (_tutorialOperation) {
-      case 'add':
-        return {
-          'add_button': _addButtonKey,
-          'name_field': _searchFieldKey, // مؤقتاً حتى نصل للشاشة الفعلية
-          'price_field': _filterButtonKey, // مؤقتاً
-          'save_button': _listViewKey, // مؤقتاً
-        };
-      case 'edit':
-        return {
-          'select_item': _firstItemKey,
-          'edit_button': _addButtonKey,
-          'update_fields': _searchFieldKey,
-        };
-      case 'delete':
-        return {
-          'select_item': _firstItemKey,
-          'delete_button': _addButtonKey,
-          'confirm_dialog': _listViewKey,
-        };
-      default:
-        return {};
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        QatTypesTutorialService.showMainTutorial(
+          context: context,
+          addButtonKey: _addButtonKey,
+          searchFieldKey: _searchFieldKey,
+          filterButtonKey: _filterButtonKey,
+          listViewKey: _listViewKey,
+          onNext: () {},
+        );
+        setState(() {
+          _showTutorial = false;
+        });
+      }
+    });
   }
 
   void _loadQatTypes() {
@@ -143,78 +125,78 @@ class _QatTypesScreenState extends State<QatTypesScreen>
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
+          textDirection: ui.TextDirection.rtl,
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            body: Stack(
+              children: [
+                _buildGradientBackground(),
 
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                _buildModernAppBar(topPadding),
-
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-
-                      BlocConsumer<QatTypesBloc, QatTypesState>(
-                        listener: (context, state) {
-                          if (state is QatTypeOperationSuccess) {
-                            _showSuccessMessage(state.message);
-                          } else if (state is QatTypesError) {
-                            _showErrorMessage(state.message);
-                          }
-                        },
-                        builder: (context, state) {
-                          if (state is QatTypesLoading) {
-                            return _buildShimmerStats();
-                          }
-                          if (state is QatTypesLoaded ||
-                              state is QatTypesSearchResults) {
-                            final qatTypes = state is QatTypesLoaded
-                                ? state.qatTypes
-                                : (state as QatTypesSearchResults).results;
-
-                            return Column(
-                              children: [
-                                _buildStatsCard(qatTypes),
-                                const SizedBox(height: 32),
-                                _buildSectionTitle(
-                                  'أنواع القات',
-                                  Icons.grass_rounded,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildFilterChips(),
-                                const SizedBox(height: 16),
-                                if (qatTypes.isEmpty)
-                                  _buildEmptyState()
-                                else
-                                  _buildQatTypesList(qatTypes),
-                                const SizedBox(height: 100),
-                              ],
-                            );
-                          }
-                          return _buildEmptyState();
-                        },
-                      ),
-                    ],
+                CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
+                  slivers: [
+                    _buildModernAppBar(topPadding),
+
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
+
+                          BlocConsumer<QatTypesBloc, QatTypesState>(
+                            listener: (context, state) {
+                              if (state is QatTypeOperationSuccess) {
+                                _showSuccessMessage(state.message);
+                              } else if (state is QatTypesError) {
+                                _showErrorMessage(state.message);
+                              }
+                            },
+                            builder: (context, state) {
+                              if (state is QatTypesLoading) {
+                                return _buildShimmerStats();
+                              }
+                              if (state is QatTypesLoaded ||
+                                  state is QatTypesSearchResults) {
+                                final qatTypes = state is QatTypesLoaded
+                                    ? state.qatTypes
+                                    : (state as QatTypesSearchResults).results;
+
+                                return Column(
+                                  children: [
+                                    _buildStatsCard(qatTypes),
+                                    const SizedBox(height: 32),
+                                    _buildSectionTitle(
+                                      'أنواع القات',
+                                      Icons.grass_rounded,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildFilterChips(),
+                                    const SizedBox(height: 16),
+                                    if (qatTypes.isEmpty)
+                                      _buildEmptyState()
+                                    else
+                                      _buildQatTypesList(qatTypes),
+                                    const SizedBox(height: 100),
+                                  ],
+                                );
+                              }
+                              return _buildEmptyState();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+
+                _buildFloatingActionButton(context),
               ],
             ),
-
-            _buildFloatingActionButton(context),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
   }
 
   Widget _buildGradientBackground() => Container(
@@ -723,11 +705,20 @@ class _QatTypesScreenState extends State<QatTypesScreen>
       itemCount: qatTypes.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        return QatTypeCard(
+        final card = QatTypeCard(
           qatType: qatTypes[index],
           onTap: () => _showQatTypeDetails(qatTypes[index]),
           onDelete: () => _deleteQatType(qatTypes[index]),
         );
+
+        if (index == 0 && _tutorialOperation == 'edit') {
+          return Container(
+            key: _firstItemKey,
+            child: card,
+          );
+        }
+
+        return card;
       },
     );
   }

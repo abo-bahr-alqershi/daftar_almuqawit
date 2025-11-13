@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/qat_type.dart';
@@ -9,6 +10,7 @@ import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
 import '../../blocs/qat_types/qat_types_state.dart';
 import './widgets/qat_type_form.dart';
+import '../../../core/services/qat_types_tutorial_service.dart';
 
 /// شاشة تعديل نوع قات - تصميم راقي هادئ
 class EditQatTypeScreen extends StatefulWidget {
@@ -31,6 +33,12 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
   final _formKey = GlobalKey<QatTypeFormState>();
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  
+  final GlobalKey _nameFieldKey = GlobalKey();
+  final GlobalKey _priceFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
+  
+  bool _showTutorial = false;
 
   @override
   void initState() {
@@ -58,13 +66,43 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
         _scrollOffset = _scrollController.offset;
       });
     });
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      
+      if (args != null && args['showTutorial'] == true && args['operation'] == 'edit') {
+        setState(() {
+          _showTutorial = true;
+        });
+        _startTutorial();
+      }
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     _scrollController.dispose();
+    QatTypesTutorialService.dispose();
     super.dispose();
+  }
+
+  void _startTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted && _showTutorial) {
+        await QatTypesTutorialService.showEditTutorial(
+          context: context,
+          nameFieldKey: _nameFieldKey,
+          priceFieldKey: _priceFieldKey,
+          saveButtonKey: _saveButtonKey,
+          scrollController: _scrollController,
+          onNext: () {},
+        );
+        setState(() {
+          _showTutorial = false;
+        });
+      }
+    });
   }
 
   Future<void> _submitQatType() async {
@@ -97,94 +135,97 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
+          textDirection: ui.TextDirection.rtl,
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            body: Stack(
+              children: [
+                _buildGradientBackground(),
 
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                _buildModernAppBar(topPadding),
+                CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    _buildModernAppBar(topPadding),
 
-                SliverToBoxAdapter(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: BlocConsumer<QatTypesBloc, QatTypesState>(
-                        listener: (context, state) {
-                          if (state is QatTypeOperationSuccess) {
-                            HapticFeedback.heavyImpact();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.check_circle, color: Colors.white),
-                                    const SizedBox(width: 12),
-                                    Text(state.message),
-                                  ],
-                                ),
-                                backgroundColor: AppColors.success,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            );
-                            Navigator.of(context).pop(true);
-                          } else if (state is QatTypesError) {
-                            HapticFeedback.heavyImpact();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.error, color: Colors.white),
-                                    const SizedBox(width: 12),
-                                    Text(state.message),
-                                  ],
-                                ),
-                                backgroundColor: AppColors.danger,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        builder: (context, state) {
-                          final isLoading = state is QatTypesLoading;
+                    SliverToBoxAdapter(
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: BlocConsumer<QatTypesBloc, QatTypesState>(
+                            listener: (context, state) {
+                              if (state is QatTypeOperationSuccess) {
+                                HapticFeedback.heavyImpact();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle, color: Colors.white),
+                                        const SizedBox(width: 12),
+                                        Text(state.message),
+                                      ],
+                                    ),
+                                    backgroundColor: AppColors.success,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                                Navigator.of(context).pop(true);
+                              } else if (state is QatTypesError) {
+                                HapticFeedback.heavyImpact();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.error, color: Colors.white),
+                                        const SizedBox(width: 12),
+                                        Text(state.message),
+                                      ],
+                                    ),
+                                    backgroundColor: AppColors.danger,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            builder: (context, state) {
+                              final isLoading = state is QatTypesLoading;
 
-                          return Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: QatTypeForm(
-                              key: _formKey,
-                              qatType: widget.qatType,
-                              isLoading: isLoading,
-                              onSubmit: _submitQatType,
-                              onCancel: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          );
-                        },
+                              return Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: QatTypeForm(
+                                  key: _formKey,
+                                  qatType: widget.qatType,
+                                  isLoading: isLoading,
+                                  nameFieldKey: _nameFieldKey,
+                                  priceFieldKey: _priceFieldKey,
+                                  saveButtonKey: _saveButtonKey,
+                                  onSubmit: _submitQatType,
+                                  onCancel: () {
+                                    HapticFeedback.lightImpact();
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
   }
 
   Widget _buildGradientBackground() => Container(
