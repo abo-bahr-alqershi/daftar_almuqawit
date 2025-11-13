@@ -15,6 +15,9 @@ class QatTypeForm extends StatefulWidget {
     this.nameFieldKey,
     this.priceFieldKey,
     this.saveButtonKey,
+    this.nameFocusNode,
+    this.buyPriceFocusNode,
+    this.sellPriceFocusNode,
   });
   final dynamic qatType;
   final VoidCallback? onSubmit;
@@ -23,6 +26,9 @@ class QatTypeForm extends StatefulWidget {
   final GlobalKey? nameFieldKey;
   final GlobalKey? priceFieldKey;
   final GlobalKey? saveButtonKey;
+  final FocusNode? nameFocusNode;
+  final FocusNode? buyPriceFocusNode;
+  final FocusNode? sellPriceFocusNode;
 
   @override
   State<QatTypeForm> createState() => QatTypeFormState();
@@ -34,10 +40,10 @@ class QatTypeFormState extends State<QatTypeForm> {
   final _buyPriceController = TextEditingController();
   final _sellPriceController = TextEditingController();
 
-  // FocusNodes للحقول
-  final _nameFocusNode = FocusNode();
-  final _buyPriceFocusNode = FocusNode();
-  final _sellPriceFocusNode = FocusNode();
+  // FocusNodes للحقول - استخدام الخارجية أو إنشاء داخلية
+  late FocusNode _nameFocusNode;
+  late FocusNode _buyPriceFocusNode;
+  late FocusNode _sellPriceFocusNode;
 
   String _selectedQuality = 'ممتاز';
   String _selectedIcon = '🌿';
@@ -53,6 +59,11 @@ class QatTypeFormState extends State<QatTypeForm> {
   @override
   void initState() {
     super.initState();
+
+    // استخدام FocusNodes الممررة أو إنشاء جديدة
+    _nameFocusNode = widget.nameFocusNode ?? FocusNode();
+    _buyPriceFocusNode = widget.buyPriceFocusNode ?? FocusNode();
+    _sellPriceFocusNode = widget.sellPriceFocusNode ?? FocusNode();
 
     for (var unit in _availableUnits) {
       _unitBuyPriceControllers[unit] = TextEditingController();
@@ -86,9 +97,12 @@ class QatTypeFormState extends State<QatTypeForm> {
     _nameController.dispose();
     _buyPriceController.dispose();
     _sellPriceController.dispose();
-    _nameFocusNode.dispose();
-    _buyPriceFocusNode.dispose();
-    _sellPriceFocusNode.dispose();
+    
+    // التخلص من FocusNodes فقط إذا تم إنشاؤها داخلياً
+    if (widget.nameFocusNode == null) _nameFocusNode.dispose();
+    if (widget.buyPriceFocusNode == null) _buyPriceFocusNode.dispose();
+    if (widget.sellPriceFocusNode == null) _sellPriceFocusNode.dispose();
+    
     for (var controller in _unitBuyPriceControllers.values) {
       controller.dispose();
     }
@@ -99,6 +113,11 @@ class QatTypeFormState extends State<QatTypeForm> {
   }
 
   bool validate() => _formKey.currentState?.validate() ?? false;
+
+  // إضافة دوال للوصول إلى FocusNodes من الخارج
+  FocusNode get nameFocusNode => _nameFocusNode;
+  FocusNode get buyPriceFocusNode => _buyPriceFocusNode;
+  FocusNode get sellPriceFocusNode => _sellPriceFocusNode;
 
   Map<String, dynamic> getFormData() {
     final Map<String, UnitPrice> unitPrices = {};

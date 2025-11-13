@@ -5,6 +5,12 @@ import '../theme/app_colors.dart';
 
 class QatTypesTutorialService {
   static TutorialCoachMark? _tutorial;
+  static Map<String, FocusNode> _focusNodes = {};
+  
+  /// تسجيل FocusNodes
+  static void registerFocusNodes(Map<String, FocusNode> focusNodes) {
+    _focusNodes = focusNodes;
+  }
 
   /// دالة مساعدة للتمرير الدقيق إلى العنصر المستهدف
   static Future<void> _scrollToTarget(
@@ -85,12 +91,18 @@ class QatTypesTutorialService {
     required GlobalKey saveButtonKey,
     required VoidCallback onNext,
     ScrollController? scrollController,
+    Map<String, FocusNode>? focusNodes,
   }) async {
+    // تسجيل FocusNodes
+    if (focusNodes != null) {
+      registerFocusNodes(focusNodes);
+    }
     // التمرير إلى الحقل الأول قبل عرض التعليمات
     await _scrollToTarget(nameFieldKey, scrollController);
     
     int currentTarget = 0;
     final targetKeys = [nameFieldKey, priceFieldKey, saveButtonKey];
+    final fieldIds = ['name_field', 'price_field', 'save_button'];
     
     final targets = <TargetFocus>[];
 
@@ -110,20 +122,49 @@ class QatTypesTutorialService {
             align: ContentAlign.bottom,
             padding: const EdgeInsets.all(20),
             builder: (context, controller) {
+              // طلب التركيز تلقائياً عند عرض هذه الخطوة
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                final focusNode = _focusNodes['name_field'];
+                if (focusNode != null) {
+                  // تأخير قصير لضمان عرض التعليمات أولاً
+                  await Future.delayed(const Duration(milliseconds: 300));
+                  
+                  // طلب التركيز
+                  if (context.mounted) {
+                    FocusScope.of(context).requestFocus(focusNode);
+                  }
+                }
+              });
+              
               return _buildStepContent(
                 stepNumber: 1,
                 totalSteps: 3,
                 title: 'أدخل اسم نوع القات',
-                description: 'اكتب اسم نوع القات في الحقل أعلاه ثم اضغط "التالي"\n(مثال: قيفي رووس، عنسي عوارض)',
+                description: 'الآن يمكنك الكتابة في الحقل أعلاه\nأدخل اسم نوع القات ثم اضغط "التالي"',
                 onNext: () async {
+                  // إلغاء التركيز
+                  FocusScope.of(context).unfocus();
+                  
                   currentTarget++;
                   if (currentTarget < targetKeys.length) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                    
+                    // طلب التركيز للحقل التالي
+                    if (currentTarget < fieldIds.length) {
+                      final nextFocusNode = _focusNodes[fieldIds[currentTarget]];
+                      if (nextFocusNode != null) {
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        if (context.mounted) {
+                          FocusScope.of(context).requestFocus(nextFocusNode);
+                        }
+                      }
+                    }
                   }
                   controller.next();
                 },
                 showSkip: true,
                 onSkip: () {
+                  FocusScope.of(context).unfocus();
                   controller.skip();
                 },
               );
@@ -149,12 +190,25 @@ class QatTypesTutorialService {
             align: ContentAlign.bottom,
             padding: const EdgeInsets.all(20),
             builder: (context, controller) {
+              // طلب التركيز تلقائياً
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                final focusNode = _focusNodes['price_field'];
+                if (focusNode != null) {
+                  await Future.delayed(const Duration(milliseconds: 300));
+                  if (context.mounted) {
+                    FocusScope.of(context).requestFocus(focusNode);
+                  }
+                }
+              });
+              
               return _buildStepContent(
                 stepNumber: 2,
                 totalSteps: 3,
                 title: 'أدخل الأسعار',
-                description: 'اكتب سعر الشراء والبيع في الحقول أعلاه ثم اضغط "التالي"',
+                description: 'الآن يمكنك إدخال سعر الشراء في الحقل أعلاه\nأدخل السعر ثم اضغط "التالي"',
                 onNext: () async {
+                  FocusScope.of(context).unfocus();
+                  
                   currentTarget++;
                   if (currentTarget < targetKeys.length) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
@@ -162,14 +216,28 @@ class QatTypesTutorialService {
                   controller.next();
                 },
                 onPrevious: () async {
+                  FocusScope.of(context).unfocus();
+                  
                   currentTarget--;
                   if (currentTarget >= 0) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                    
+                    // طلب التركيز للحقل السابق
+                    if (currentTarget < fieldIds.length) {
+                      final prevFocusNode = _focusNodes[fieldIds[currentTarget]];
+                      if (prevFocusNode != null) {
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        if (context.mounted) {
+                          FocusScope.of(context).requestFocus(prevFocusNode);
+                        }
+                      }
+                    }
                   }
                   controller.previous();
                 },
                 showSkip: true,
                 onSkip: () {
+                  FocusScope.of(context).unfocus();
                   controller.skip();
                 },
               );
@@ -195,6 +263,11 @@ class QatTypesTutorialService {
             align: ContentAlign.top,
             padding: const EdgeInsets.all(20),
             builder: (context, controller) {
+              // إلغاء أي تركيز عند عرض زر الحفظ
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                FocusScope.of(context).unfocus();
+              });
+              
               return _buildStepContent(
                 stepNumber: 3,
                 totalSteps: 3,
@@ -208,6 +281,17 @@ class QatTypesTutorialService {
                   currentTarget--;
                   if (currentTarget >= 0) {
                     await _scrollToTarget(targetKeys[currentTarget], scrollController);
+                    
+                    // طلب التركيز للحقل السابق
+                    if (currentTarget < fieldIds.length) {
+                      final prevFocusNode = _focusNodes[fieldIds[currentTarget]];
+                      if (prevFocusNode != null) {
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        if (context.mounted) {
+                          FocusScope.of(context).requestFocus(prevFocusNode);
+                        }
+                      }
+                    }
                   }
                   controller.previous();
                 },
@@ -234,9 +318,13 @@ class QatTypesTutorialService {
       ),
       onFinish: () {
         _tutorial = null;
+        _focusNodes.clear();
+        FocusScope.of(context).unfocus();
       },
       onSkip: () {
         _tutorial = null;
+        _focusNodes.clear();
+        FocusScope.of(context).unfocus();
         return true;
       },
     );
@@ -787,5 +875,6 @@ class QatTypesTutorialService {
 
   static void dispose() {
     _tutorial = null;
+    _focusNodes.clear();
   }
 }

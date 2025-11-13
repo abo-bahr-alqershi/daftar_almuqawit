@@ -33,6 +33,11 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   final GlobalKey _priceFieldKey = GlobalKey();
   final GlobalKey _saveButtonKey = GlobalKey();
 
+  // إضافة FocusNodes
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _buyPriceFocusNode = FocusNode();
+  final FocusNode _sellPriceFocusNode = FocusNode();
+
   bool _showTutorial = false;
 
   @override
@@ -83,12 +88,18 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   void dispose() {
     _animationController.dispose();
     _scrollController.dispose();
+    _nameFocusNode.dispose();
+    _buyPriceFocusNode.dispose();
+    _sellPriceFocusNode.dispose();
     QatTypesTutorialService.dispose();
     super.dispose();
   }
 
   void _startTutorial() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // انتظار إضافي لضمان استقرار الواجهة
+      await Future.delayed(const Duration(milliseconds: 300));
+      
       if (mounted && _showTutorial) {
         await QatTypesTutorialService.showAddTutorial(
           context: context,
@@ -97,6 +108,11 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
           saveButtonKey: _saveButtonKey,
           scrollController: _scrollController,
           onNext: () {},
+          // تمرير FocusNodes
+          focusNodes: {
+            'name_field': _nameFocusNode,
+            'price_field': _buyPriceFocusNode,
+          },
         );
         setState(() {
           _showTutorial = false;
@@ -212,6 +228,9 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                                   nameFieldKey: _nameFieldKey,
                                   priceFieldKey: _priceFieldKey,
                                   saveButtonKey: _saveButtonKey,
+                                  nameFocusNode: _nameFocusNode,        // جديد - تمرير FocusNode
+                                  buyPriceFocusNode: _buyPriceFocusNode, // جديد - تمرير FocusNode
+                                  sellPriceFocusNode: _sellPriceFocusNode, // جديد - تمرير FocusNode
                                   onSubmit: _submitQatType,
                                   onCancel: () {
                                     HapticFeedback.lightImpact();
