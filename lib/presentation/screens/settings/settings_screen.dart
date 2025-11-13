@@ -85,6 +85,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 24),
                             _buildAppearanceSection(),
                             const SizedBox(height: 24),
+                            _buildLearningSection(settingsState),
+                            const SizedBox(height: 24),
                             _buildNotificationsSection(settingsState),
                             const SizedBox(height: 24),
                             _buildDataSection(settingsState),
@@ -241,6 +243,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: Icons.brightness_6_rounded,
           iconColor: AppColors.warning,
           onTap: () => _navigateTo(const ThemeScreen()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLearningSection(SettingsLoaded state) {
+    return _SectionCard(
+      title: 'وضع التعلم',
+      icon: Icons.school_rounded,
+      color: AppColors.purchases,
+      children: [
+        SettingsTile(
+          title: 'تفعيل وضع التعلم',
+          subtitle: 'عرض أزرار العمليات بدلاً من الإدارات',
+          icon: Icons.lightbulb_outline_rounded,
+          iconColor: AppColors.purchases,
+          trailing: Switch(
+            value: state.learningModeEnabled,
+            onChanged: (value) {
+              HapticFeedback.lightImpact();
+              context.read<SettingsBloc>().add(ToggleLearningMode(value));
+            },
+            activeColor: AppColors.purchases,
+          ),
         ),
       ],
     );

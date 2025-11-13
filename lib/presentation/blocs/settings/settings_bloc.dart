@@ -35,6 +35,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<ToggleAutoBackup>(_onToggleAutoBackup);
     on<ToggleNotifications>(_onToggleNotifications);
     on<ToggleSound>(_onToggleSound);
+    on<ToggleLearningMode>(_onToggleLearningMode);
   }
 
   /// معالج تحميل الإعدادات
@@ -56,6 +57,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final notificationsEnabled =
           _prefs.getBool(StorageKeys.notificationsEnabled) ?? true;
       final soundEnabled = true; // TODO: إضافة مفتاح للصوت في StorageKeys
+      final learningModeEnabled =
+          _prefs.getBool(StorageKeys.learningModeEnabled) ?? false;
 
       emit(
         SettingsLoaded(
@@ -65,6 +68,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           autoBackupEnabled: autoBackupEnabled,
           notificationsEnabled: notificationsEnabled,
           soundEnabled: soundEnabled,
+          learningModeEnabled: learningModeEnabled,
         ),
       );
 
@@ -264,6 +268,30 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     } catch (e, s) {
       _logger.error('فشل تبديل الصوت', error: e, stackTrace: s);
       emit(SettingsError('فشل تبديل الصوت: ${e.toString()}'));
+    }
+  }
+
+  /// معالج تبديل وضع التعلم
+  Future<void> _onToggleLearningMode(
+    ToggleLearningMode event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      _logger.info('تبديل وضع التعلم إلى: ${event.enabled}');
+
+      // حفظ الإعداد
+      await _prefs.setBool(StorageKeys.learningModeEnabled, event.enabled);
+
+      // تحديث الحالة
+      final currentState = state;
+      if (currentState is SettingsLoaded) {
+        emit(currentState.copyWith(learningModeEnabled: event.enabled));
+      }
+
+      _logger.info('تم تبديل وضع التعلم بنجاح');
+    } catch (e, s) {
+      _logger.error('فشل تبديل وضع التعلم', error: e, stackTrace: s);
+      emit(SettingsError('فشل تبديل وضع التعلم: ${e.toString()}'));
     }
   }
 }

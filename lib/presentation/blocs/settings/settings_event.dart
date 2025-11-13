@@ -45,3 +45,9 @@ class ToggleSound extends SettingsEvent {
   final bool enabled;
   ToggleSound(this.enabled);
 }
+
+/// حدث تبديل وضع التعلم
+class ToggleLearningMode extends SettingsEvent {
+  final bool enabled;
+  ToggleLearningMode(this.enabled);
+}

@@ -20,6 +20,7 @@ class SettingsLoaded extends SettingsState {
   final bool autoBackupEnabled;
   final bool notificationsEnabled;
   final bool soundEnabled;
+  final bool learningModeEnabled;
   
   SettingsLoaded({
     required this.languageCode,
@@ -28,6 +29,7 @@ class SettingsLoaded extends SettingsState {
     this.autoBackupEnabled = false,
     this.notificationsEnabled = true,
     this.soundEnabled = true,
+    this.learningModeEnabled = false,
   });
   
   /// نسخ الحالة مع تحديث بعض القيم
@@ -38,6 +40,7 @@ class SettingsLoaded extends SettingsState {
     bool? autoBackupEnabled,
     bool? notificationsEnabled,
     bool? soundEnabled,
+    bool? learningModeEnabled,
   }) {
     return SettingsLoaded(
       languageCode: languageCode ?? this.languageCode,
@@ -46,6 +49,7 @@ class SettingsLoaded extends SettingsState {
       autoBackupEnabled: autoBackupEnabled ?? this.autoBackupEnabled,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
+      learningModeEnabled: learningModeEnabled ?? this.learningModeEnabled,
     );
   }
   
@@ -57,6 +61,7 @@ class SettingsLoaded extends SettingsState {
     autoBackupEnabled,
     notificationsEnabled,
     soundEnabled,
+    learningModeEnabled,
   ];
 }
 

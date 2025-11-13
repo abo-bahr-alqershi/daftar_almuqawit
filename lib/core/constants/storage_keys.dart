@@ -47,6 +47,7 @@ class StorageKeys {
   static const String dateFormat = 'date_format';
   static const String useArabicNumbers = 'use_arabic_numbers';
   static const String showDecimals = 'show_decimals';
+  static const String learningModeEnabled = 'learning_mode_enabled';
   
   // التخزين الآمن (SecureStorage)
   static const String authToken = 'auth_token';

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'menu_card.dart';
 import '../../../navigation/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../blocs/settings/settings_bloc.dart';
+import '../../../blocs/settings/settings_state.dart';
 
 /// شبكة القوائم الرئيسية - تصميم متطور
 class MenuGrid extends StatefulWidget {
@@ -21,11 +24,13 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
   late List<Animation<double>> _fadeAnimations;
 
   final List<_MenuItemData> menuItems = [];
+  final List<_MenuItemData> operationItems = [];
 
   @override
   void initState() {
     super.initState();
     _initializeMenuItems();
+    _initializeOperationItems();
     _initializeAnimations();
     _startAnimations();
   }
@@ -132,9 +137,102 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
     ]);
   }
 
+  void _initializeOperationItems() {
+    operationItems.addAll([
+      _MenuItemData(
+        title: 'إضافة نوع قات',
+        icon: Icons.add_circle_rounded,
+        color: AppColors.success,
+        route: RouteNames.qatTypes,
+        subtitle: 'إضافة صنف جديد',
+      ),
+      _MenuItemData(
+        title: 'تعديل نوع قات',
+        icon: Icons.edit_rounded,
+        color: AppColors.info,
+        route: RouteNames.qatTypes,
+        subtitle: 'تعديل الأصناف',
+      ),
+      _MenuItemData(
+        title: 'حذف نوع قات',
+        icon: Icons.delete_rounded,
+        color: AppColors.danger,
+        route: RouteNames.qatTypes,
+        subtitle: 'حذف الأصناف',
+      ),
+      _MenuItemData(
+        title: 'إضافة مورد',
+        icon: Icons.person_add_rounded,
+        color: AppColors.primary,
+        route: RouteNames.suppliers,
+        subtitle: 'إضافة مورد جديد',
+      ),
+      _MenuItemData(
+        title: 'تعديل مورد',
+        icon: Icons.person_outline_rounded,
+        color: AppColors.accent,
+        route: RouteNames.suppliers,
+        subtitle: 'تعديل بيانات المورد',
+      ),
+      _MenuItemData(
+        title: 'حذف مورد',
+        icon: Icons.person_remove_rounded,
+        color: AppColors.warning,
+        route: RouteNames.suppliers,
+        subtitle: 'حذف المورد',
+      ),
+      _MenuItemData(
+        title: 'إضافة عميل',
+        icon: Icons.group_add_rounded,
+        color: AppColors.success,
+        route: RouteNames.customers,
+        subtitle: 'إضافة عميل جديد',
+      ),
+      _MenuItemData(
+        title: 'تعديل عميل',
+        icon: Icons.people_outline_rounded,
+        color: AppColors.info,
+        route: RouteNames.customers,
+        subtitle: 'تعديل بيانات العميل',
+      ),
+      _MenuItemData(
+        title: 'حذف عميل',
+        icon: Icons.group_remove_rounded,
+        color: AppColors.danger,
+        route: RouteNames.customers,
+        subtitle: 'حذف العميل',
+      ),
+      _MenuItemData(
+        title: 'إضافة مبيعة',
+        icon: Icons.shopping_cart_checkout_rounded,
+        color: AppColors.purchases,
+        route: RouteNames.sales,
+        subtitle: 'تسجيل مبيعة جديدة',
+      ),
+      _MenuItemData(
+        title: 'تعديل مبيعة',
+        icon: Icons.receipt_long_rounded,
+        color: AppColors.warning,
+        route: RouteNames.sales,
+        subtitle: 'تعديل المبيعة',
+      ),
+      _MenuItemData(
+        title: 'إضافة مشترى',
+        icon: Icons.add_shopping_cart_rounded,
+        color: const Color(0xFF00BCD4),
+        route: RouteNames.purchases,
+        subtitle: 'تسجيل مشترى جديد',
+      ),
+    ]);
+  }
+
   void _initializeAnimations() {
+    final maxLength = menuItems.length > operationItems.length 
+        ? menuItems.length 
+        : operationItems.length;
+    
     _controllers = List.generate(
-      menuItems.length,
+      maxLength,
       (index) => AnimationController(
         duration: Duration(milliseconds: 600 + (index * 50)),
         vsync: this,
@@ -179,60 +277,135 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 20, right: 20),
-    child: Column(
-      children: [
-        // Header with view toggle
-        // _buildHeader(),
-        const SizedBox(height: 16),
+  Widget build(BuildContext context) => BlocBuilder<SettingsBloc, SettingsState>(
+    builder: (context, state) {
+      final isLearningMode = state is SettingsLoaded && state.learningModeEnabled;
+      final currentItems = isLearningMode ? operationItems : menuItems;
+      
+      return Padding(
+        padding: const EdgeInsets.only(left: 20, right: 20),
+        child: Column(
+          children: [
+            // Header with mode indicator
+            if (isLearningMode) _buildLearningModeHeader(),
+            const SizedBox(height: 16),
 
-        // Grid View (precise two-column layout using Wrap)
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: List.generate(menuItems.length, (index) {
-            final item = menuItems[index];
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                // Calculate the width for each card (2 columns)
-                final screenWidth = MediaQuery.of(context).size.width;
-                const horizontalPadding = 40.0; // 20 left + 20 right
-                const spacing = 16.0;
-                final tileWidth =
-                    (screenWidth - horizontalPadding - spacing) / 2;
+            // Grid View (precise two-column layout using Wrap)
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: List.generate(currentItems.length, (index) {
+                final item = currentItems[index];
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Calculate the width for each card (2 columns)
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    const horizontalPadding = 40.0; // 20 left + 20 right
+                    const spacing = 16.0;
+                    final tileWidth =
+                        (screenWidth - horizontalPadding - spacing) / 2;
 
-                return SizedBox(
-                  width: tileWidth,
-                  height: 140, // Fixed height for consistency
-                  child: AnimatedBuilder(
-                    animation: _controllers[index],
-                    builder: (context, child) => FadeTransition(
-                      opacity: _fadeAnimations[index],
-                      child: ScaleTransition(
-                        scale: _scaleAnimations[index],
-                        child: MenuCard(
-                          title: item.title,
-                          icon: item.icon,
-                          color: item.color,
-                          subtitle: item.subtitle,
-                          badge: item.badge,
-                          isNew: item.isNew,
-                          isPremium: item.isPremium,
-                          onTap: () => _navigateToRoute(context, item.route),
-                        ),
-                      ),
-                    ),
-                  ),
+                    return SizedBox(
+                      width: tileWidth,
+                      height: 140, // Fixed height for consistency
+                      child: index < _controllers.length
+                          ? AnimatedBuilder(
+                              animation: _controllers[index],
+                              builder: (context, child) => FadeTransition(
+                                opacity: _fadeAnimations[index],
+                                child: ScaleTransition(
+                                  scale: _scaleAnimations[index],
+                                  child: MenuCard(
+                                    title: item.title,
+                                    icon: item.icon,
+                                    color: item.color,
+                                    subtitle: item.subtitle,
+                                    badge: item.badge,
+                                    isNew: item.isNew,
+                                    isPremium: item.isPremium,
+                                    onTap: () => _navigateToRoute(context, item.route),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : MenuCard(
+                              title: item.title,
+                              icon: item.icon,
+                              color: item.color,
+                              subtitle: item.subtitle,
+                              badge: item.badge,
+                              isNew: item.isNew,
+                              isPremium: item.isPremium,
+                              onTap: () => _navigateToRoute(context, item.route),
+                            ),
+                    );
+                  },
                 );
-              },
-            );
-          }),
-        ),
+              }),
+            ),
 
-        // Quick Access Section
-        const SizedBox(height: 32),
-        _buildQuickAccessSection(),
+            // Quick Access Section
+            const SizedBox(height: 32),
+            _buildQuickAccessSection(),
+          ],
+        ),
+      );
+    },
+  );
+
+  Widget _buildLearningModeHeader() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          AppColors.purchases.withOpacity(0.1),
+          AppColors.purchases.withOpacity(0.05),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.purchases.withOpacity(0.2)),
+    ),
+    child: Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.purchases.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.school_rounded,
+            color: AppColors.purchases,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'وضع التعلم مفعل',
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: AppColors.purchases,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                'عرض أزرار العمليات للتعلم',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          Icons.lightbulb_rounded,
+          color: AppColors.purchases.withOpacity(0.7),
+          size: 18,
+        ),
       ],
     ),
   );
