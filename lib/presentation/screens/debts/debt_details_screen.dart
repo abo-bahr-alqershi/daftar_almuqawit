@@ -21,10 +21,7 @@ import './debt_payment_screen.dart';
 class DebtDetailsScreen extends StatefulWidget {
   final Debt debt;
 
-  const DebtDetailsScreen({
-    super.key,
-    required this.debt,
-  });
+  const DebtDetailsScreen({super.key, required this.debt});
 
   @override
   State<DebtDetailsScreen> createState() => _DebtDetailsScreenState();
@@ -174,7 +171,11 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.delete_rounded, size: 20, color: AppColors.danger),
+            child: const Icon(
+              Icons.delete_rounded,
+              size: 20,
+              color: AppColors.danger,
+            ),
           ),
           onPressed: () => _deleteDebt(context),
         ),
@@ -205,7 +206,10 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
                           height: 50,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [statusColor, statusColor.withOpacity(0.7)],
+                              colors: [
+                                statusColor,
+                                statusColor.withOpacity(0.7),
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
@@ -298,7 +302,10 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -359,10 +366,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
             children: [
               Text(
                 'المدفوع: ${Formatters.formatCurrency(widget.debt.paidAmount)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 13),
               ),
               Text(
                 '${(progress * 100).toStringAsFixed(0)}%',
@@ -399,7 +403,9 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
         dividerColor: Colors.transparent,
         labelColor: Colors.white,
         unselectedLabelColor: AppColors.textSecondary,
-        labelStyle: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+        labelStyle: AppTextStyles.bodyMedium.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
         unselectedLabelStyle: AppTextStyles.bodyMedium,
         tabs: const [
           Tab(text: 'التفاصيل'),
@@ -443,7 +449,11 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 60, color: AppColors.danger),
+                const Icon(
+                  Icons.error_outline,
+                  size: 60,
+                  color: AppColors.danger,
+                ),
                 const SizedBox(height: 16),
                 Text(state.message),
               ],
@@ -484,7 +494,11 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
       children: [
         _buildInfoRow('الاسم', widget.debt.personName, Icons.person_outline),
         if (widget.debt.customerPhone != null)
-          _buildInfoRow('الهاتف', widget.debt.customerPhone!, Icons.phone_rounded),
+          _buildInfoRow(
+            'الهاتف',
+            widget.debt.customerPhone!,
+            Icons.phone_rounded,
+          ),
         _buildInfoRow('النوع', widget.debt.personType, Icons.category_rounded),
       ],
     );
@@ -521,7 +535,11 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
       title: 'التواريخ',
       icon: Icons.calendar_today_rounded,
       children: [
-        _buildInfoRow('تاريخ الدين', _formatDate(widget.debt.date), Icons.event_rounded),
+        _buildInfoRow(
+          'تاريخ الدين',
+          _formatDate(widget.debt.date),
+          Icons.event_rounded,
+        ),
         if (widget.debt.dueDate != null)
           _buildInfoRow(
             'تاريخ الاستحقاق',
@@ -556,7 +574,9 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
               const SizedBox(width: 8),
               Text(
                 'ملاحظات',
-                style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w700),
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -617,7 +637,12 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon, {Color? valueColor}) {
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    IconData icon, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -708,7 +733,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
         builder: (context) => DebtPaymentScreen(debt: widget.debt),
       ),
     );
-    
+
     if (result == true && mounted) {
       context.read<PaymentBloc>().add(LoadPaymentsByDebtEvent(widget.debt.id!));
     }
@@ -738,8 +763,18 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen>
     try {
       final date = DateTime.parse(dateStr);
       final months = [
-        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+        'يناير',
+        'فبراير',
+        'مارس',
+        'أبريل',
+        'مايو',
+        'يونيو',
+        'يوليو',
+        'أغسطس',
+        'سبتمبر',
+        'أكتوبر',
+        'نوفمبر',
+        'ديسمبر',
       ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     } catch (e) {

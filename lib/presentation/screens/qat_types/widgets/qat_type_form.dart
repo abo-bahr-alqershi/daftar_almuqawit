@@ -12,11 +12,17 @@ class QatTypeForm extends StatefulWidget {
     this.onSubmit,
     this.onCancel,
     this.isLoading = false,
+    this.nameFieldKey,
+    this.priceFieldKey,
+    this.saveButtonKey,
   });
   final dynamic qatType;
   final VoidCallback? onSubmit;
   final VoidCallback? onCancel;
   final bool isLoading;
+  final GlobalKey? nameFieldKey;
+  final GlobalKey? priceFieldKey;
+  final GlobalKey? saveButtonKey;
 
   @override
   State<QatTypeForm> createState() => QatTypeFormState();
@@ -127,6 +133,7 @@ class QatTypeFormState extends State<QatTypeForm> {
           child: Column(
             children: [
               _buildTextField(
+                key: widget.nameFieldKey,
                 controller: _nameController,
                 label: 'اسم النوع',
                 hint: 'مثال: قيفي رووس، عنسي عوارض',
@@ -165,6 +172,7 @@ class QatTypeFormState extends State<QatTypeForm> {
                 children: [
                   Expanded(
                     child: _buildTextField(
+                      key: widget.priceFieldKey,
                       controller: _buyPriceController,
                       label: 'سعر الشراء',
                       hint: '0',
@@ -278,6 +286,7 @@ class QatTypeFormState extends State<QatTypeForm> {
   }
 
   Widget _buildTextField({
+    Key? key,
     required TextEditingController controller,
     required String label,
     required String hint,
@@ -287,6 +296,7 @@ class QatTypeFormState extends State<QatTypeForm> {
     void Function(String)? onChanged,
   }) {
     return Container(
+      key: key,
       decoration: BoxDecoration(
         color: AppColors.background.withOpacity(0.5),
         borderRadius: BorderRadius.circular(14),
@@ -730,6 +740,7 @@ class QatTypeFormState extends State<QatTypeForm> {
         Expanded(
           flex: 2,
           child: Container(
+            key: widget.saveButtonKey,
             height: 56,
             decoration: BoxDecoration(
               gradient: widget.isLoading

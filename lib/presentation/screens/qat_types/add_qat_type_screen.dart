@@ -9,6 +9,7 @@ import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
 import '../../blocs/qat_types/qat_types_state.dart';
 import './widgets/qat_type_form.dart';
+import '../../../core/services/qat_types_showcase_service.dart';
 
 /// شاشة إضافة نوع قات - تصميم راقي هادئ
 class AddQatTypeScreen extends StatefulWidget {
@@ -26,6 +27,13 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   final _formKey = GlobalKey<QatTypeFormState>();
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  
+  // مفاتيح التعليمات التفاعلية
+  final GlobalKey _nameFieldKey = GlobalKey();
+  final GlobalKey _priceFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
+  
+  bool _showTutorial = false;
 
   @override
   void initState() {
@@ -53,6 +61,16 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
         _scrollOffset = _scrollController.offset;
       });
     });
+    
+    // التحقق من معاملات التعليمات
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      
+      if (args != null && args['showTutorial'] == true && args['operation'] == 'add') {
+        _showTutorial = true;
+        _startTutorial();
+      }
+    });
   }
 
   @override
@@ -60,6 +78,17 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
     _animationController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _startTutorial() {
+    if (!_showTutorial) return;
+    
+    QatTypesShowcaseService.instance.startAddTutorial(
+      context,
+      nameFieldKey: _nameFieldKey,
+      priceFieldKey: _priceFieldKey,
+      saveButtonKey: _saveButtonKey,
+    );
   }
 
   Future<void> _submitQatType() async {
@@ -160,6 +189,9 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                             child: QatTypeForm(
                               key: _formKey,
                               isLoading: isLoading,
+                              nameFieldKey: _nameFieldKey,
+                              priceFieldKey: _priceFieldKey,
+                              saveButtonKey: _saveButtonKey,
                               onSubmit: _submitQatType,
                               onCancel: () {
                                 HapticFeedback.lightImpact();
@@ -226,6 +258,36 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
           Navigator.pop(context);
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: opacity < 0.5
+                  ? AppColors.surface.withOpacity(0.9)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              _showTutorial = true;
+            });
+            _startTutorial();
+          },
+          tooltip: 'عرض التعليمات',
+        ),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

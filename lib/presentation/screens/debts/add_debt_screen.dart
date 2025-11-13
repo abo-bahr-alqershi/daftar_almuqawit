@@ -94,7 +94,8 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                             const SizedBox(height: 20),
                             BlocBuilder<CustomersBloc, CustomersState>(
                               builder: (context, customerState) {
-                                final customers = customerState is CustomersLoaded
+                                final customers =
+                                    customerState is CustomersLoaded
                                     ? customerState.customers
                                     : <Customer>[]; // تحديد النوع بشكل صريح
 

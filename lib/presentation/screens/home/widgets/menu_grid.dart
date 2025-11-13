@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../blocs/settings/settings_bloc.dart';
 import '../../../blocs/settings/settings_state.dart';
+import '../../../../core/services/qat_types_tutorial_manager.dart';
 
 /// شبكة القوائم الرئيسية - تصميم متطور
 class MenuGrid extends StatefulWidget {
@@ -143,7 +144,7 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         title: 'إضافة نوع قات',
         icon: Icons.add_circle_rounded,
         color: AppColors.success,
-        route: RouteNames.qatTypes,
+        route: RouteNames.addQatType,
         subtitle: 'إضافة صنف جديد',
       ),
       _MenuItemData(
@@ -323,7 +324,11 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
                                     badge: item.badge,
                                     isNew: item.isNew,
                                     isPremium: item.isPremium,
-                                    onTap: () => _navigateToRoute(context, item.route),
+                                    onTap: () => _navigateToRoute(
+                                      context, 
+                                      item.route,
+                                      operation: _getOperationFromTitle(item.title),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -336,7 +341,11 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
                               badge: item.badge,
                               isNew: item.isNew,
                               isPremium: item.isPremium,
-                              onTap: () => _navigateToRoute(context, item.route),
+                              onTap: () => _navigateToRoute(
+                                context, 
+                                item.route,
+                                operation: _getOperationFromTitle(item.title),
+                              ),
                             ),
                     );
                   },
@@ -476,9 +485,152 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
     ),
   );
 
-  void _navigateToRoute(BuildContext context, String route) {
+  void _navigateToRoute(BuildContext context, String route, {String? operation}) {
     HapticFeedback.mediumImpact();
-    Navigator.pushNamed(context, route);
+    
+    // التحقق من وضع التعلم
+    final settingsState = context.read<SettingsBloc>().state;
+    final isLearningMode = settingsState is SettingsLoaded && settingsState.learningModeEnabled;
+    
+    if (isLearningMode && _isQatTypeRoute(route) && operation != null) {
+      // عرض التعليمات قبل التنقل لأنواع القات
+      _showQatTypesTutorial(context, operation, route);
+    } else {
+      Navigator.pushNamed(context, route);
+    }
+  }
+
+  void _showQatTypesTutorial(BuildContext context, String operation, String route) {
+    // عرض حوار تأكيد بدء التعليمات
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00BCD4).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.school_rounded,
+                color: const Color(0xFF00BCD4),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'تعليمات تفاعلية',
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: const Color(0xFF00BCD4),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _getTutorialDescription(operation),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.info.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.info,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ستحصل على إرشادات تفاعلية خطوة بخطوة',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.info,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushNamed(context, route);
+            },
+            child: Text(
+              'تخطي التعليمات',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushNamed(
+                context, 
+                route,
+                arguments: {'showTutorial': true, 'operation': operation},
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00BCD4),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('بدء التعليمات'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isQatTypeRoute(String route) {
+    return route == RouteNames.qatTypes || 
+           route == RouteNames.addQatType || 
+           route == RouteNames.editQatType;
+  }
+
+  String? _getOperationFromTitle(String title) {
+    if (title.contains('إضافة')) return 'add';
+    if (title.contains('تعديل')) return 'edit';
+    if (title.contains('حذف')) return 'delete';
+    return null;
+  }
+
+  String _getTutorialDescription(String operation) {
+    switch (operation) {
+      case 'add':
+        return 'سنوضح لك كيفية إضافة نوع قات جديد خطوة بخطوة، من إدخال الاسم والسعر حتى حفظ البيانات.';
+      case 'edit':
+        return 'سنعرض لك كيفية تعديل بيانات نوع قات موجود، وكيفية تحديث المعلومات بسهولة.';
+      case 'delete':
+        return 'سنشرح لك عملية حذف نوع قات بأمان، مع التأكيدات اللازمة لتجنب الأخطاء.';
+      default:
+        return 'سنقدم لك إرشادات تفاعلية لتعلم هذه العملية بسهولة.';
+    }
   }
 }
 

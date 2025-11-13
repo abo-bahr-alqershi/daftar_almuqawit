@@ -11,6 +11,7 @@ import '../../blocs/qat_types/qat_types_state.dart';
 import '../../navigation/route_names.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import './widgets/qat_type_card.dart';
+import '../../../core/services/tutorial_service.dart';
 
 /// شاشة أنواع القات الرئيسية - تصميم راقي هادئ
 class QatTypesScreen extends StatefulWidget {
@@ -27,6 +28,16 @@ class _QatTypesScreenState extends State<QatTypesScreen>
   double _scrollOffset = 0;
   String _selectedFilter = 'الكل';
   final TextEditingController _searchController = TextEditingController();
+  
+  // مفاتيح التعليمات التفاعلية
+  final GlobalKey _addButtonKey = GlobalKey();
+  final GlobalKey _searchFieldKey = GlobalKey();
+  final GlobalKey _filterButtonKey = GlobalKey();
+  final GlobalKey _listViewKey = GlobalKey();
+  final GlobalKey _firstItemKey = GlobalKey();
+  
+  bool _showTutorial = false;
+  String? _tutorialOperation;
 
   @override
   void initState() {
@@ -45,6 +56,14 @@ class _QatTypesScreenState extends State<QatTypesScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QatTypesBloc>().add(LoadQatTypes());
+      
+      // التحقق من معاملات التعليمات
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null && args['showTutorial'] == true) {
+        _showTutorial = true;
+        _tutorialOperation = args['operation'];
+        _startTutorial();
+      }
     });
   }
 
@@ -53,7 +72,52 @@ class _QatTypesScreenState extends State<QatTypesScreen>
     _animationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
+    TutorialService.instance.stopTutorial();
     super.dispose();
+  }
+
+  void _startTutorial() {
+    if (!_showTutorial || _tutorialOperation == null) return;
+    
+    // تأخير بسيط للتأكد من بناء الواجهة
+    Future.delayed(const Duration(milliseconds: 500), () {
+      final targets = TutorialService.createQatTypesTargets(
+        operation: _tutorialOperation!,
+        keys: _getTutorialKeys(),
+      );
+      
+      TutorialService.instance.startQatTypesTutorial(
+        context,
+        operation: _tutorialOperation!,
+        targets: targets,
+      );
+    });
+  }
+
+  Map<String, GlobalKey> _getTutorialKeys() {
+    switch (_tutorialOperation) {
+      case 'add':
+        return {
+          'add_button': _addButtonKey,
+          'name_field': _searchFieldKey, // مؤقتاً حتى نصل للشاشة الفعلية
+          'price_field': _filterButtonKey, // مؤقتاً
+          'save_button': _listViewKey, // مؤقتاً
+        };
+      case 'edit':
+        return {
+          'select_item': _firstItemKey,
+          'edit_button': _addButtonKey,
+          'update_fields': _searchFieldKey,
+        };
+      case 'delete':
+        return {
+          'select_item': _firstItemKey,
+          'delete_button': _addButtonKey,
+          'confirm_dialog': _listViewKey,
+        };
+      default:
+        return {};
+    }
   }
 
   void _loadQatTypes() {
@@ -720,6 +784,7 @@ class _QatTypesScreenState extends State<QatTypesScreen>
     bottom: 20,
     left: 20,
     child: FloatingActionButton.extended(
+      key: _addButtonKey,
       onPressed: () => _navigateToAdd(context),
       backgroundColor: AppColors.primary,
       icon: const Icon(Icons.add, color: Colors.white),

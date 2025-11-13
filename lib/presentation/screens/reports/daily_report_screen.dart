@@ -62,8 +62,8 @@ class _DailyReportScreenState extends State<DailyReportScreen>
 
   void _loadReport() {
     context.read<ReportsBloc>().add(
-          GenerateDailyReportEvent(_dateFormat.format(_selectedDate)),
-        );
+      GenerateDailyReportEvent(_dateFormat.format(_selectedDate)),
+    );
   }
 
   @override
@@ -135,19 +135,19 @@ class _DailyReportScreenState extends State<DailyReportScreen>
   }
 
   Widget _buildGradientBackground() => Container(
-        height: 400,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withOpacity(0.08),
-              AppColors.info.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      );
+    height: 400,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.primary.withOpacity(0.08),
+          AppColors.info.withOpacity(0.05),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
 
   Widget _buildModernAppBar(double topPadding) {
     final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
@@ -165,8 +165,11 @@ class _DailyReportScreenState extends State<DailyReportScreen>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border.withOpacity(0.5)),
           ),
-          child: const Icon(Icons.arrow_back_rounded,
-              size: 20, color: AppColors.textPrimary),
+          child: const Icon(
+            Icons.arrow_back_rounded,
+            size: 20,
+            color: AppColors.textPrimary,
+          ),
         ),
         onPressed: () {
           HapticFeedback.lightImpact();
@@ -182,8 +185,11 @@ class _DailyReportScreenState extends State<DailyReportScreen>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
-            child: const Icon(Icons.refresh_rounded,
-                color: AppColors.textPrimary, size: 20),
+            child: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
           ),
           onPressed: () {
             HapticFeedback.lightImpact();
@@ -277,15 +283,13 @@ class _DailyReportScreenState extends State<DailyReportScreen>
         ),
       ),
       child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.2),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: const Interval(0.0, 0.3, curve: Curves.easeOutCubic),
-          ),
-        ),
+        position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: const Interval(0.0, 0.3, curve: Curves.easeOutCubic),
+              ),
+            ),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
           child: InkWell(
@@ -377,15 +381,13 @@ class _DailyReportScreenState extends State<DailyReportScreen>
         ),
       ),
       child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.3),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
-          ),
-        ),
+        position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
+              ),
+            ),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -460,7 +462,8 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                                     Container(
                                       width: 8,
                                       height: 8,
-                                      decoration: const BoxDecoration( // تصحيح من BoxShadow إلى BoxDecoration
+                                      decoration: const BoxDecoration(
+                                        // تصحيح من BoxShadow إلى BoxDecoration
                                         color: AppColors.success,
                                         shape: BoxShape.circle,
                                         boxShadow: [
@@ -702,8 +705,11 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.bar_chart_rounded,
-                      size: 20, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.bar_chart_rounded,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -776,74 +782,77 @@ class _DailyReportScreenState extends State<DailyReportScreen>
   }
 
   Widget _buildShimmerLoading() => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        height: 200,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
-      );
+    margin: const EdgeInsets.symmetric(horizontal: 20),
+    height: 200,
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: const Center(child: CircularProgressIndicator()),
+  );
 
   Widget _buildEmptyState() => Container(
-        padding: const EdgeInsets.all(40),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.assessment_rounded,
-                  size: 60,
-                  color: AppColors.textHint,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'لا توجد بيانات',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'لا توجد معاملات في هذا اليوم',
-                style: TextStyle(fontSize: 14, color: AppColors.textHint),
-              ),
-            ],
+    padding: const EdgeInsets.all(40),
+    child: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: const BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.assessment_rounded,
+              size: 60,
+              color: AppColors.textHint,
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 20),
+          const Text(
+            'لا توجد بيانات',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'لا توجد معاملات في هذا اليوم',
+            style: TextStyle(fontSize: 14, color: AppColors.textHint),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildExportButton() => Positioned(
-        bottom: 20,
-        left: 20,
-        child: BlocBuilder<ReportsBloc, ReportsState>(
-          builder: (context, state) {
-            if (state is ReportsLoaded) {
-              return FloatingActionButton.extended(
-                onPressed: () => _showExportOptions(state.reportData),
-                backgroundColor: AppColors.primary,
-                icon: const Icon(Icons.share_rounded, color: Colors.white),
-                label: const Text(
-                  'تصدير',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                ),
-                elevation: 8,
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-      );
+    bottom: 20,
+    left: 20,
+    child: BlocBuilder<ReportsBloc, ReportsState>(
+      builder: (context, state) {
+        if (state is ReportsLoaded) {
+          return FloatingActionButton.extended(
+            onPressed: () => _showExportOptions(state.reportData),
+            backgroundColor: AppColors.primary,
+            icon: const Icon(Icons.share_rounded, color: Colors.white),
+            label: const Text(
+              'تصدير',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            elevation: 8,
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    ),
+  );
 
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
@@ -883,9 +892,7 @@ class _DailyReportScreenState extends State<DailyReportScreen>
           ),
         ),
         padding: const EdgeInsets.all(24),
-        child: ExportOptions(
-          onExport: (type) => _handleExport(type, data),
-        ),
+        child: ExportOptions(onExport: (type) => _handleExport(type, data)),
       ),
     );
   }
@@ -896,30 +903,30 @@ class _DailyReportScreenState extends State<DailyReportScreen>
     switch (type) {
       case ExportType.print:
         context.read<ReportsBloc>().add(
-              PrintReportEvent(
-                'daily',
-                data,
-                startDate: dateString,
-                endDate: dateString,
-                customData: data,
-              ),
-            );
+          PrintReportEvent(
+            'daily',
+            data,
+            startDate: dateString,
+            endDate: dateString,
+            customData: data,
+          ),
+        );
         break;
       case ExportType.share:
         context.read<ReportsBloc>().add(
-              ShareReportEvent(
-                'daily',
-                data,
-                startDate: dateString,
-                endDate: dateString,
-                customData: data,
-              ),
-            );
+          ShareReportEvent(
+            'daily',
+            data,
+            startDate: dateString,
+            endDate: dateString,
+            customData: data,
+          ),
+        );
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('هذه الميزة قيد التطوير')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('هذه الميزة قيد التطوير')));
     }
     Navigator.pop(context);
   }

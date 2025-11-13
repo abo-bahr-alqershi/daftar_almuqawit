@@ -70,7 +70,7 @@ class AppRouter {
       case RouteNames.qatTypes:
         return _buildRoute(const QatTypesScreen());
       case RouteNames.addQatType:
-        return _buildRoute(const AddQatTypeScreen());
+        return _buildRoute(const AddQatTypeScreen(), settings: settings);
       case RouteNames.editQatType:
         final qatType = settings.arguments as dynamic;
         return _buildRoute(EditQatTypeScreen(qatType: qatType));
@@ -140,16 +140,20 @@ class AppRouter {
   }
 
   /// بناء المسار مع انتقال مخصص
-  static Route<dynamic> _buildRoute(Widget screen, {bool fade = false}) {
+  static Route<dynamic> _buildRoute(Widget screen, {bool fade = false, RouteSettings? settings}) {
     if (fade) {
       return PageRouteBuilder(
+        settings: settings,
         pageBuilder: (context, animation, secondaryAnimation) => screen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
       );
     }
-    return MaterialPageRoute(builder: (_) => screen);
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (_) => screen,
+    );
   }
 
   /// التحقق من أن المسار يتطلب مصادقة

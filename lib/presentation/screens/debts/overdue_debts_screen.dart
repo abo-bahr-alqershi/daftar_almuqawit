@@ -144,13 +144,14 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.border.withOpacity(0.5),
-            ),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textPrimary, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
             onPressed: () {
               HapticFeedback.lightImpact();
               Navigator.pop(context);
@@ -165,13 +166,14 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.border.withOpacity(0.5),
-              ),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.notifications_active_rounded,
-                  color: AppColors.danger, size: 20),
+              icon: const Icon(
+                Icons.notifications_active_rounded,
+                color: AppColors.danger,
+                size: 20,
+              ),
               onPressed: () {
                 HapticFeedback.lightImpact();
                 _sendRemindersToAll();
@@ -234,7 +236,9 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
           })
         : null;
 
-    final maxOverdueDays = mostOverdue != null ? _getDaysOverdue(mostOverdue) : 0;
+    final maxOverdueDays = mostOverdue != null
+        ? _getDaysOverdue(mostOverdue)
+        : 0;
 
     return FadeTransition(
       opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -244,15 +248,13 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
         ),
       ),
       child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.3),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
-          ),
-        ),
+        position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
+              ),
+            ),
         child: Container(
           height: 200,
           margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -260,10 +262,7 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                AppColors.danger,
-                AppColors.warning,
-              ],
+              colors: [AppColors.danger, AppColors.warning],
             ),
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
@@ -423,19 +422,20 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
               ),
             ),
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.5),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(
-                  parent: _animationController,
-                  curve: Interval(
-                    (delay / 1200).clamp(0.0, 1.0),
-                    ((delay + 300) / 1200).clamp(0.0, 1.0),
-                    curve: Curves.easeOutCubic,
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.5),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Interval(
+                        (delay / 1200).clamp(0.0, 1.0),
+                        ((delay + 300) / 1200).clamp(0.0, 1.0),
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
                   ),
-                ),
-              ),
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -467,9 +467,7 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
                   child: Text(
                     option,
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: isSelected
-                          ? Colors.white
-                          : AppColors.textPrimary,
+                      color: isSelected ? Colors.white : AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -510,19 +508,20 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
             ),
           ),
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.3),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(
-                parent: _animationController,
-                curve: Interval(
-                  (delay / 1200).clamp(0.0, 1.0),
-                  ((delay + 400) / 1200).clamp(0.0, 1.0),
-                  curve: Curves.easeOutCubic,
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.3),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: _animationController,
+                    curve: Interval(
+                      (delay / 1200).clamp(0.0, 1.0),
+                      ((delay + 400) / 1200).clamp(0.0, 1.0),
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
                 ),
-              ),
-            ),
             child: DebtCard(
               debt: debt,
               // isOverdue: true, // DebtCard يحسبها تلقائياً
@@ -535,7 +534,8 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
                   arguments: debt.id,
                 );
               },
-              onPayTap: () { // تغيير من onPayment إلى onPayTap
+              onPayTap: () {
+                // تغيير من onPayment إلى onPayTap
                 HapticFeedback.lightImpact();
                 Navigator.pushNamed(
                   context,
@@ -546,7 +546,8 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
                   },
                 );
               },
-              onReminderTap: () { // تغيير من onReminder إلى onReminderTap
+              onReminderTap: () {
+                // تغيير من onReminder إلى onReminderTap
                 HapticFeedback.lightImpact();
                 _sendReminder(debt.id?.toString() ?? '0');
               },
@@ -670,8 +671,10 @@ class _OverdueDebtsScreenState extends State<OverdueDebtsScreen>
         });
         break;
       case 'المبلغ':
-        sorted.sort((a, b) => (b.remainingAmount ?? 0.0)
-            .compareTo(a.remainingAmount ?? 0.0));
+        sorted.sort(
+          (a, b) =>
+              (b.remainingAmount ?? 0.0).compareTo(a.remainingAmount ?? 0.0),
+        );
         break;
       case 'الأحدث':
         sorted.sort((a, b) {
