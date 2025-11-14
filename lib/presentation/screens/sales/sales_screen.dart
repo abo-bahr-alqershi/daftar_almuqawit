@@ -538,7 +538,7 @@ class _SalesScreenState extends State<SalesScreen>
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
@@ -553,7 +553,7 @@ class _SalesScreenState extends State<SalesScreen>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -566,16 +566,20 @@ class _SalesScreenState extends State<SalesScreen>
                 child: Icon(icon, color: color, size: 18),
               ),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4), // بدلاً من Spacer()
+          const SizedBox(height: 6),
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 1200),
             tween: Tween(begin: 0, end: value),
@@ -584,7 +588,7 @@ class _SalesScreenState extends State<SalesScreen>
               return Text(
                 '${animValue.toStringAsFixed(0)} ر.ي',
                 style: TextStyle(
-                  fontSize: 17, // تقليل من 18 إلى 17
+                  fontSize: 16,
                   color: color,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,

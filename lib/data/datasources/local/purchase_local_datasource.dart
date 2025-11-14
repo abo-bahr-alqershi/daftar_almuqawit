@@ -67,9 +67,9 @@ class PurchaseLocalDataSource extends BaseLocalDataSource<PurchaseModel> {
     );
   }
 
-  /// توليد رقم فاتورة تلقائي تسلسلي
-  /// النمط: PUR-YYYYMMDD-XXXX
-  /// حيث XXXX هو رقم تسلسلي يومي
+  /// توليد رقم فاتورة تلقائي رقمي فقط
+  /// النمط: YYYYMMDDXXXX (رقم السنة + الشهر + اليوم + رقم تسلسلي يومي)
+  /// مثال: 202501150001 (الفاتورة الأولى في 2025-01-15)
   Future<String> generateInvoiceNumber() async {
     final db = await dbHelper.database;
     final today = DateTime.now();
@@ -88,7 +88,7 @@ class PurchaseLocalDataSource extends BaseLocalDataSource<PurchaseModel> {
     final count = (result.first['count'] as int?) ?? 0;
     final sequenceNumber = (count + 1).toString().padLeft(4, '0');
     
-    return 'PUR-$dateStr-$sequenceNumber';
+    return '$dateStr$sequenceNumber';
   }
 
   /// التحقق من توفر رقم فاتورة

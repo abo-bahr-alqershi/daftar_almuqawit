@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// مدخل الكمية - تصميم راقي هادئ
+/// مدخل الكمية - تصميم هادئ وراقي وأنيق
 class QuantityInput extends StatefulWidget {
   final double value;
   final ValueChanged<double> onChanged;
@@ -74,13 +74,18 @@ class _QuantityInputState extends State<QuantityInput> {
         if (widget.label != null) ...[
           Row(
             children: [
-              const Icon(Icons.shopping_bag_rounded, size: 18, color: AppColors.textSecondary),
+              Icon(
+                Icons.shopping_bag_outlined,
+                size: 16,
+                color: AppColors.textSecondary.withOpacity(0.8),
+              ),
               const SizedBox(width: 6),
               Text(
                 widget.label!,
                 style: AppTextStyles.labelMedium.copyWith(
                   color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
                 ),
               ),
             ],
@@ -89,21 +94,14 @@ class _QuantityInputState extends State<QuantityInput> {
         ],
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.background.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _isEditing
-                  ? AppColors.primary.withOpacity(0.4)
-                  : AppColors.border.withOpacity(0.2),
-              width: _isEditing ? 2 : 1,
+                  ? AppColors.primary.withOpacity(0.3)
+                  : AppColors.border.withOpacity(0.25),
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(_isEditing ? 0.05 : 0.02),
-                blurRadius: _isEditing ? 10 : 8,
-                offset: Offset(0, _isEditing ? 3 : 2),
-              ),
-            ],
           ),
           child: Row(
             children: [
@@ -114,7 +112,7 @@ class _QuantityInputState extends State<QuantityInput> {
               ),
               Expanded(
                 child: Container(
-                  height: 56,
+                  height: 48,
                   alignment: Alignment.center,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -131,10 +129,10 @@ class _QuantityInputState extends State<QuantityInput> {
                               RegExp(r'^\d*\.?\d*'),
                             ),
                           ],
-                          style: AppTextStyles.h2.copyWith(
-                            fontWeight: FontWeight.w900,
+                          style: AppTextStyles.h3.copyWith(
+                            fontWeight: FontWeight.w700,
                             color: AppColors.primary,
-                            fontSize: 28,
+                            fontSize: 20,
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
@@ -159,24 +157,19 @@ class _QuantityInputState extends State<QuantityInput> {
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primary.withOpacity(0.15),
-                              AppColors.primary.withOpacity(0.08),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           widget.unit,
-                          style: AppTextStyles.bodyMedium.copyWith(
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                            fontSize: 12,
                           ),
                         ),
                       ),
@@ -192,7 +185,7 @@ class _QuantityInputState extends State<QuantityInput> {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _buildQuickSelectionButtons(),
       ],
     );
@@ -206,18 +199,20 @@ class _QuantityInputState extends State<QuantityInput> {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        width: 56,
-        height: 56,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: enabled
-              ? AppColors.primary.withOpacity(0.1)
-              : AppColors.background,
-          borderRadius: BorderRadius.circular(16),
+              ? AppColors.primary.withOpacity(0.08)
+              : AppColors.background.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
           icon,
-          color: enabled ? AppColors.primary : AppColors.disabled,
-          size: 24,
+          color: enabled
+              ? AppColors.primary.withOpacity(0.9)
+              : AppColors.disabled.withOpacity(0.5),
+          size: 20,
         ),
       ),
     );
@@ -240,28 +235,25 @@ class _QuantityInputState extends State<QuantityInput> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryDark],
-                      )
-                    : null,
-                color: isSelected ? null : AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isSelected
                       ? AppColors.primary
                       : AppColors.border.withOpacity(0.2),
-                  width: isSelected ? 2 : 1,
+                  width: isSelected ? 1.5 : 1,
                 ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                          color: AppColors.primary.withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
                       ]
                     : [],
@@ -271,8 +263,8 @@ class _QuantityInputState extends State<QuantityInput> {
                   value.toStringAsFixed(0),
                   style: TextStyle(
                     color: isSelected ? Colors.white : AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
                 ),
               ),

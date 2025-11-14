@@ -4,11 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/sales_tutorial_service.dart';
 import '../../../domain/entities/customer.dart';
 import '../../../domain/entities/qat_type.dart';
 import '../../blocs/sales/sale_form_bloc.dart';
 import '../../blocs/sales/sale_form_event.dart';
-import '../../blocs/sales/sale_form_state.dart';
+import '../../blocs/sales/sale_form_state.dart' as sale_form_bloc_state;
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
 import '../../blocs/customers/customers_state.dart';
@@ -30,6 +31,7 @@ class _AddSaleScreenState extends State<AddSaleScreen>
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  final GlobalKey<SaleFormState> _formKey = GlobalKey<SaleFormState>();
 
   @override
   void initState() {
@@ -88,17 +90,17 @@ class _AddSaleScreenState extends State<AddSaleScreen>
                           _buildInfoCard(),
                           const SizedBox(height: 24),
 
-                          BlocConsumer<SaleFormBloc, SaleFormState>(
+                          BlocConsumer<SaleFormBloc, sale_form_bloc_state.SaleFormState>(
                             listener: (context, state) {
-                              if (state is SaleFormSuccess) {
+                              if (state is sale_form_bloc_state.SaleFormSuccess) {
                                 _showSuccessMessage();
                                 Navigator.pop(context, true);
-                              } else if (state is SaleFormError) {
+                              } else if (state is sale_form_bloc_state.SaleFormError) {
                                 _showErrorMessage(state.message);
                               }
                             },
                             builder: (context, state) {
-                              if (state is SaleFormLoading) {
+                              if (state is sale_form_bloc_state.SaleFormLoading) {
                                 return _buildLoadingState();
                               }
 
@@ -122,11 +124,10 @@ class _AddSaleScreenState extends State<AddSaleScreen>
                                           : <QatType>[];
 
                                       return SaleForm(
+                                        key: _formKey,
                                         customers: customers,
                                         qatTypes: qatTypes,
                                         onSubmit: (data) {
-                                          // يمكن معالجة البيانات هنا وإرسالها إلى الـ Bloc
-                                          // حالياً نستخدم SaveSale بدون معاملات
                                           context.read<SaleFormBloc>().add(
                                             SaveSale(),
                                           );
@@ -195,6 +196,57 @@ class _AddSaleScreenState extends State<AddSaleScreen>
           Navigator.pop(context);
         },
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.sales.withOpacity(0.15),
+                    AppColors.success.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.sales.withOpacity(0.3),
+                ),
+              ),
+              child: const Icon(
+                Icons.help_outline_rounded,
+                color: AppColors.sales,
+                size: 20,
+              ),
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              final formState = _formKey.currentState;
+              if (formState != null && formState.mounted) {
+                final keys = formState.tutorialKeys;
+                
+                SalesTutorialService.showAddTutorial(
+                  context: context,
+                  invoiceNumberFieldKey: keys['invoiceNumber']!,
+                  dateFieldKey: keys['date']!,
+                  customerFieldKey: keys['customer']!,
+                  qatTypeFieldKey: keys['qatType']!,
+                  unitFieldKey: keys['unit']!,
+                  quantityFieldKey: keys['quantity']!,
+                  priceFieldKey: keys['price']!,
+                  paymentMethodKey: keys['paymentMethod']!,
+                  discountFieldKey: keys['discount']!,
+                  notesFieldKey: keys['notes']!,
+                  saveButtonKey: keys['saveButton']!,
+                  onNext: () {},
+                  scrollController: _scrollController,
+                );
+              }
+            },
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

@@ -75,4 +75,57 @@ class SalesLocalDataSource extends BaseLocalDataSource<SaleModel> {
       orderBy: '${SalesTable.cDate} DESC, ${SalesTable.cTime} DESC',
     );
   }
+
+  /// توليد رقم فاتورة تلقائي رقمي فقط
+  /// النمط: YYYYMMDDXXXX (رقم السنة + الشهر + اليوم + رقم تسلسلي يومي)
+  /// مثال: 202501150001 (الفاتورة الأولى في 2025-01-15)
+  Future<String> generateInvoiceNumber() async {
+    final db = await dbHelper.database;
+    final today = DateTime.now();
+    final dateStr = '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
+    
+    // جلب عدد الفواتير اليوم
+    final result = await db.rawQuery(
+      '''
+      SELECT COUNT(*) as count 
+      FROM ${SalesTable.table} 
+      WHERE ${SalesTable.cDate} = ?
+      ''',
+      [today.toIso8601String().split('T')[0]],
+    );
+    
+    final count = (result.first['count'] as int?) ?? 0;
+    final sequenceNumber = (count + 1).toString().padLeft(4, '0');
+    
+    return '$dateStr$sequenceNumber';
+  }
+
+  /// التحقق من توفر رقم فاتورة
+  Future<bool> isInvoiceNumberAvailable(String invoiceNumber) async {
+    if (invoiceNumber.trim().isEmpty) return true;
+    
+    final result = await getWhere(
+      where: '${SalesTable.cInvoiceNumber} = ?',
+      whereArgs: [invoiceNumber],
+    );
+    
+    return result.isEmpty;
+  }
+
+  /// جلب آخر رقم فاتورة
+  Future<String?> getLastInvoiceNumber() async {
+    final db = await dbHelper.database;
+    final result = await db.rawQuery(
+      '''
+      SELECT ${SalesTable.cInvoiceNumber} 
+      FROM ${SalesTable.table} 
+      WHERE ${SalesTable.cInvoiceNumber} IS NOT NULL
+      ORDER BY ${SalesTable.cId} DESC 
+      LIMIT 1
+      ''',
+    );
+    
+    if (result.isEmpty) return null;
+    return result.first[SalesTable.cInvoiceNumber] as String?;
+  }
 }

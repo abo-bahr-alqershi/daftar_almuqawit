@@ -138,10 +138,11 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 42,
-                      height: 42,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         gradient: isSelected
                             ? LinearGradient(
@@ -154,28 +155,35 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
                       child: Icon(
                         method.icon,
                         color: isSelected ? Colors.white : method.color,
-                        size: 22,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      method.label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? method.color : AppColors.textPrimary,
+                    const SizedBox(height: 6),
+                    Flexible(
+                      child: Text(
+                        method.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? method.color : AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      method.description,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
+                    Flexible(
+                      child: Text(
+                        method.description,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

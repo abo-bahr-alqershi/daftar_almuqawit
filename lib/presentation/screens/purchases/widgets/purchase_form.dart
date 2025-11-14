@@ -419,6 +419,11 @@ class PurchaseFormState extends State<PurchaseForm> {
 
             Container(
               key: _priceFieldKey,
+              decoration: BoxDecoration(
+                color: AppColors.background.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border.withOpacity(0.3)),
+              ),
               child: AppTextField.currency(
                 controller: _unitPriceController,
                 label: 'سعر الوحدة *',
@@ -448,27 +453,75 @@ class PurchaseFormState extends State<PurchaseForm> {
               key: _paymentMethodKey,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'طريقة الدفع',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withOpacity(0.15),
+                            AppColors.primary.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.payment_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'طريقة الدفع',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: _paymentMethods.map((method) {
                     final isSelected = _paymentMethod == method;
-                    return ChoiceChip(
-                      label: Text(method),
-                      selected: isSelected,
-                      onSelected: (selected) {
+                    return GestureDetector(
+                      onTap: () {
                         setState(() => _paymentMethod = method);
                       },
-                      backgroundColor: AppColors.surface,
-                      selectedColor: AppColors.primary,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? const LinearGradient(
+                                  colors: [AppColors.primary, AppColors.primaryDark],
+                                )
+                              : null,
+                          color: isSelected
+                              ? null
+                              : AppColors.background.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.border.withOpacity(0.3),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Text(
+                          method,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
                       ),
                     );
                   }).toList(),
@@ -564,8 +617,8 @@ class PurchaseFormState extends State<PurchaseForm> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+            color: AppColors.background.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border, width: 1.5),
           ),
           child: DropdownButtonFormField<String>(
@@ -573,11 +626,11 @@ class PurchaseFormState extends State<PurchaseForm> {
             decoration: const InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingM,
-                vertical: AppDimensions.paddingS,
+                horizontal: 16,
+                vertical: 12,
               ),
               hintText: 'اختر نوع القات',
-              prefixIcon: Icon(Icons.category_outlined),
+              prefixIcon: Icon(Icons.grass_rounded),
             ),
             dropdownColor: AppColors.surface,
             iconEnabledColor: AppColors.primary,

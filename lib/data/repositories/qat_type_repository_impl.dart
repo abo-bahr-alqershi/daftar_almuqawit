@@ -17,6 +17,8 @@ class QatTypeRepositoryImpl implements QatTypeRepository {
         defaultSellPrice: m.defaultSellPrice,
         color: m.color,
         icon: m.icon,
+        availableUnits: m.availableUnits,
+        unitPrices: m.unitPrices,
       );
 
   QatTypeModel _toModel(QatType e) => QatTypeModel(
@@ -27,6 +29,8 @@ class QatTypeRepositoryImpl implements QatTypeRepository {
         defaultSellPrice: e.defaultSellPrice,
         color: e.color,
         icon: e.icon,
+        availableUnits: e.availableUnits,
+        unitPrices: e.unitPrices,
       );
 
   @override
