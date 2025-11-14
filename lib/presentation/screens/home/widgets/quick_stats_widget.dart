@@ -8,8 +8,14 @@ import '../../../../domain/entities/daily_statistics.dart';
 
 /// ويدجت الإحصائيات السريعة - تصميم Tesla/iOS متطور
 class QuickStatsWidget extends StatefulWidget {
-  const QuickStatsWidget({super.key, this.stats, this.isLoading = false});
+  const QuickStatsWidget({
+    super.key,
+    this.stats,
+    this.isLoading = false,
+    this.yesterdayStats,
+  });
   final DailyStatistics? stats;
+  final DailyStatistics? yesterdayStats;
   final bool isLoading;
 
   @override
@@ -261,22 +267,22 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.2),
+                  color: _getProfitChangeColor().withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.trending_up_rounded,
+                    Icon(
+                      _getProfitChangeIcon(),
                       size: 16,
-                      color: AppColors.success,
+                      color: _getProfitChangeColor(),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      '+24.5%',
+                    Text(
+                      _getProfitChangeText(),
                       style: TextStyle(
-                        color: AppColors.success,
+                        color: _getProfitChangeColor(),
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
@@ -306,21 +312,21 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
         value: widget.stats?.totalSales ?? 0,
         icon: Icons.trending_up_rounded,
         color: AppColors.sales,
-        trend: 12.5,
+        trend: _calculateTrend('sales'),
       ),
       _StatData(
         title: 'المشتريات',
         value: widget.stats?.totalPurchases ?? 0,
         icon: Icons.shopping_cart_rounded,
         color: AppColors.purchases,
-        trend: -5.2,
+        trend: _calculateTrend('purchases'),
       ),
       _StatData(
         title: 'المصروفات',
         value: widget.stats?.totalExpenses ?? 0,
         icon: Icons.payment_rounded,
         color: AppColors.expense,
-        trend: -8.3,
+        trend: _calculateTrend('expenses'),
       ),
       _StatData(
         title: 'الديون',
@@ -328,7 +334,7 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
             (widget.stats?.newDebts ?? 0) + (widget.stats?.collectedDebts ?? 0),
         icon: Icons.account_balance_wallet_rounded,
         color: AppColors.debt,
-        trend: 15.7,
+        trend: _calculateTrend('debts'),
       ),
     ];
 
@@ -381,27 +387,27 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
           height: 60,
           child: CustomPaint(
             painter: _PerformanceChartPainter(
-              percentage: 0.75,
-              color: AppColors.success,
+              percentage: _calculatePerformancePercentage(),
+              color: _getPerformanceColor(),
             ),
           ),
         ),
         const SizedBox(width: 16),
 
         // Performance Details
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'أداء اليوم',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'ممتاز',
+                _getPerformanceLabel(),
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: _getPerformanceColor(),
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -474,6 +480,101 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
       'السبت',
     ];
     return '${days[now.weekday - 1]}, ${now.day}/${now.month}/${now.year}';
+  }
+
+  double _calculatePerformancePercentage() {
+    if (widget.stats == null) return 0.0;
+    
+    final netProfit = widget.stats!.netProfit;
+    final totalSales = widget.stats!.totalSales;
+    
+    if (totalSales == 0) return 0.0;
+    
+    final profitMargin = (netProfit / totalSales).abs();
+    
+    return profitMargin.clamp(0.0, 1.0);
+  }
+
+  Color _getPerformanceColor() {
+    final percentage = _calculatePerformancePercentage();
+    
+    if (percentage >= 0.6) return AppColors.success;
+    if (percentage >= 0.3) return AppColors.warning;
+    return AppColors.danger;
+  }
+
+  String _getPerformanceLabel() {
+    final percentage = _calculatePerformancePercentage();
+    
+    if (percentage >= 0.8) return 'ممتاز';
+    if (percentage >= 0.6) return 'جيد جداً';
+    if (percentage >= 0.4) return 'جيد';
+    if (percentage >= 0.2) return 'مقبول';
+    return 'ضعيف';
+  }
+
+  Color _getProfitChangeColor() {
+    final netProfit = widget.stats?.netProfit ?? 0;
+    return netProfit >= 0 ? AppColors.success : AppColors.danger;
+  }
+
+  IconData _getProfitChangeIcon() {
+    final netProfit = widget.stats?.netProfit ?? 0;
+    return netProfit >= 0 
+        ? Icons.trending_up_rounded 
+        : Icons.trending_down_rounded;
+  }
+
+  String _getProfitChangeText() {
+    if (widget.stats == null) return '+0%';
+    
+    final totalSales = widget.stats!.totalSales;
+    final netProfit = widget.stats!.netProfit;
+    
+    if (totalSales == 0) return '+0%';
+    
+    final profitMargin = (netProfit / totalSales * 100);
+    final sign = profitMargin >= 0 ? '+' : '';
+    
+    return '$sign${profitMargin.toStringAsFixed(1)}%';
+  }
+
+  double? _calculateTrend(String type) {
+    if (widget.stats == null || widget.yesterdayStats == null) return null;
+    
+    double today = 0;
+    double yesterday = 0;
+    
+    switch (type) {
+      case 'sales':
+        today = widget.stats!.totalSales;
+        yesterday = widget.yesterdayStats!.totalSales;
+        break;
+        
+      case 'purchases':
+        today = widget.stats!.totalPurchases;
+        yesterday = widget.yesterdayStats!.totalPurchases;
+        break;
+        
+      case 'expenses':
+        today = widget.stats!.totalExpenses;
+        yesterday = widget.yesterdayStats!.totalExpenses;
+        break;
+        
+      case 'debts':
+        today = widget.stats!.newDebts + widget.stats!.collectedDebts;
+        yesterday = widget.yesterdayStats!.newDebts + widget.yesterdayStats!.collectedDebts;
+        break;
+        
+      default:
+        return null;
+    }
+    
+    if (yesterday == 0) {
+      return today > 0 ? 100.0 : 0.0;
+    }
+    
+    return ((today - yesterday) / yesterday * 100);
   }
 }
 

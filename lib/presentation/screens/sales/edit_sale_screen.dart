@@ -109,25 +109,46 @@ class _EditSaleScreenState extends State<EditSaleScreen>
     
     final updatedSale = Sale(
       id: widget.sale.id,
-      date: saleData['date'],
-      time: saleData['time'],
-      customerId: saleData['customerId'],
-      customerName: saleData['customerName'],
-      qatTypeId: saleData['qatTypeId'],
-      qatTypeName: saleData['qatTypeName'],
-      quantity: saleData['quantity'],
-      unit: saleData['unit'],
-      unitPrice: saleData['unitPrice'],
-      totalAmount: saleData['totalAmount'],
-      discount: saleData['discount'],
-      paymentMethod: saleData['paymentMethod'],
-      notes: saleData['notes'],
+      date: saleData['date'] as String,
+      time: saleData['time'] as String,
+      customerId: saleData['customerId'] as int?,
+      customerName: saleData['customerName'] as String?,
+      qatTypeId: saleData['qatTypeId'] as int,
+      qatTypeName: saleData['qatTypeName'] as String?,
+      quantity: saleData['quantity'] as double,
+      unit: saleData['unit'] as String,
+      unitPrice: saleData['unitPrice'] as double,
+      totalAmount: saleData['totalAmount'] as double,
+      discount: saleData['discount'] as double? ?? 0.0,
+      paymentStatus: saleData['paymentStatus'] as String? ?? 
+          _calculatePaymentStatus(
+            saleData['totalAmount'] as double,
+            saleData['paidAmount'] as double? ?? saleData['totalAmount'] as double,
+          ),
+      paymentMethod: saleData['paymentMethod'] as String,
+      paidAmount: saleData['paidAmount'] as double? ?? saleData['totalAmount'] as double,
+      remainingAmount: (saleData['totalAmount'] as double) - 
+                       (saleData['paidAmount'] as double? ?? saleData['totalAmount'] as double),
+      invoiceNumber: saleData['invoiceNumber'] as String?,
+      notes: saleData['notes'] as String?,
+      isQuickSale: widget.sale.isQuickSale,
       status: widget.sale.status,
       createdAt: widget.sale.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
     );
     
     context.read<SalesBloc>().add(UpdateSaleEvent(updatedSale));
+  }
+
+  /// حساب حالة الدفع
+  String _calculatePaymentStatus(double totalAmount, double paidAmount) {
+    if (paidAmount >= totalAmount) {
+      return 'مدفوع';
+    } else if (paidAmount > 0) {
+      return 'مدفوع جزئياً';
+    } else {
+      return 'غير مدفوع';
+    }
   }
 
   @override

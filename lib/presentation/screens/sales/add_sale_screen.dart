@@ -128,8 +128,9 @@ class _AddSaleScreenState extends State<AddSaleScreen>
                                         customers: customers,
                                         qatTypes: qatTypes,
                                         onSubmit: (data) {
+                                          // تمرير البيانات إلى الـ Bloc
                                           context.read<SaleFormBloc>().add(
-                                            SaveSale(),
+                                            SaveSale(data),
                                           );
                                         },
                                       );

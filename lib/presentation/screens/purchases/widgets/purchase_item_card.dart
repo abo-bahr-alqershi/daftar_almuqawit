@@ -248,7 +248,8 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                                 child: _buildInfoItem(
                                   icon: Icons.inventory_2_outlined,
                                   label: 'الكمية',
-                                  value: '${widget.purchase.quantity} ${widget.purchase.unit}',
+                                  value:
+                                      '${widget.purchase.quantity} ${widget.purchase.unit}',
                                   color: AppColors.info,
                                 ),
                               ),
@@ -261,7 +262,8 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                                 child: _buildInfoItem(
                                   icon: Icons.attach_money_rounded,
                                   label: 'سعر الوحدة',
-                                  value: '${widget.purchase.unitPrice.toStringAsFixed(0)} ر.ي',
+                                  value:
+                                      '${widget.purchase.unitPrice.toStringAsFixed(0)} ر.ي',
                                   color: AppColors.purchases,
                                 ),
                               ),
@@ -329,7 +331,9 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                                         'متبقي',
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: AppColors.danger.withOpacity(0.8),
+                                          color: AppColors.danger.withOpacity(
+                                            0.8,
+                                          ),
                                         ),
                                       ),
                                       Text(
@@ -380,8 +384,9 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            if (widget.purchase.invoiceNumber != null) ...[
+                            if (widget.purchase.invoiceNumber != null)
                               const Spacer(),
+                            if (widget.purchase.invoiceNumber != null)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -410,12 +415,11 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                                   ],
                                 ),
                               ),
-                            ],
                           ],
                         ),
 
-                        if (widget.showActions) ...[
-                          const SizedBox(height: 16),
+                        if (widget.showActions) const SizedBox(height: 16),
+                        if (widget.showActions)
                           Container(
                             height: 1,
                             decoration: BoxDecoration(
@@ -428,7 +432,8 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                        if (widget.showActions) const SizedBox(height: 12),
+                        if (widget.showActions)
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -439,27 +444,26 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                                   color: AppColors.warning,
                                   onPressed: widget.onCancel!,
                                 ),
-                              if (widget.onEdit != null) ...[
+                              if (widget.onEdit != null)
                                 const SizedBox(width: 8),
+                              if (widget.onEdit != null)
                                 _buildActionButton(
                                   icon: Icons.edit_rounded,
                                   label: 'تعديل',
                                   color: AppColors.info,
                                   onPressed: widget.onEdit!,
                                 ),
-                              ],
-                              if (widget.onDelete != null) ...[
+                              if (widget.onDelete != null)
                                 const SizedBox(width: 8),
+                              if (widget.onDelete != null)
                                 _buildActionButton(
-                                  icon: Icons.delete_rounded,
-                                  label: 'حذف',
+                                  icon: Icons.autorenew_rounded,
+                                  label: 'استرداد',
                                   color: AppColors.danger,
                                   onPressed: widget.onDelete!,
                                 ),
-                              ],
                             ],
                           ),
-                        ],
                       ],
                     ),
                   ),
@@ -535,9 +539,7 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-          ),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -584,4 +586,3 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
     }
   }
 }
-

@@ -389,7 +389,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           // الإحصائيات السريعة مع Animation
           ScaleTransition(
             scale: _statsScaleAnimation,
-            child: QuickStatsWidget(stats: state.dailyStats),
+            child: QuickStatsWidget(
+              stats: state.dailyStats,
+              yesterdayStats: state.yesterdayStats,
+            ),
           ),
 
           const SizedBox(height: 32),

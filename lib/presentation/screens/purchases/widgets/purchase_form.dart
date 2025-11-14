@@ -59,7 +59,7 @@ class PurchaseFormState extends State<PurchaseForm> {
   int? _selectedQatTypeId;
   String _selectedUnit = 'ربطة';
   String _paymentMethod = 'نقد';
-  List<String> _availableUnits = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
+  List<String> _availableUnits = ['ربطة', 'علاقية', 'كيلو'];
   Map<String, double?> _unitBuyPrices = {};
   String _paymentStatus = 'مدفوع';
   DateTime _selectedDate = DateTime.now();
@@ -70,8 +70,8 @@ class PurchaseFormState extends State<PurchaseForm> {
   String _generatedInvoiceNumber = ''; // رقم الفاتورة المُولّد تلقائياً
   bool _isLoadingInvoiceNumber = false;
 
-  final List<String> _units = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
-  final List<String> _paymentMethods = ['نقد', 'آجل', 'حوالة', 'تحويل'];
+  final List<String> _units = ['ربطة', 'علاقية', 'كيلو'];
+  final List<String> _paymentMethods = ['نقد', 'محفظة', 'حوالة'];
   final List<String> _paymentStatuses = ['مدفوع', 'مدفوع جزئياً', 'غير مدفوع'];
 
   // Getters لمفاتيح التعليمات
@@ -89,7 +89,11 @@ class PurchaseFormState extends State<PurchaseForm> {
   };
 
   // دالة لتفعيل التعليمات من الخارج
-  void showTutorial(BuildContext context, ScrollController? scrollController, {bool isEdit = false}) {
+  void showTutorial(
+    BuildContext context,
+    ScrollController? scrollController, {
+    bool isEdit = false,
+  }) {
     // سيتم استدعاؤها من شاشة الإضافة/التعديل
   }
 
@@ -138,11 +142,11 @@ class PurchaseFormState extends State<PurchaseForm> {
   /// توليد رقم فاتورة تلقائي
   Future<void> _generateInvoiceNumber() async {
     setState(() => _isLoadingInvoiceNumber = true);
-    
+
     try {
       final dataSource = getIt<PurchaseLocalDataSource>();
       final invoiceNumber = await dataSource.generateInvoiceNumber();
-      
+
       if (mounted) {
         setState(() {
           _generatedInvoiceNumber = invoiceNumber;
@@ -172,7 +176,7 @@ class PurchaseFormState extends State<PurchaseForm> {
     setState(() {
       _selectedQatTypeId = qatTypeId != null ? int.tryParse(qatTypeId) : null;
       _selectedUnit = 'ربطة';
-      _availableUnits = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
+      _availableUnits = ['ربطة', 'علاقية', 'كيلو'];
       _unitBuyPrices = {};
       _unitPriceController.clear();
 
@@ -222,7 +226,7 @@ class PurchaseFormState extends State<PurchaseForm> {
     setState(() {
       _totalAmount = quantity * unitPrice;
       _remainingAmount = _totalAmount - paidAmount;
-      
+
       if (_remainingAmount > 0) {
         _paymentStatus = paidAmount > 0 ? 'مدفوع جزئياً' : 'غير مدفوع';
       } else {
@@ -255,10 +259,12 @@ class PurchaseFormState extends State<PurchaseForm> {
         return;
       }
 
-      final selectedSupplier = widget.suppliers
-          .firstWhere((s) => s.id == _selectedSupplierId);
-      final selectedQatType = widget.qatTypes
-          .firstWhere((qt) => qt.id == _selectedQatTypeId);
+      final selectedSupplier = widget.suppliers.firstWhere(
+        (s) => s.id == _selectedSupplierId,
+      );
+      final selectedQatType = widget.qatTypes.firstWhere(
+        (qt) => qt.id == _selectedQatTypeId,
+      );
 
       final purchase = Purchase(
         id: widget.purchase?.id,
@@ -277,14 +283,15 @@ class PurchaseFormState extends State<PurchaseForm> {
         paidAmount: double.tryParse(_paidAmountController.text) ?? 0,
         remainingAmount: _remainingAmount,
         dueDate: _dueDate?.toIso8601String().split('T')[0],
-        invoiceNumber: _generatedInvoiceNumber.isEmpty 
-            ? null 
+        invoiceNumber: _generatedInvoiceNumber.isEmpty
+            ? null
             : _generatedInvoiceNumber,
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
         status: 'نشط',
-        createdAt: widget.purchase?.createdAt ?? DateTime.now().toIso8601String(),
+        createdAt:
+            widget.purchase?.createdAt ?? DateTime.now().toIso8601String(),
         updatedAt: DateTime.now().toIso8601String(),
       );
 
@@ -304,7 +311,9 @@ class PurchaseFormState extends State<PurchaseForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              widget.purchase == null ? 'إضافة عملية شراء جديدة' : 'تعديل عملية الشراء',
+              widget.purchase == null
+                  ? 'إضافة عملية شراء جديدة'
+                  : 'تعديل عملية الشراء',
               style: AppTextStyles.headlineMedium,
               textAlign: TextAlign.center,
             ),
@@ -385,8 +394,13 @@ class PurchaseFormState extends State<PurchaseForm> {
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                          border: Border.all(color: AppColors.border, width: 1.5),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusM,
+                          ),
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1.5,
+                          ),
                         ),
                         child: DropdownButtonFormField<String>(
                           value: _selectedUnit,
@@ -400,7 +414,10 @@ class PurchaseFormState extends State<PurchaseForm> {
                           items: _availableUnits.map((unit) {
                             return DropdownMenuItem(
                               value: unit,
-                              child: Text(unit, style: AppTextStyles.bodyMedium),
+                              child: Text(
+                                unit,
+                                style: AppTextStyles.bodyMedium,
+                              ),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -501,7 +518,10 @@ class PurchaseFormState extends State<PurchaseForm> {
                         decoration: BoxDecoration(
                           gradient: isSelected
                               ? const LinearGradient(
-                                  colors: [AppColors.primary, AppColors.primaryDark],
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.primaryDark,
+                                  ],
                                 )
                               : null,
                           color: isSelected
@@ -518,8 +538,12 @@ class PurchaseFormState extends State<PurchaseForm> {
                         child: Text(
                           method,
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                       ),
@@ -588,10 +612,10 @@ class PurchaseFormState extends State<PurchaseForm> {
                     key: _saveButtonKey,
                     child: AppButton.primary(
                       text: widget.purchase == null ? 'إضافة' : 'حفظ التعديلات',
-                    onPressed: _isSubmitting ? null : _handleSubmit,
-                    isLoading: _isSubmitting,
-                    icon: widget.purchase == null ? Icons.add : Icons.save,
-                    fullWidth: true,
+                      onPressed: _isSubmitting ? null : _handleSubmit,
+                      isLoading: _isSubmitting,
+                      icon: widget.purchase == null ? Icons.add : Icons.save,
+                      fullWidth: true,
                     ),
                   ),
                 ),
@@ -640,11 +664,7 @@ class PurchaseFormState extends State<PurchaseForm> {
                 value: qatType.id.toString(),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.grass,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
+                    Icon(Icons.grass, size: 18, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Text(
                       qatType.name,
@@ -745,8 +765,8 @@ class PurchaseFormState extends State<PurchaseForm> {
                       Row(
                         children: [
                           Text(
-                            _generatedInvoiceNumber.isEmpty 
-                                ? 'لم يتم التوليد' 
+                            _generatedInvoiceNumber.isEmpty
+                                ? 'لم يتم التوليد'
                                 : _generatedInvoiceNumber,
                             style: AppTextStyles.bodyLarge.copyWith(
                               color: AppColors.textPrimary,
@@ -762,7 +782,9 @@ class PurchaseFormState extends State<PurchaseForm> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.15),
+                                color: AppColors.success.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -798,17 +820,11 @@ class PurchaseFormState extends State<PurchaseForm> {
             decoration: BoxDecoration(
               color: AppColors.info.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.info.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  color: AppColors.info,
-                  size: 16,
-                ),
+                Icon(Icons.info_outline, color: AppColors.info, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

@@ -23,32 +23,25 @@ class PaymentMethodSelector extends StatefulWidget {
 class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
   static final List<PaymentMethodOption> paymentMethods = [
     PaymentMethodOption(
-      value: 'نقدي',
-      label: 'نقدي',
+      value: 'نقد',
+      label: 'نقد',
       icon: Icons.payments_rounded,
       color: AppColors.success,
-      description: 'دفع فوري',
-    ),
-    PaymentMethodOption(
-      value: 'آجل',
-      label: 'آجل',
-      icon: Icons.schedule_rounded,
-      color: AppColors.warning,
-      description: 'دفع مؤجل',
-    ),
-    PaymentMethodOption(
-      value: 'حوالة',
-      label: 'حوالة',
-      icon: Icons.swap_horiz_rounded,
-      color: AppColors.info,
-      description: 'حوالة بنكية',
+      description: 'دفع نقدي',
     ),
     PaymentMethodOption(
       value: 'محفظة',
       label: 'محفظة',
       icon: Icons.account_balance_wallet_rounded,
-      color: AppColors.primary,
+      color: AppColors.info,
       description: 'محفظة إلكترونية',
+    ),
+    PaymentMethodOption(
+      value: 'حوالة',
+      label: 'حوالة',
+      icon: Icons.swap_horiz_rounded,
+      color: AppColors.warning,
+      description: 'حوالة بنكية',
     ),
   ];
 

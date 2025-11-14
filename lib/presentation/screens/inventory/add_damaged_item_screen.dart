@@ -25,12 +25,12 @@ class _AddDamagedItemScreenState extends State<AddDamagedItemScreen> {
   final _notesController = TextEditingController();
 
   String _selectedDamageType = 'تلف_طبيعي';
-  String _selectedSeverityLevel = 'متوسط';
+  String _selectedSeverityLevel = 'حارق';
   String _selectedUnit = 'ربطة';
   double _totalCost = 0;
 
-  final List<String> _units = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
-  final List<String> _severityLevels = ['طفيف', 'متوسط', 'كبير', 'كارثي'];
+  final List<String> _units = ['ربطة', 'علاقية', 'كيلو'];
+  final List<String> _severityLevels = ['حارق'];
 
   @override
   void dispose() {

@@ -57,9 +57,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       emit(DashboardLoading());
       
       final today = DateTime.now().toIso8601String().split('T')[0];
+      final yesterday = DateTime.now().subtract(const Duration(days: 1)).toIso8601String().split('T')[0];
       
       final results = await Future.wait([
-        _getDailyStatistics(GetDailyStatisticsParams(date: today)),
+        _getDailyStatistics(GetDailyStatisticsParams(
+          date: today,
+          forceRefresh: true,
+        )),
+        _getDailyStatistics(GetDailyStatisticsParams(
+          date: yesterday,
+          forceRefresh: false,
+        )),
         _getTodaySales(today),
         _getTodayPurchases(today),
         _getPendingDebts(NoParams()),
@@ -69,11 +77,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       
       emit(DashboardLoaded(
         dailyStats: results[0] as DailyStatistics,
-        todaySales: results[1] as List<Sale>,
-        todayPurchases: results[2] as List<Purchase>,
-        pendingDebts: results[3] as List<Debt>,
-        overdueDebts: results[4] as List<Debt>,
-        monthlyProgress: _calculateMonthlyProgress(results[5] as List<DailyStatistics>),
+        yesterdayStats: results[1] as DailyStatistics,
+        todaySales: results[2] as List<Sale>,
+        todayPurchases: results[3] as List<Purchase>,
+        pendingDebts: results[4] as List<Debt>,
+        overdueDebts: results[5] as List<Debt>,
+        monthlyProgress: _calculateMonthlyProgress(results[6] as List<DailyStatistics>),
       ));
     } catch (e) {
       emit(DashboardError('فشل تحميل لوحة التحكم: ${e.toString()}'));

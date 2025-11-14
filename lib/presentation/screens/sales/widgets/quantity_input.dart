@@ -20,7 +20,7 @@ class QuantityInput extends StatefulWidget {
     this.min = 0,
     this.max = 1000,
     this.step = 1,
-    this.unit = 'كيس',
+    this.unit = 'علاقية',
     this.label,
   });
 
@@ -238,9 +238,7 @@ class _QuantityInputState extends State<QuantityInput> {
               margin: const EdgeInsets.symmetric(horizontal: 3),
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.surface,
+                color: isSelected ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isSelected

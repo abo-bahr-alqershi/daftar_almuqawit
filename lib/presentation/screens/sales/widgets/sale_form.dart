@@ -60,12 +60,12 @@ class SaleFormState extends State<SaleForm> {
   String? _selectedCustomerId;
   String? _selectedQatTypeId;
   String? _selectedUnit;
-  String _paymentMethod = 'نقدي';
+  String _paymentMethod = 'نقد';
   double _totalAmount = 0;
 
   List<String> _availableUnits = [];
   Map<String, double?> _unitSellPrices = {};
-  
+
   String _generatedInvoiceNumber = '';
   bool _isLoadingInvoiceNumber = false;
 
@@ -91,10 +91,10 @@ class SaleFormState extends State<SaleForm> {
     _quantityController.addListener(_calculateTotal);
     _priceController.addListener(_calculateTotal);
     _discountController.addListener(_calculateTotal);
-    
+
     // اختيار الوحدة الافتراضية الأولى
     _selectedUnit = 'ربطة';
-    
+
     // توليد رقم فاتورة تلقائي للعمليات الجديدة فقط
     if (widget.initialData == null) {
       _generateInvoiceNumber();
@@ -103,15 +103,15 @@ class SaleFormState extends State<SaleForm> {
       _invoiceNumberController.text = _generatedInvoiceNumber;
     }
   }
-  
+
   /// توليد رقم فاتورة تلقائي
   Future<void> _generateInvoiceNumber() async {
     setState(() => _isLoadingInvoiceNumber = true);
-    
+
     try {
       final dataSource = getIt<SalesLocalDataSource>();
       final invoiceNumber = await dataSource.generateInvoiceNumber();
-      
+
       if (mounted) {
         setState(() {
           _generatedInvoiceNumber = invoiceNumber;
@@ -178,8 +178,10 @@ class SaleFormState extends State<SaleForm> {
           debugPrint('✅ Units loaded from QatType: $_availableUnits');
         } else {
           // وحدات افتراضية
-          _availableUnits = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
-          debugPrint('⚠️ No units in QatType, using default units: $_availableUnits');
+          _availableUnits = ['ربطة', 'علاقية', 'كيلو'];
+          debugPrint(
+            '⚠️ No units in QatType, using default units: $_availableUnits',
+          );
         }
 
         // تحميل الأسعار إذا كانت متوفرة
@@ -195,7 +197,9 @@ class SaleFormState extends State<SaleForm> {
             for (final unit in _availableUnits) {
               _unitSellPrices[unit] = selectedQatType.defaultSellPrice;
             }
-            debugPrint('⚠️ Using default sell price for all units: ${selectedQatType.defaultSellPrice}');
+            debugPrint(
+              '⚠️ Using default sell price for all units: ${selectedQatType.defaultSellPrice}',
+            );
           }
         }
 
@@ -293,7 +297,11 @@ class SaleFormState extends State<SaleForm> {
             ),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.shopping_cart_rounded, color: AppColors.primary, size: 24),
+          child: const Icon(
+            Icons.shopping_cart_rounded,
+            color: AppColors.primary,
+            size: 24,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -301,8 +309,12 @@ class SaleFormState extends State<SaleForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.initialData != null ? 'تعديل عملية بيع' : 'إضافة عملية بيع',
-                style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                widget.initialData != null
+                    ? 'تعديل عملية بيع'
+                    : 'إضافة عملية بيع',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -399,8 +411,8 @@ class SaleFormState extends State<SaleForm> {
                         children: [
                           Flexible(
                             child: Text(
-                              _generatedInvoiceNumber.isEmpty 
-                                  ? 'لم يتم التوليد' 
+                              _generatedInvoiceNumber.isEmpty
+                                  ? 'لم يتم التوليد'
                                   : _generatedInvoiceNumber,
                               style: AppTextStyles.bodyLarge.copyWith(
                                 color: AppColors.textPrimary,
@@ -418,7 +430,9 @@ class SaleFormState extends State<SaleForm> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.15),
+                                color: AppColors.success.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -455,17 +469,11 @@ class SaleFormState extends State<SaleForm> {
             decoration: BoxDecoration(
               color: AppColors.info.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.info.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  color: AppColors.info,
-                  size: 16,
-                ),
+                Icon(Icons.info_outline, color: AppColors.info, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -499,7 +507,8 @@ class SaleFormState extends State<SaleForm> {
     key: _customerFieldKey,
     child: CustomerSelector(
       selectedCustomerId: _selectedCustomerId,
-      onChanged: (customerId) => setState(() => _selectedCustomerId = customerId),
+      onChanged: (customerId) =>
+          setState(() => _selectedCustomerId = customerId),
       customers: widget.customers,
     ),
   );
@@ -542,11 +551,7 @@ class SaleFormState extends State<SaleForm> {
                   value: qatType.id.toString(),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.grass,
-                        size: 18,
-                        color: AppColors.sales,
-                      ),
+                      Icon(Icons.grass, size: 18, color: AppColors.sales),
                       const SizedBox(width: 8),
                       Text(
                         qatType.name,
@@ -571,13 +576,13 @@ class SaleFormState extends State<SaleForm> {
       ),
     );
   }
-  
+
   Widget _buildUnitSection() {
     // إذا لم يتم اختيار نوع قات، استخدم الوحدات الافتراضية
-    final displayUnits = _availableUnits.isEmpty 
-        ? ['ربطة', 'كيس', 'كرتون', 'قطعة']
+    final displayUnits = _availableUnits.isEmpty
+        ? ['ربطة', 'علاقية', 'كيلو']
         : _availableUnits;
-    
+
     return Container(
       key: _unitFieldKey,
       padding: const EdgeInsets.all(14),
@@ -591,11 +596,7 @@ class SaleFormState extends State<SaleForm> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.straighten_rounded,
-                color: AppColors.sales,
-                size: 18,
-              ),
+              Icon(Icons.straighten_rounded, color: AppColors.sales, size: 18),
               const SizedBox(width: 8),
               Text(
                 'اختر الوحدة',
@@ -621,7 +622,10 @@ class SaleFormState extends State<SaleForm> {
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
@@ -631,7 +635,9 @@ class SaleFormState extends State<SaleForm> {
                             ],
                           )
                         : null,
-                    color: isSelected ? null : AppColors.background.withOpacity(0.5),
+                    color: isSelected
+                        ? null
+                        : AppColors.background.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected
@@ -646,15 +652,21 @@ class SaleFormState extends State<SaleForm> {
                       Icon(
                         _getUnitIcon(unit),
                         size: 16,
-                        color: isSelected ? AppColors.sales : AppColors.textSecondary,
+                        color: isSelected
+                            ? AppColors.sales
+                            : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         unit,
                         style: TextStyle(
                           fontSize: 14,
-                          color: isSelected ? AppColors.sales : AppColors.textPrimary,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.sales
+                              : AppColors.textPrimary,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -818,10 +830,7 @@ class SaleFormState extends State<SaleForm> {
             '${subtotal.toStringAsFixed(2)} ريال',
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 1,
-            color: AppColors.border.withOpacity(0.1),
-          ),
+          Container(height: 1, color: AppColors.border.withOpacity(0.1)),
           const SizedBox(height: 8),
           _buildSummaryRow(
             'الخصم',
@@ -829,10 +838,7 @@ class SaleFormState extends State<SaleForm> {
             color: AppColors.danger,
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 1,
-            color: AppColors.border.withOpacity(0.1),
-          ),
+          Container(height: 1, color: AppColors.border.withOpacity(0.1)),
           const SizedBox(height: 8),
           _buildSummaryRow(
             'الإجمالي',
@@ -855,15 +861,15 @@ class SaleFormState extends State<SaleForm> {
       Text(
         label,
         style: (isTotal ? AppTextStyles.bodyLarge : AppTextStyles.bodyMedium)
-            .copyWith(
-              fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
-            ),
+            .copyWith(fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500),
       ),
       Text(
         value,
         style: (isTotal ? AppTextStyles.bodyLarge : AppTextStyles.bodyMedium)
             .copyWith(
-              color: color ?? (isTotal ? AppColors.success : AppColors.textPrimary),
+              color:
+                  color ??
+                  (isTotal ? AppColors.success : AppColors.textPrimary),
               fontWeight: FontWeight.w600,
             ),
       ),
@@ -936,15 +942,21 @@ class SaleFormState extends State<SaleForm> {
 
         if (!stockCheck.isAvailable) {
           if (!mounted) return;
-          
+
           // عرض رسالة تحذيرية مع تفاصيل المخزون
           await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: Row(
                 children: [
-                  Icon(Icons.warning_rounded, color: AppColors.warning, size: 24),
+                  Icon(
+                    Icons.warning_rounded,
+                    color: AppColors.warning,
+                    size: 24,
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(child: Text('تحذير: نقص في المخزون')),
                 ],
@@ -966,7 +978,9 @@ class SaleFormState extends State<SaleForm> {
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.border.withOpacity(0.2)),
+                      border: Border.all(
+                        color: AppColors.border.withOpacity(0.2),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1023,7 +1037,7 @@ class SaleFormState extends State<SaleForm> {
               ],
             ),
           );
-          
+
           // منع البيع
           return;
         }
@@ -1052,8 +1066,9 @@ class SaleFormState extends State<SaleForm> {
         'totalAmount': (quantity * price) - discount,
         'discount': discount,
         'paymentMethod': _paymentMethod,
-        'invoiceNumber': _generatedInvoiceNumber.isEmpty 
-            ? null 
+        'paidAmount': (quantity * price) - discount, // المبلغ المدفوع = الإجمالي (دفع كامل افتراضيًا)
+        'invoiceNumber': _generatedInvoiceNumber.isEmpty
+            ? null
             : _generatedInvoiceNumber,
         'notes': _notesController.text.isEmpty ? null : _notesController.text,
       });
@@ -1088,7 +1103,7 @@ class SaleFormState extends State<SaleForm> {
     switch (unit) {
       case 'ربطة':
         return Icons.shopping_bag_rounded;
-      case 'كيس':
+      case 'علاقية':
         return Icons.inventory_2_rounded;
       case 'كيلو':
         return Icons.scale_rounded;

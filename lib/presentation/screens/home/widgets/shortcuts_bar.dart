@@ -9,14 +9,20 @@ class ShortcutsBar extends StatefulWidget {
   const ShortcutsBar({
     super.key,
     this.onQuickSale,
+    this.onAddSale,
     this.onAddPurchase,
+    this.onAddDebtPayment,
     this.onAddExpense,
-    this.onViewReports,
+    this.onAddReturn,
+    this.onAddDamaged,
   });
   final VoidCallback? onQuickSale;
+  final VoidCallback? onAddSale;
   final VoidCallback? onAddPurchase;
+  final VoidCallback? onAddDebtPayment;
   final VoidCallback? onAddExpense;
-  final VoidCallback? onViewReports;
+  final VoidCallback? onAddReturn;
+  final VoidCallback? onAddDamaged;
 
   @override
   State<ShortcutsBar> createState() => _ShortcutsBarState();
@@ -49,31 +55,55 @@ class _ShortcutsBarState extends State<ShortcutsBar>
         color: AppColors.success,
         gradientColors: [AppColors.success, AppColors.success.withOpacity(0.7)],
         onTap: widget.onQuickSale,
-        description: 'إضافة عملية بيع',
+        description: 'إضافة عملية بيع سريعة',
       ),
       _ShortcutItem(
-        icon: Icons.add_shopping_cart_rounded,
+        icon: Icons.shopping_bag_rounded,
+        label: 'بيع لعميل',
+        color: AppColors.sales,
+        gradientColors: [AppColors.sales, AppColors.sales.withOpacity(0.7)],
+        onTap: widget.onAddSale,
+        description: 'فتح شاشة البيع العادية',
+      ),
+      _ShortcutItem(
+        icon: Icons.shopping_cart_rounded,
         label: 'شراء',
-        color: AppColors.info,
-        gradientColors: [AppColors.info, AppColors.info.withOpacity(0.7)],
+        color: AppColors.purchases,
+        gradientColors: [AppColors.purchases, AppColors.purchases.withOpacity(0.7)],
         onTap: widget.onAddPurchase,
-        description: 'تسجيل مشتريات',
+        description: 'تسجيل عملية شراء جديدة',
       ),
       _ShortcutItem(
         icon: Icons.payment_rounded,
+        label: 'دفعة دين',
+        color: AppColors.success,
+        gradientColors: [AppColors.success, AppColors.success.withOpacity(0.7)],
+        onTap: widget.onAddDebtPayment,
+        description: 'إضافة دفعة دين',
+      ),
+      _ShortcutItem(
+        icon: Icons.receipt_long_rounded,
         label: 'مصروف',
-        color: AppColors.danger,
-        gradientColors: [AppColors.danger, AppColors.danger.withOpacity(0.7)],
+        color: AppColors.expense,
+        gradientColors: [AppColors.expense, AppColors.expense.withOpacity(0.7)],
         onTap: widget.onAddExpense,
         description: 'إضافة مصروف',
       ),
       _ShortcutItem(
-        icon: Icons.bar_chart_rounded,
-        label: 'تقارير',
-        color: AppColors.primary,
-        gradientColors: [AppColors.primary, AppColors.primaryDark],
-        onTap: widget.onViewReports,
-        description: 'عرض التقارير',
+        icon: Icons.assignment_return_rounded,
+        label: 'مردود',
+        color: AppColors.warning,
+        gradientColors: [AppColors.warning, AppColors.warning.withOpacity(0.7)],
+        onTap: widget.onAddReturn,
+        description: 'إضافة مردود',
+      ),
+      _ShortcutItem(
+        icon: Icons.warning_rounded,
+        label: 'تالف',
+        color: AppColors.danger,
+        gradientColors: [AppColors.danger, AppColors.danger.withOpacity(0.7)],
+        onTap: widget.onAddDamaged,
+        description: 'تسجيل بضاعة تالفة',
       ),
     ]);
   }

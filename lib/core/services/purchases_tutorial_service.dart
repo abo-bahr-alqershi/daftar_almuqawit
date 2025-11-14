@@ -600,8 +600,7 @@ class PurchasesTutorialService {
                 stepNumber: 6,
                 totalSteps: 10,
                 title: 'وحدة القياس',
-                description:
-                    'اختر وحدة القياس المناسبة\n(ربطة، كيس، كرتون، قطعة)',
+                description: 'اختر وحدة القياس المناسبة\n(ربطة، علاقية كيلو)',
                 onNext: () async {
                   await _preScroll(
                     context: context,

@@ -8,6 +8,7 @@ import '../../../domain/entities/purchase.dart';
 import '../../blocs/purchases/purchases_bloc.dart';
 import '../../blocs/purchases/purchases_event.dart';
 import '../../widgets/common/confirm_dialog.dart';
+import '../../navigation/route_names.dart';
 import 'edit_purchase_screen.dart';
 
 /// شاشة تفاصيل عملية الشراء - تصميم راقي متطور
@@ -249,8 +250,8 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
           case 'cancel':
             _cancelPurchase();
             break;
-          case 'delete':
-            _deletePurchase();
+          case 'return':
+            _openReturnScreen();
             break;
         }
       },
@@ -268,12 +269,12 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
             ),
           ),
         const PopupMenuItem(
-          value: 'delete',
+          value: 'return',
           child: Row(
             children: [
-              Icon(Icons.delete_rounded, color: AppColors.danger, size: 20),
+              Icon(Icons.assignment_return_rounded, color: AppColors.info, size: 20),
               SizedBox(width: 12),
-              Text('حذف المشترى'),
+              Text('استرداد'),
             ],
           ),
         ),
@@ -784,21 +785,6 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
     }
   }
 
-  Future<void> _deletePurchase() async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'حذف المشترى',
-      message: 'هل أنت متأكد من حذف هذا المشترى؟\nلن يمكن التراجع عن هذا الإجراء.',
-      confirmText: 'حذف',
-      cancelText: 'إلغاء',
-      isDangerous: true,
-    );
-    if (confirmed == true && widget.purchase.id != null && mounted) {
-      context.read<PurchasesBloc>().add(DeletePurchaseEvent(widget.purchase.id!));
-      Navigator.of(context).pop(true);
-    }
-  }
-
   Future<void> _cancelPurchase() async {
     final confirmed = await ConfirmDialog.show(
       context,
@@ -812,6 +798,15 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
       context.read<PurchasesBloc>().add(CancelPurchaseEvent(widget.purchase.id!));
       Navigator.of(context).pop(true);
     }
+  }
+
+  void _openReturnScreen() {
+    HapticFeedback.mediumImpact();
+    Navigator.pushNamed(
+      context,
+      RouteNames.addReturn,
+      arguments: widget.purchase,
+    );
   }
 
   void _printInvoice() {

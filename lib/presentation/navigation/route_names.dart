@@ -75,6 +75,7 @@ class RouteNames {
   static const String debtPayment = '/debts/payment';
   static const String overdueDebts = '/debts/overdue';
   static const String debtPayments = '/debt_payments';
+  static const String addDebtPayment = '/debt_payments/add';
 
   // ========== Expenses Routes ==========
   static const String expenses = '/expenses';

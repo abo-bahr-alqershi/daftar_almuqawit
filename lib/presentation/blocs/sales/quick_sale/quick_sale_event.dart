@@ -40,14 +40,20 @@ class CompleteSale extends QuickSaleEvent {
 }
 
 class SubmitQuickSale extends QuickSaleEvent {
+  final int qatTypeId;
+  final String unit;
   final double quantity;
   final double price;
   final int? customerId;
+  final String? notes;
   
   SubmitQuickSale({
+    required this.qatTypeId,
+    required this.unit,
     required this.quantity,
     required this.price,
     this.customerId,
+    this.notes,
   });
 }
 

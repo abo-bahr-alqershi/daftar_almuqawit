@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/inventory.dart';
 import '../../../domain/usecases/inventory/get_inventory_list.dart';
+import '../../../domain/usecases/inventory/get_inventory_statistics.dart';
 import '../../blocs/inventory/inventory_bloc.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import 'widgets/inventory_item_card.dart';
@@ -51,14 +52,17 @@ class _InventoryScreenState extends State<InventoryScreen>
     });
 
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        _onTabChanged(_tabController.index);
+      if (_tabController.indexIsChanging) {
+        return;
       }
+      _onTabChanged(_tabController.index);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<InventoryBloc>().add(const LoadInventoryListEvent());
       context.read<InventoryBloc>().add(const LoadInventoryStatisticsEvent());
+      context.read<InventoryBloc>().add(
+        const LoadInventoryListEvent(filterType: InventoryFilterType.all),
+      );
     });
   }
 
@@ -101,12 +105,19 @@ class _InventoryScreenState extends State<InventoryScreen>
                           }
                         },
                         builder: (context, state) {
+                          InventoryStatistics? statistics;
+
+                          if (state is InventoryListLoaded &&
+                              state.statistics != null) {
+                            statistics = state.statistics;
+                          } else if (state is InventoryStatisticsLoaded) {
+                            statistics = state.statistics;
+                          }
+
                           return Column(
                             children: [
-                              if (state is InventoryStatisticsLoaded)
-                                InventoryStatsCard(
-                                  statistics: state.statistics,
-                                ),
+                              if (statistics != null)
+                                InventoryStatsCard(statistics: statistics),
                               const SizedBox(height: 20),
                               _buildSearchBar(),
                               const SizedBox(height: 20),
@@ -965,9 +976,12 @@ class _InventoryScreenState extends State<InventoryScreen>
   }
 
   void _onTabChanged(int index) {
+    setState(() {});
     switch (index) {
       case 0:
-        context.read<InventoryBloc>().add(const LoadInventoryListEvent());
+        context.read<InventoryBloc>().add(
+          const LoadInventoryListEvent(filterType: InventoryFilterType.all),
+        );
         break;
       case 1:
         context.read<InventoryBloc>().add(

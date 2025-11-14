@@ -1,7 +1,6 @@
 // ignore_for_file: public_member_api_docs
 
 import 'package:bloc/bloc.dart';
-import '../../../../domain/entities/sale.dart';
 import '../../../../domain/usecases/sales/quick_sale.dart';
 import 'quick_sale_event.dart';
 import 'quick_sale_state.dart';
@@ -39,29 +38,34 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
     final newItems = List<SaleItem>.from(currentState.items)..add(newItem);
     final newTotal = newItems.fold<double>(0, (sum, item) => sum + item.total);
 
-    emit(QuickSaleInProgress(
-      items: newItems,
-      totalAmount: newTotal,
-      paymentMethod: currentState.paymentMethod,
-      paidAmount: currentState.paidAmount,
-      remainingAmount: newTotal - currentState.paidAmount,
-    ));
+    emit(
+      QuickSaleInProgress(
+        items: newItems,
+        totalAmount: newTotal,
+        paymentMethod: currentState.paymentMethod,
+        paidAmount: currentState.paidAmount,
+        remainingAmount: newTotal - currentState.paidAmount,
+      ),
+    );
   }
 
   void _onRemoveItem(RemoveItemFromSale event, Emitter<QuickSaleState> emit) {
     final currentState = state;
     if (currentState is! QuickSaleInProgress) return;
 
-    final newItems = List<SaleItem>.from(currentState.items)..removeAt(event.index);
+    final newItems = List<SaleItem>.from(currentState.items)
+      ..removeAt(event.index);
     final newTotal = newItems.fold<double>(0, (sum, item) => sum + item.total);
 
-    emit(QuickSaleInProgress(
-      items: newItems,
-      totalAmount: newTotal,
-      paymentMethod: currentState.paymentMethod,
-      paidAmount: currentState.paidAmount,
-      remainingAmount: newTotal - currentState.paidAmount,
-    ));
+    emit(
+      QuickSaleInProgress(
+        items: newItems,
+        totalAmount: newTotal,
+        paymentMethod: currentState.paymentMethod,
+        paidAmount: currentState.paidAmount,
+        remainingAmount: newTotal - currentState.paidAmount,
+      ),
+    );
   }
 
   void _onUpdateQuantity(UpdateQuantity event, Emitter<QuickSaleState> emit) {
@@ -79,42 +83,54 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
 
     final newTotal = newItems.fold<double>(0, (sum, item) => sum + item.total);
 
-    emit(QuickSaleInProgress(
-      items: newItems,
-      totalAmount: newTotal,
-      paymentMethod: currentState.paymentMethod,
-      paidAmount: currentState.paidAmount,
-      remainingAmount: newTotal - currentState.paidAmount,
-    ));
+    emit(
+      QuickSaleInProgress(
+        items: newItems,
+        totalAmount: newTotal,
+        paymentMethod: currentState.paymentMethod,
+        paidAmount: currentState.paidAmount,
+        remainingAmount: newTotal - currentState.paidAmount,
+      ),
+    );
   }
 
-  void _onSelectPaymentMethod(SelectPaymentMethod event, Emitter<QuickSaleState> emit) {
+  void _onSelectPaymentMethod(
+    SelectPaymentMethod event,
+    Emitter<QuickSaleState> emit,
+  ) {
     final currentState = state;
     if (currentState is! QuickSaleInProgress) return;
 
-    emit(QuickSaleInProgress(
-      items: currentState.items,
-      totalAmount: currentState.totalAmount,
-      paymentMethod: event.method,
-      paidAmount: currentState.paidAmount,
-      remainingAmount: currentState.remainingAmount,
-    ));
+    emit(
+      QuickSaleInProgress(
+        items: currentState.items,
+        totalAmount: currentState.totalAmount,
+        paymentMethod: event.method,
+        paidAmount: currentState.paidAmount,
+        remainingAmount: currentState.remainingAmount,
+      ),
+    );
   }
 
   void _onSetPaidAmount(SetPaidAmount event, Emitter<QuickSaleState> emit) {
     final currentState = state;
     if (currentState is! QuickSaleInProgress) return;
 
-    emit(QuickSaleInProgress(
-      items: currentState.items,
-      totalAmount: currentState.totalAmount,
-      paymentMethod: currentState.paymentMethod,
-      paidAmount: event.amount,
-      remainingAmount: currentState.totalAmount - event.amount,
-    ));
+    emit(
+      QuickSaleInProgress(
+        items: currentState.items,
+        totalAmount: currentState.totalAmount,
+        paymentMethod: currentState.paymentMethod,
+        paidAmount: event.amount,
+        remainingAmount: currentState.totalAmount - event.amount,
+      ),
+    );
   }
 
-  Future<void> _onCompleteSale(CompleteSale event, Emitter<QuickSaleState> emit) async {
+  Future<void> _onCompleteSale(
+    CompleteSale event,
+    Emitter<QuickSaleState> emit,
+  ) async {
     final currentState = state;
     if (currentState is! QuickSaleInProgress) return;
 
@@ -141,7 +157,10 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
     }
   }
 
-  Future<void> _onSubmitQuickSale(SubmitQuickSale event, Emitter<QuickSaleState> emit) async {
+  Future<void> _onSubmitQuickSale(
+    SubmitQuickSale event,
+    Emitter<QuickSaleState> emit,
+  ) async {
     if (event.quantity <= 0 || event.price <= 0) {
       emit(QuickSaleError('الكمية والسعر يجب أن يكونا أكبر من صفر'));
       return;
@@ -149,15 +168,15 @@ class QuickSaleBloc extends Bloc<QuickSaleEvent, QuickSaleState> {
 
     try {
       emit(QuickSaleLoading());
-      
+
       final params = QuickSaleParams(
         customerId: event.customerId,
-        qatTypeId: 1,
+        qatTypeId: event.qatTypeId,
         quantity: event.quantity,
-        unit: 'كيس',
+        unit: event.unit,
         unitPrice: event.price,
         paidAmount: event.quantity * event.price,
-        notes: null,
+        notes: event.notes,
       );
 
       final saleId = await quickSaleUseCase(params);

@@ -747,7 +747,10 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
   }
 
   void _showAddPaymentForm() {
-    if (widget.debtId == null) return;
+    if (widget.debtId == null) {
+      _showErrorMessage('لا يمكن إضافة دفعة بدون تحديد دين');
+      return;
+    }
 
     final formKey = GlobalKey<PaymentFormState>();
 
@@ -764,28 +767,30 @@ class _DebtPaymentsScreenState extends State<DebtPaymentsScreen>
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: PaymentForm(
-            key: formKey,
-            onSubmit: () {
-              if (formKey.currentState?.validate() ?? false) {
-                final formData = formKey.currentState!.getFormData();
-                final payment = DebtPayment(
-                  debtId: widget.debtId!,
-                  amount: formData['amount'],
-                  paymentDate: formData['date'].toString().split(' ')[0],
-                  paymentTime:
-                      formData['time'] ??
-                      '${TimeOfDay.now().hour}:${TimeOfDay.now().minute}',
-                  paymentMethod: formData['paymentMethod'] ?? 'نقد',
-                  notes: formData['notes'],
-                );
-                context.read<PaymentBloc>().add(AddPaymentEvent(payment));
-                Navigator.pop(context);
-              }
-            },
-            onCancel: () => Navigator.pop(context),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: PaymentForm(
+              key: formKey,
+              onSubmit: () {
+                if (formKey.currentState?.validate() ?? false) {
+                  final formData = formKey.currentState!.getFormData();
+                  final payment = DebtPayment(
+                    debtId: widget.debtId!,
+                    amount: formData['amount'],
+                    paymentDate: formData['date'].toString().split(' ')[0],
+                    paymentTime:
+                        formData['time'] ??
+                        '${TimeOfDay.now().hour}:${TimeOfDay.now().minute}',
+                    paymentMethod: formData['paymentMethod'] ?? 'نقد',
+                    notes: formData['notes'],
+                  );
+                  context.read<PaymentBloc>().add(AddPaymentEvent(payment));
+                  Navigator.pop(context);
+                }
+              },
+              onCancel: () => Navigator.pop(context),
+            ),
           ),
         ),
       ),

@@ -27,21 +27,40 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
     // التأريخ المطلوب
     final date = params.date;
     
+    print('📊 [GetDailyStatistics] جاري جلب إحصائيات اليوم: $date');
+    
     // محاولة جلب الإحصائيات المحفوظة
     final existing = await statsRepo.getDaily(date);
     if (existing != null && !params.forceRefresh) {
+      print('✅ [GetDailyStatistics] تم العثور على إحصائيات محفوظة');
+      print('   - المبيعات: ${existing.totalSales}');
+      print('   - المشتريات: ${existing.totalPurchases}');
+      print('   - المصروفات: ${existing.totalExpenses}');
+      print('   - صافي الربح: ${existing.netProfit}');
       return existing;
     }
+    
+    print('🔄 [GetDailyStatistics] إعادة حساب الإحصائيات من البيانات الخام...');
     
     // جمع بيانات اليوم
     final sales = await salesRepo.getByDate(date);
     final purchases = await purchaseRepo.getByDate(date);
     final expenses = await expenseRepo.getByDate(date);
     
+    print('📦 [GetDailyStatistics] عدد السجلات:');
+    print('   - المبيعات: ${sales.length}');
+    print('   - المشتريات: ${purchases.length}');
+    print('   - المصروفات: ${expenses.length}');
+    
     // حساب المجاميع
     final totalSales = sales.fold<double>(0, (sum, sale) => sum + sale.totalAmount);
     final totalPurchases = purchases.fold<double>(0, (sum, purchase) => sum + purchase.totalAmount);
     final totalExpenses = expenses.fold<double>(0, (sum, expense) => sum + expense.amount);
+    
+    print('💰 [GetDailyStatistics] المجاميع المحسوبة:');
+    print('   - إجمالي المبيعات: $totalSales');
+    print('   - إجمالي المشتريات: $totalPurchases');
+    print('   - إجمالي المصروفات: $totalExpenses');
     
     // حساب المبيعات النقدية والآجلة
     final cashSales = sales
@@ -59,6 +78,10 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
     // حساب الأرباح
     final grossProfit = sales.fold<double>(0, (sum, sale) => sum + (sale.profit ?? 0));
     final netProfit = grossProfit - totalExpenses;
+    
+    print('📈 [GetDailyStatistics] الأرباح المحسوبة:');
+    print('   - إجمالي الربح: $grossProfit');
+    print('   - صافي الربح: $netProfit');
     
     // حساب الرصيد النقدي
     final cashBalance = cashSales + collectedDebts - totalPurchases - totalExpenses;
@@ -80,6 +103,8 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
     
     // حفظ الإحصائيات
     await statsRepo.saveDaily(statistics);
+    
+    print('✅ [GetDailyStatistics] تم حفظ الإحصائيات بنجاح');
     
     // المقارنة مع الأيام السابقة إذا طلب ذلك
     if (params.includeComparison) {

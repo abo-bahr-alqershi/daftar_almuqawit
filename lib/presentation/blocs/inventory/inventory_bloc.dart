@@ -96,6 +96,13 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     LoadInventoryListEvent event,
     Emitter<InventoryState> emit,
   ) async {
+    InventoryStatistics? currentStatistics;
+    if (state is InventoryListLoaded) {
+      currentStatistics = (state as InventoryListLoaded).statistics;
+    } else if (state is InventoryStatisticsLoaded) {
+      currentStatistics = (state as InventoryStatisticsLoaded).statistics;
+    }
+
     emit(const InventoryLoading());
 
     try {
@@ -112,6 +119,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         currentFilter: event.filterType,
         isSearchActive: event.searchQuery?.isNotEmpty == true,
         searchQuery: event.searchQuery,
+        statistics: currentStatistics,
       ));
     } catch (e) {
       emit(InventoryError(
@@ -229,11 +237,15 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     LoadInventoryStatisticsEvent event,
     Emitter<InventoryState> emit,
   ) async {
-    emit(const InventoryLoading());
-
     try {
       final statistics = await _getInventoryStatistics(const NoParams());
-      emit(InventoryStatisticsLoaded(statistics));
+      
+      if (state is InventoryListLoaded) {
+        final currentState = state as InventoryListLoaded;
+        emit(currentState.copyWith(statistics: statistics));
+      } else {
+        emit(InventoryStatisticsLoaded(statistics));
+      }
     } catch (e) {
       emit(InventoryError(
         message: 'فشل في تحميل إحصائيات المخزون: ${e.toString()}',

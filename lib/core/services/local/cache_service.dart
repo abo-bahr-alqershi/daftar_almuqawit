@@ -70,6 +70,43 @@ class CacheService {
     }
   }
 
+  /// مسح جميع الإحصائيات المخزنة
+  void clearStatisticsCache() {
+    final keysToRemove = <String>[];
+    
+    _cache.forEach((key, value) {
+      if (key.startsWith('daily_stats_') || 
+          key.startsWith('monthly_stats_') ||
+          key.startsWith('statistics_')) {
+        keysToRemove.add(key);
+      }
+    });
+    
+    for (final key in keysToRemove) {
+      remove(key);
+    }
+  }
+
+  /// مسح إحصائيات يوم محدد
+  void clearDailyStatsCache(String date) {
+    remove('daily_stats_$date');
+  }
+
+  /// مسح البيانات حسب النمط
+  void clearByPattern(String pattern) {
+    final keysToRemove = <String>[];
+    
+    _cache.forEach((key, value) {
+      if (key.contains(pattern)) {
+        keysToRemove.add(key);
+      }
+    });
+    
+    for (final key in keysToRemove) {
+      remove(key);
+    }
+  }
+
   /// الحصول على حجم الذاكرة
   int get size => _cache.length;
 

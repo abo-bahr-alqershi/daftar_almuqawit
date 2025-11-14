@@ -101,7 +101,10 @@ class _HomeScreenState extends State<HomeScreen>
                           if (state is DashboardLoaded) {
                             return Hero(
                               tag: 'quick-stats',
-                              child: QuickStatsWidget(stats: state.dailyStats),
+                              child: QuickStatsWidget(
+                                stats: state.dailyStats,
+                                yesterdayStats: state.yesterdayStats,
+                              ),
                             );
                           }
                           return const SizedBox.shrink();
@@ -121,17 +124,27 @@ class _HomeScreenState extends State<HomeScreen>
                           context,
                           RouteNames.quickSale,
                         ),
+                        onAddSale: () =>
+                            _navigateWithAnimation(context, RouteNames.sales),
                         onAddPurchase: () => _navigateWithAnimation(
                           context,
                           RouteNames.purchases,
                         ),
+                        onAddDebtPayment: () => _navigateWithAnimation(
+                          context,
+                          RouteNames.debtPayments,
+                        ),
                         onAddExpense: () => _navigateWithAnimation(
                           context,
-                          RouteNames.expenses,
+                          RouteNames.addExpense,
                         ),
-                        onViewReports: () => _navigateWithAnimation(
+                        onAddReturn: () => _navigateWithAnimation(
                           context,
-                          RouteNames.statistics,
+                          RouteNames.addReturn,
+                        ),
+                        onAddDamaged: () => _navigateWithAnimation(
+                          context,
+                          RouteNames.addDamagedItem,
                         ),
                       ),
 
@@ -285,14 +298,14 @@ class _HomeScreenState extends State<HomeScreen>
           builder: (context, state) {
             final isSyncing = state is SyncInProgress;
             DateTime? lastSyncTime;
-            
+
             // تحديد وقت آخر مزامنة ناجحة
             if (state is SyncSuccess) {
               lastSyncTime = DateTime.now();
             } else if (state is SyncPartial) {
               lastSyncTime = DateTime.now();
             }
-            
+
             return Padding(
               padding: const EdgeInsets.only(left: 8),
               child: SyncIndicator(
@@ -437,6 +450,7 @@ class _HomeScreenState extends State<HomeScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => _QuickActionsBottomSheet(),
     );
   }
@@ -448,7 +462,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showSyncBottomSheet(BuildContext context, SyncState state) {
     HapticFeedback.lightImpact();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -461,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen>
             DateTime? lastSyncTime;
             int itemsSynced = 0;
             int itemsPending = 0;
-            
+
             if (state is SyncSuccess) {
               lastSyncTime = DateTime.now();
               itemsSynced = 100; // يمكن الحصول على القيمة الحقيقية من state
@@ -472,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen>
             } else if (state is SyncInProgress) {
               itemsPending = 50;
             }
-            
+
             return SyncDetailsSheet(
               isSyncing: isSyncing,
               lastSyncTime: lastSyncTime,
@@ -482,7 +496,7 @@ class _HomeScreenState extends State<HomeScreen>
                 // بدء المزامنة الفورية
                 context.read<SyncBloc>().add(StartSync(fullSync: true));
                 Navigator.pop(context);
-                
+
                 // عرض رسالة تأكيد
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -591,71 +605,133 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// Bottom Sheet للإجراءات السريعة
+// Bottom Sheet للإجراءات السريعة - محسّن باحترافية عالية مع DraggableScrollableSheet
 class _QuickActionsBottomSheet extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 20,
-          offset: const Offset(0, -5),
-        ),
-      ],
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 40,
-          height: 4,
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7, // يبدأ بـ 70% من الشاشة
+      minChildSize: 0.5, // الحد الأدنى 50%
+      maxChildSize: 0.95, // الحد الأقصى 95%
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
           decoration: BoxDecoration(
-            color: AppColors.border,
-            borderRadius: BorderRadius.circular(2),
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'إجراء سريع',
-          style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 24),
-        _buildQuickAction(
-          context,
-          Icons.point_of_sale,
-          'بيع سريع',
-          AppColors.success,
-          () => Navigator.pushNamed(context, RouteNames.quickSale),
-        ),
-        _buildQuickAction(
-          context,
-          Icons.shopping_cart,
-          'إضافة مشتريات',
-          AppColors.info,
-          () => Navigator.pushNamed(context, RouteNames.purchases),
-        ),
-        _buildQuickAction(
-          context,
-          Icons.person_add,
-          'عميل جديد',
-          AppColors.primary,
-          () => Navigator.pushNamed(context, RouteNames.customers),
-        ),
-        _buildQuickAction(
-          context,
-          Icons.receipt_long,
-          'إضافة مصروف',
-          AppColors.expense,
-          () => Navigator.pushNamed(context, RouteNames.expenses),
-        ),
-        const SizedBox(height: 20),
-      ],
-    ),
-  );
+          child: Column(
+            children: [
+              // Handle Bar - قابل للسحب
+              Container(
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // العنوان
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                child: Text(
+                  'إجراء سريع',
+                  style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              const Divider(height: 1),
+              // القائمة القابلة للتمرير - الآن تستخدم scrollController من DraggableScrollableSheet
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 8, bottom: 20),
+                  children: [
+                    // 1. بيع سريع
+                    _buildQuickAction(
+                      context,
+                      Icons.point_of_sale,
+                      'بيع سريع',
+                      AppColors.success,
+                      () => Navigator.pushNamed(context, RouteNames.quickSale),
+                    ),
+                    // 2. بيع لعميل (البيع العادي)
+                    _buildQuickAction(
+                      context,
+                      Icons.shopping_bag,
+                      'بيع لعميل',
+                      AppColors.sales,
+                      () => Navigator.pushNamed(context, RouteNames.addSale),
+                    ),
+                    // 3. شراء
+                    _buildQuickAction(
+                      context,
+                      Icons.shopping_cart,
+                      'شراء',
+                      AppColors.purchases,
+                      () =>
+                          Navigator.pushNamed(context, RouteNames.addPurchase),
+                    ),
+                    // 4. دفعة دين
+                    _buildQuickAction(
+                      context,
+                      Icons.payments,
+                      'دفعة دين',
+                      AppColors.primary,
+                      () => Navigator.pushNamed(
+                        context,
+                        RouteNames.addDebtPayment,
+                      ),
+                    ),
+                    // 5. مصروف
+                    _buildQuickAction(
+                      context,
+                      Icons.receipt_long,
+                      'مصروف',
+                      AppColors.expense,
+                      () => Navigator.pushNamed(context, RouteNames.addExpense),
+                    ),
+                    // 6. مردود
+                    _buildQuickAction(
+                      context,
+                      Icons.assignment_return,
+                      'مردود',
+                      AppColors.warning,
+                      () => Navigator.pushNamed(context, RouteNames.addReturn),
+                    ),
+                    // 7. تالف
+                    _buildQuickAction(
+                      context,
+                      Icons.broken_image,
+                      'تالف',
+                      AppColors.danger,
+                      () => Navigator.pushNamed(
+                        context,
+                        RouteNames.addDamagedItem,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildQuickAction(
     BuildContext context,

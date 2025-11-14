@@ -25,6 +25,7 @@ import '../screens/sales/sale_details_screen.dart';
 import '../screens/sales/today_sales_screen.dart';
 import '../screens/debts/debts_screen.dart';
 import '../screens/debt_payments/debt_payments_screen.dart';
+import '../screens/debt_payments/add_debt_payment_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
 import '../screens/expenses/add_expense_screen.dart';
 import '../screens/expenses/edit_expense_screen.dart';
@@ -39,6 +40,8 @@ import '../screens/reports/monthly_report_screen.dart';
 import '../screens/reports/yearly_report_screen.dart';
 import '../screens/reports/custom_report_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
+import '../screens/inventory/add_return_screen.dart';
+import '../screens/inventory/add_damaged_item_screen.dart';
 
 /// مدير التوجيه الرئيسي للتطبيق
 class AppRouter {
@@ -101,10 +104,17 @@ class AppRouter {
         return _buildRoute(const TodaySalesScreen());
       case RouteNames.inventory:
         return _buildRoute(const InventoryScreen());
+      case RouteNames.addReturn:
+        return _buildRoute(const AddReturnScreen());
+      case RouteNames.addDamagedItem:
+        return _buildRoute(const AddDamagedItemScreen());
       case RouteNames.debts:
         return _buildRoute(const DebtsScreen());
       case RouteNames.debtPayments:
         return _buildRoute(const DebtPaymentsScreen());
+      case RouteNames.addDebtPayment:
+        final debtId = settings.arguments as int?;
+        return _buildRoute(AddDebtPaymentScreen(debtId: debtId ?? 0));
       case RouteNames.expenses:
         return _buildRoute(const ExpensesScreen());
       case RouteNames.addExpense:

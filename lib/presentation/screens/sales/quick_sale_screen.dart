@@ -34,7 +34,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
   double _scrollOffset = 0;
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _quantityController = TextEditingController(text: '1.0');
+  final TextEditingController _quantityController = TextEditingController(
+    text: '1.0',
+  );
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
@@ -138,8 +140,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
           debugPrint('✅ Units loaded from QatType: $_availableUnits');
         } else {
           // وحدات افتراضية
-          _availableUnits = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
-          debugPrint('⚠️ No units in QatType, using default units: $_availableUnits');
+          _availableUnits = ['ربطة', 'علاقية', 'كيلو'];
+          debugPrint(
+            '⚠️ No units in QatType, using default units: $_availableUnits',
+          );
         }
 
         // تحميل الأسعار إذا كانت متوفرة
@@ -155,7 +159,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
             for (final unit in _availableUnits) {
               _unitSellPrices[unit] = selectedQatType.defaultSellPrice;
             }
-            debugPrint('⚠️ Using default sell price for all units: ${selectedQatType.defaultSellPrice}');
+            debugPrint(
+              '⚠️ Using default sell price for all units: ${selectedQatType.defaultSellPrice}',
+            );
           }
         }
 
@@ -357,9 +363,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.sales.withOpacity(0.3),
-                ),
+                border: Border.all(color: AppColors.sales.withOpacity(0.3)),
               ),
               child: const Icon(
                 Icons.help_outline_rounded,
@@ -369,7 +373,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
             ),
             onPressed: () {
               HapticFeedback.lightImpact();
-              
+
               SalesTutorialService.showQuickSaleTutorial(
                 context: context,
                 qatTypeFieldKey: _qatTypeFieldKey,
@@ -558,45 +562,27 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
 
           const SizedBox(height: 20),
 
-          _buildAnimatedField(
-            delay: 200,
-            child: _buildUnitSelector(),
-          ),
+          _buildAnimatedField(delay: 200, child: _buildUnitSelector()),
 
           const SizedBox(height: 20),
 
-          _buildAnimatedField(
-            delay: 300,
-            child: _buildQuantityField(),
-          ),
+          _buildAnimatedField(delay: 300, child: _buildQuantityField()),
 
           const SizedBox(height: 20),
 
-          _buildAnimatedField(
-            delay: 400,
-            child: _buildPriceField(),
-          ),
+          _buildAnimatedField(delay: 400, child: _buildPriceField()),
 
           const SizedBox(height: 24),
 
-          _buildAnimatedField(
-            delay: 500, 
-            child: _buildPaymentMethodSelector(),
-          ),
+          _buildAnimatedField(delay: 500, child: _buildPaymentMethodSelector()),
 
           const SizedBox(height: 24),
 
-          _buildAnimatedField(
-            delay: 600, 
-            child: _buildNotesField(),
-          ),
+          _buildAnimatedField(delay: 600, child: _buildNotesField()),
 
           const SizedBox(height: 24),
 
-          _buildAnimatedField(
-            delay: 700, 
-            child: _buildTotalCard(),
-          ),
+          _buildAnimatedField(delay: 700, child: _buildTotalCard()),
         ],
       ),
     ),
@@ -640,11 +626,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
                   value: qatType.id.toString(),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.grass,
-                        size: 18,
-                        color: AppColors.sales,
-                      ),
+                      Icon(Icons.grass, size: 18, color: AppColors.sales),
                       const SizedBox(width: 8),
                       Text(
                         qatType.name,
@@ -675,10 +657,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
 
   Widget _buildUnitSelector() {
     // إذا لم يتم اختيار نوع قات، استخدم الوحدات الافتراضية
-    final displayUnits = _availableUnits.isEmpty 
-        ? ['ربطة', 'كيس', 'كرتون', 'قطعة']
+    final displayUnits = _availableUnits.isEmpty
+        ? ['ربطة', 'علاقية', 'كيلو']
         : _availableUnits;
-    
+
     return Container(
       key: _unitFieldKey,
       padding: const EdgeInsets.all(14),
@@ -692,11 +674,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
         children: [
           Row(
             children: [
-              Icon(
-                Icons.straighten_rounded,
-                color: AppColors.sales,
-                size: 18,
-              ),
+              Icon(Icons.straighten_rounded, color: AppColors.sales, size: 18),
               const SizedBox(width: 8),
               Text(
                 'اختر الوحدة',
@@ -722,7 +700,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
@@ -747,15 +728,21 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
                       Icon(
                         _getUnitIcon(unit),
                         size: 16,
-                        color: isSelected ? AppColors.sales : AppColors.textSecondary,
+                        color: isSelected
+                            ? AppColors.sales
+                            : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         unit,
                         style: TextStyle(
                           fontSize: 14,
-                          color: isSelected ? AppColors.sales : AppColors.textPrimary,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.sales
+                              : AppColors.textPrimary,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -949,9 +936,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.15),
-        ),
+        border: Border.all(color: AppColors.border.withOpacity(0.15)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -1205,13 +1190,44 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
       return;
     }
 
+    // التحقق من اختيار نوع القات
+    if (_selectedQatTypeId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى اختيار نوع القات'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    // التحقق من اختيار وحدة القياس
+    if (_selectedUnit == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى اختيار وحدة القياس'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
     HapticFeedback.mediumImpact();
 
     final quantity = double.parse(_quantityController.text);
     final price = double.parse(_priceController.text);
+    final notes = _notesController.text.trim().isEmpty 
+        ? null 
+        : _notesController.text.trim();
 
     context.read<QuickSaleBloc>().add(
-      SubmitQuickSale(quantity: quantity, price: price),
+      SubmitQuickSale(
+        qatTypeId: int.parse(_selectedQatTypeId!),
+        unit: _selectedUnit!,
+        quantity: quantity,
+        price: price,
+        notes: notes,
+      ),
     );
   }
 
@@ -1219,11 +1235,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
     switch (unit) {
       case 'ربطة':
         return Icons.shopping_bag_rounded;
-      case 'كيس':
+      case 'علاقية':
         return Icons.inventory_2_rounded;
-      case 'كرتون':
-        return Icons.inbox_rounded;
-      case 'قطعة':
+      case 'كيلو':
         return Icons.category_rounded;
       default:
         return Icons.category_rounded;

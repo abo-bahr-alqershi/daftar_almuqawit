@@ -7,7 +7,7 @@ import '../theme/app_colors.dart';
 class SalesTutorialService {
   static TutorialCoachMark? _tutorial;
   static bool _isTransitioning = false;
-  
+
   /// معاملات التوقيت المحسّنة والآمنة للانتقالات السلسة
   static const _timing = (
     initialDelay: Duration(milliseconds: 200),
@@ -303,17 +303,17 @@ class SalesTutorialService {
     );
 
     final targetKeys = [
-      invoiceNumberFieldKey,    // 0
-      dateFieldKey,             // 1
-      customerFieldKey,         // 2
-      qatTypeFieldKey,          // 3
-      unitFieldKey,             // 4
-      quantityFieldKey,         // 5
-      priceFieldKey,            // 6
-      paymentMethodKey,         // 7
-      discountFieldKey,         // 8
-      notesFieldKey,            // 9
-      saveButtonKey,            // 10
+      invoiceNumberFieldKey, // 0
+      dateFieldKey, // 1
+      customerFieldKey, // 2
+      qatTypeFieldKey, // 3
+      unitFieldKey, // 4
+      quantityFieldKey, // 5
+      priceFieldKey, // 6
+      paymentMethodKey, // 7
+      discountFieldKey, // 8
+      notesFieldKey, // 9
+      saveButtonKey, // 10
     ];
 
     final targets = <TargetFocus>[];
@@ -527,8 +527,7 @@ class SalesTutorialService {
                 stepNumber: 5,
                 totalSteps: 11,
                 title: 'وحدة القياس',
-                description:
-                    'اختر وحدة القياس المناسبة\n(ربطة، كيس، كرتون، قطعة)',
+                description: 'اختر وحدة القياس المناسبة\n(ربطة، علاقية كيلو)',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -891,13 +890,13 @@ class SalesTutorialService {
     );
 
     final targetKeys = [
-      qatTypeFieldKey,      // 0
-      unitFieldKey,         // 1
-      quantityFieldKey,     // 2
-      priceFieldKey,        // 3
-      paymentMethodKey,     // 4
-      notesFieldKey,        // 5
-      saveButtonKey,        // 6
+      qatTypeFieldKey, // 0
+      unitFieldKey, // 1
+      quantityFieldKey, // 2
+      priceFieldKey, // 3
+      paymentMethodKey, // 4
+      notesFieldKey, // 5
+      saveButtonKey, // 6
     ];
 
     final targets = <TargetFocus>[];
@@ -962,8 +961,7 @@ class SalesTutorialService {
                 stepNumber: 2,
                 totalSteps: 7,
                 title: 'وحدة القياس',
-                description:
-                    'اختر وحدة القياس المناسبة\n(ربطة، كيس، كرتون، قطعة)',
+                description: 'اختر وحدة القياس المناسبة\n(ربطة، علاقية كيلو)',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -1406,16 +1404,25 @@ class SalesTutorialService {
                     OutlinedButton(
                       onPressed: onPrevious,
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.border.withValues(alpha: 0.3)),
+                        side: BorderSide(
+                          color: AppColors.border.withValues(alpha: 0.3),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
+                          Icon(
+                            Icons.arrow_back,
+                            size: 16,
+                            color: AppColors.textSecondary,
+                          ),
                           SizedBox(width: 4),
                           Text(
                             'السابق',
@@ -1440,7 +1447,10 @@ class SalesTutorialService {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

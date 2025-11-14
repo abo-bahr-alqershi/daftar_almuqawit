@@ -24,16 +24,18 @@ class InventoryListLoaded extends InventoryState {
   final InventoryFilterType currentFilter;
   final bool isSearchActive;
   final String? searchQuery;
+  final InventoryStatistics? statistics;
 
   const InventoryListLoaded({
     required this.inventory,
     this.currentFilter = InventoryFilterType.all,
     this.isSearchActive = false,
     this.searchQuery,
+    this.statistics,
   });
 
   @override
-  List<Object?> get props => [inventory, currentFilter, isSearchActive, searchQuery];
+  List<Object?> get props => [inventory, currentFilter, isSearchActive, searchQuery, statistics];
 
   /// نسخة محدثة من الحالة
   InventoryListLoaded copyWith({
@@ -41,12 +43,14 @@ class InventoryListLoaded extends InventoryState {
     InventoryFilterType? currentFilter,
     bool? isSearchActive,
     String? searchQuery,
+    InventoryStatistics? statistics,
   }) {
     return InventoryListLoaded(
       inventory: inventory ?? this.inventory,
       currentFilter: currentFilter ?? this.currentFilter,
       isSearchActive: isSearchActive ?? this.isSearchActive,
       searchQuery: searchQuery ?? this.searchQuery,
+      statistics: statistics ?? this.statistics,
     );
   }
 }

@@ -24,6 +24,9 @@ class DashboardLoaded extends DashboardState {
   /// إحصائيات اليوم
   final DailyStatistics dailyStats;
   
+  /// إحصائيات الأمس للمقارنة
+  final DailyStatistics? yesterdayStats;
+  
   /// مبيعات اليوم
   final List<Sale> todaySales;
   
@@ -45,6 +48,7 @@ class DashboardLoaded extends DashboardState {
   
   DashboardLoaded({
     required this.dailyStats,
+    this.yesterdayStats,
     required this.todaySales,
     required this.todayPurchases,
     required this.pendingDebts,
@@ -57,6 +61,7 @@ class DashboardLoaded extends DashboardState {
   @override
   List<Object?> get props => [
     dailyStats,
+    yesterdayStats,
     todaySales,
     todayPurchases,
     pendingDebts,
@@ -68,6 +73,7 @@ class DashboardLoaded extends DashboardState {
 
   DashboardLoaded copyWith({
     DailyStatistics? dailyStats,
+    DailyStatistics? yesterdayStats,
     List<Sale>? todaySales,
     List<Purchase>? todayPurchases,
     List<Debt>? pendingDebts,
@@ -78,6 +84,7 @@ class DashboardLoaded extends DashboardState {
   }) {
     return DashboardLoaded(
       dailyStats: dailyStats ?? this.dailyStats,
+      yesterdayStats: yesterdayStats ?? this.yesterdayStats,
       todaySales: todaySales ?? this.todaySales,
       todayPurchases: todayPurchases ?? this.todayPurchases,
       pendingDebts: pendingDebts ?? this.pendingDebts,

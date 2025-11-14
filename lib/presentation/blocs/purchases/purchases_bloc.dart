@@ -10,6 +10,7 @@ import '../../../domain/usecases/purchases/get_purchases.dart';
 import '../../../domain/usecases/purchases/get_purchases_by_supplier.dart';
 import '../../../domain/usecases/purchases/get_today_purchases.dart';
 import '../../../domain/usecases/purchases/update_purchase.dart';
+import '../../../domain/usecases/statistics/invalidate_daily_statistics.dart';
 import 'purchases_event.dart';
 import 'purchases_state.dart';
 
@@ -22,6 +23,7 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
   final UpdatePurchase updatePurchase;
   final DeletePurchase deletePurchase;
   final CancelPurchase cancelPurchase;
+  final InvalidateDailyStatistics? invalidateStatistics;
 
   PurchasesBloc({
     required this.getPurchases,
@@ -31,6 +33,7 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
     required this.updatePurchase,
     required this.deletePurchase,
     required this.cancelPurchase,
+    this.invalidateStatistics,
   }) : super(PurchasesInitial()) {
     on<LoadPurchases>(_onLoadPurchases);
     on<LoadPurchaseById>(_onLoadPurchaseById);
@@ -94,6 +97,10 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
   Future<void> _onAddPurchase(AddPurchaseEvent event, Emitter<PurchasesState> emit) async {
     try {
       await addPurchase(event.purchase);
+      
+      // إبطال إحصائيات اليوم
+      await _invalidateTodayStats(event.purchase.date);
+      
       emit(PurchaseOperationSuccess('تم إضافة المشترى بنجاح'));
       add(LoadPurchases());
     } catch (e) {
@@ -105,6 +112,10 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
   Future<void> _onUpdatePurchase(UpdatePurchaseEvent event, Emitter<PurchasesState> emit) async {
     try {
       await updatePurchase(event.purchase);
+      
+      // إبطال إحصائيات اليوم
+      await _invalidateTodayStats(event.purchase.date);
+      
       emit(PurchaseOperationSuccess('تم تحديث المشترى بنجاح'));
       add(LoadPurchases());
     } catch (e) {
@@ -116,6 +127,10 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
   Future<void> _onDeletePurchase(DeletePurchaseEvent event, Emitter<PurchasesState> emit) async {
     try {
       await deletePurchase(event.id);
+      
+      // إبطال إحصائيات اليوم
+      await _invalidateTodayStats(DateTime.now().toIso8601String().split('T')[0]);
+      
       emit(PurchaseOperationSuccess('تم حذف المشترى بنجاح'));
       add(LoadPurchases());
     } catch (e) {
@@ -127,10 +142,27 @@ class PurchasesBloc extends Bloc<PurchasesEvent, PurchasesState> {
   Future<void> _onCancelPurchase(CancelPurchaseEvent event, Emitter<PurchasesState> emit) async {
     try {
       await cancelPurchase(event.id);
+      
+      // إبطال إحصائيات اليوم
+      await _invalidateTodayStats(DateTime.now().toIso8601String().split('T')[0]);
+      
       emit(PurchaseOperationSuccess('تم إلغاء المشترى بنجاح'));
       add(LoadPurchases());
     } catch (e) {
       emit(PurchasesError('فشل إلغاء المشترى: ${e.toString()}'));
+    }
+  }
+
+  /// إبطال إحصائيات يوم محدد
+  Future<void> _invalidateTodayStats(String date) async {
+    if (invalidateStatistics != null) {
+      try {
+        await invalidateStatistics!(
+          InvalidateDailyStatisticsParams(date: date),
+        );
+      } catch (e) {
+        // تجاهل الأخطاء في إبطال الإحصائيات
+      }
     }
   }
 }

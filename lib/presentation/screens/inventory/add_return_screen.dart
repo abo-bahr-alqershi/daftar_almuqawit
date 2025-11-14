@@ -29,7 +29,7 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
   String _selectedUnit = 'ربطة';
   double _totalAmount = 0;
 
-  final List<String> _units = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
+  final List<String> _units = ['ربطة', 'علاقية', 'كيلو'];
   final List<String> _returnTypes = ['مردود_مبيعات', 'مردود_مشتريات'];
 
   @override

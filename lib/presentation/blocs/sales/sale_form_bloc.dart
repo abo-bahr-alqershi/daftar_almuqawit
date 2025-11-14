@@ -2,13 +2,19 @@
 /// يدير حالة نموذج إضافة وتعديل المبيعات
 
 import 'package:bloc/bloc.dart';
+import '../../../core/di/service_locator.dart';
+import '../../../domain/entities/sale.dart';
+import '../../../domain/usecases/sales/add_sale.dart';
 import 'sale_form_event.dart';
 import 'sale_form_state.dart';
 
 /// Bloc نموذج المبيعات
 class SaleFormBloc extends Bloc<SaleFormEvent, SaleFormState> {
+  final AddSale? _addSaleUseCase;
   
-  SaleFormBloc() : super(SaleFormInitial()) {
+  SaleFormBloc({AddSale? addSaleUseCase}) 
+      : _addSaleUseCase = addSaleUseCase ?? sl<AddSale>(),
+        super(SaleFormInitial()) {
     on<LoadSaleForEdit>(_onLoadSaleForEdit);
     on<SaleCustomerChanged>(_onCustomerChanged);
     on<SaleAmountChanged>(_onAmountChanged);
@@ -66,15 +72,53 @@ class SaleFormBloc extends Bloc<SaleFormEvent, SaleFormState> {
 
   /// معالج حفظ المبيعة
   Future<void> _onSaveSale(SaveSale event, Emitter<SaleFormState> emit) async {
-    final currentState = state;
-    if (currentState is SaleFormReady) {
-      try {
-        emit(SaleFormLoading());
-        await Future.delayed(const Duration(seconds: 1));
-        emit(SaleFormSuccess('تم حفظ المبيعة بنجاح'));
-      } catch (e) {
-        emit(SaleFormError('فشل حفظ المبيعة: ${e.toString()}'));
-      }
+    try {
+      emit(SaleFormLoading());
+      
+      // تحويل البيانات إلى كائن Sale
+      final sale = Sale(
+        id: 0, // سيتم توليد ID تلقائيًا من قاعدة البيانات
+        date: event.saleData['date'] as String,
+        time: event.saleData['time'] as String,
+        customerId: event.saleData['customerId'] as int?,
+        customerName: event.saleData['customerName'] as String?,
+        qatTypeId: event.saleData['qatTypeId'] as int,
+        qatTypeName: event.saleData['qatTypeName'] as String?,
+        quantity: event.saleData['quantity'] as double,
+        unit: event.saleData['unit'] as String,
+        unitPrice: event.saleData['unitPrice'] as double,
+        totalAmount: event.saleData['totalAmount'] as double,
+        discount: event.saleData['discount'] as double? ?? 0.0,
+        paymentStatus: _calculatePaymentStatus(
+          event.saleData['totalAmount'] as double,
+          event.saleData['paidAmount'] as double? ?? 0.0,
+        ),
+        paymentMethod: event.saleData['paymentMethod'] as String,
+        paidAmount: event.saleData['paidAmount'] as double? ?? 0.0,
+        remainingAmount: (event.saleData['totalAmount'] as double) - 
+                        (event.saleData['paidAmount'] as double? ?? 0.0),
+        invoiceNumber: event.saleData['invoiceNumber'] as String?,
+        notes: event.saleData['notes'] as String?,
+        isQuickSale: false,
+      );
+      
+      // حفظ البيع في قاعدة البيانات
+      final saleId = await _addSaleUseCase!(sale);
+      
+      emit(SaleFormSuccess('تم حفظ البيع بنجاح - رقم البيع: $saleId'));
+    } catch (e) {
+      emit(SaleFormError('فشل حفظ البيع: ${e.toString()}'));
+    }
+  }
+  
+  /// حساب حالة الدفع
+  String _calculatePaymentStatus(double totalAmount, double paidAmount) {
+    if (paidAmount >= totalAmount) {
+      return 'مدفوع';
+    } else if (paidAmount > 0) {
+      return 'مدفوع جزئياً';
+    } else {
+      return 'غير مدفوع';
     }
   }
 

@@ -56,6 +56,25 @@ class StatisticsRepositoryImpl implements StatisticsRepository {
   Future<void> saveDaily(DailyStatistics statistics) => local.saveDaily(statistics);
   
   @override
+  Future<void> invalidateDailyStats(String date) async {
+    // مسح من الكاش
+    _cache.clearDailyStatsCache(date);
+    
+    // حذف من قاعدة البيانات
+    final db = await local.db;
+    await db.delete(
+      'daily_stats',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+  }
+  
+  @override
+  Future<void> clearAllCache() async {
+    _cache.clearStatisticsCache();
+  }
+  
+  @override
   Future<int> add(DailyStatistics entity) async => 0;
   
   @override

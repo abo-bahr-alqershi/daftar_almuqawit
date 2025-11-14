@@ -30,7 +30,11 @@ class AddProductToSale extends SaleFormEvent {
 }
 
 /// حدث حفظ المبيعة
-class SaveSale extends SaleFormEvent {}
+class SaveSale extends SaleFormEvent {
+  final Map<String, dynamic> saleData;
+  
+  SaveSale(this.saleData);
+}
 
 /// حدث إعادة تعيين النموذج
 class ResetSaleForm extends SaleFormEvent {}

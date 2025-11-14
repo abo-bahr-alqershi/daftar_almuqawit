@@ -129,6 +129,7 @@ import '../../domain/usecases/accounting/get_trial_balance.dart';
 import '../../domain/usecases/accounting/generate_financial_statements.dart';
 // Statistics
 import '../../domain/usecases/statistics/get_daily_statistics.dart';
+import '../../domain/usecases/statistics/invalidate_daily_statistics.dart';
 import '../../domain/usecases/statistics/get_monthly_statistics.dart';
 import '../../domain/usecases/statistics/get_weekly_report.dart';
 import '../../domain/usecases/statistics/get_yearly_report.dart';
@@ -278,6 +279,7 @@ class ServiceLocator {
       purchaseRepo: sl<PurchaseRepository>(),
       expenseRepo: sl<ExpenseRepository>(),
     ));
+    sl.registerLazySingleton<InvalidateDailyStatistics>(() => InvalidateDailyStatistics(sl()));
     sl.registerLazySingleton<GetMonthlyStatistics>(() => GetMonthlyStatistics(sl()));
     sl.registerLazySingleton<GetWeeklyReport>(() => GetWeeklyReport(sl()));
     sl.registerLazySingleton<GetYearlyReport>(() => GetYearlyReport(sl()));

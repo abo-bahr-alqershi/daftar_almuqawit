@@ -23,7 +23,7 @@ class QatType extends BaseEntity {
   final double? defaultSellPrice;
   final String? color;
   final String? icon;
-  final List<String>? availableUnits; // الوحدات المتاحة: ربطة، كيس، كيلو
+  final List<String>? availableUnits; // الوحدات المتاحة: ربطة، علاقية كيلو
   final Map<String, UnitPrice>? unitPrices; // أسعار الشراء والبيع لكل وحدة
 }
 
@@ -32,10 +32,7 @@ class UnitPrice {
   final double? buyPrice;
   final double? sellPrice;
 
-  const UnitPrice({
-    this.buyPrice,
-    this.sellPrice,
-  });
+  const UnitPrice({this.buyPrice, this.sellPrice});
 
   Map<String, dynamic> toJson() => {
     'buyPrice': buyPrice,

@@ -44,7 +44,7 @@ class QatTypeFormState extends State<QatTypeForm> {
 
   final List<String> _qualities = ['ممتاز', 'جيد جداً', 'جيد', 'متوسط', 'عادي'];
   final List<String> _icons = ['🌿', '🍃', '🌱', '🌾', '🎋', '🌳', '🪴', '☘️'];
-  final List<String> _availableUnits = ['ربطة', 'كيس', 'كيلو'];
+  final List<String> _availableUnits = ['ربطة', 'علاقية', 'كيلو'];
 
   @override
   void initState() {
@@ -67,8 +67,10 @@ class QatTypeFormState extends State<QatTypeForm> {
       if (widget.qatType.unitPrices != null) {
         widget.qatType.unitPrices.forEach((unit, prices) {
           if (_unitBuyPriceControllers.containsKey(unit)) {
-            _unitBuyPriceControllers[unit]!.text = prices.buyPrice?.toString() ?? '';
-            _unitSellPriceControllers[unit]!.text = prices.sellPrice?.toString() ?? '';
+            _unitBuyPriceControllers[unit]!.text =
+                prices.buyPrice?.toString() ?? '';
+            _unitSellPriceControllers[unit]!.text =
+                prices.sellPrice?.toString() ?? '';
           }
         });
       }
@@ -79,7 +81,7 @@ class QatTypeFormState extends State<QatTypeForm> {
   void dispose() {
     _nameController.dispose();
     _nameFocusNode.dispose();
-    
+
     for (var controller in _unitBuyPriceControllers.values) {
       controller.dispose();
     }
@@ -91,7 +93,6 @@ class QatTypeFormState extends State<QatTypeForm> {
 
   bool validate() => _formKey.currentState?.validate() ?? false;
 
-
   Map<String, dynamic> getFormData() {
     final Map<String, UnitPrice> unitPrices = {};
 
@@ -101,8 +102,12 @@ class QatTypeFormState extends State<QatTypeForm> {
       final sellPrice = _unitSellPriceControllers[unit]?.text;
 
       unitPrices[unit] = UnitPrice(
-        buyPrice: buyPrice != null && buyPrice.isNotEmpty ? double.parse(buyPrice) : null,
-        sellPrice: sellPrice != null && sellPrice.isNotEmpty ? double.parse(sellPrice) : null,
+        buyPrice: buyPrice != null && buyPrice.isNotEmpty
+            ? double.parse(buyPrice)
+            : null,
+        sellPrice: sellPrice != null && sellPrice.isNotEmpty
+            ? double.parse(sellPrice)
+            : null,
       );
     }
 
@@ -153,7 +158,6 @@ class QatTypeFormState extends State<QatTypeForm> {
 
         // تم إخفاء حاوية اختيار الرمز حسب الطلب
         // تم إخفاء حقول الأسعار الافتراضية والوحدات
-
         const SizedBox(height: 24),
 
         if (widget.onSubmit != null && widget.onCancel != null)
@@ -191,10 +195,7 @@ class QatTypeFormState extends State<QatTypeForm> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      color.withOpacity(0.15),
-                      color.withOpacity(0.08),
-                    ],
+                    colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -251,7 +252,10 @@ class QatTypeFormState extends State<QatTypeForm> {
             color: AppColors.textHint,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
         ),
         validator: validator,
@@ -274,7 +278,11 @@ class QatTypeFormState extends State<QatTypeForm> {
         children: [
           Row(
             children: [
-              const Icon(Icons.grade_rounded, color: AppColors.warning, size: 20),
+              const Icon(
+                Icons.grade_rounded,
+                color: AppColors.warning,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Text(
                 'درجة الجودة',
@@ -298,7 +306,10 @@ class QatTypeFormState extends State<QatTypeForm> {
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
@@ -330,7 +341,9 @@ class QatTypeFormState extends State<QatTypeForm> {
                     quality,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w600,
                       color: isSelected ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
@@ -528,11 +541,16 @@ class QatTypeFormState extends State<QatTypeForm> {
                   keyboardType: TextInputType.number,
                   onChanged: (value) => setState(() {}),
                   validator: (value) {
-                    if (value != null && value.isNotEmpty &&
+                    if (value != null &&
+                        value.isNotEmpty &&
                         _unitBuyPriceControllers[unit]!.text.isNotEmpty) {
-                      final buyPrice = double.tryParse(_unitBuyPriceControllers[unit]!.text);
+                      final buyPrice = double.tryParse(
+                        _unitBuyPriceControllers[unit]!.text,
+                      );
                       final sellPrice = double.tryParse(value);
-                      if (buyPrice != null && sellPrice != null && sellPrice < buyPrice) {
+                      if (buyPrice != null &&
+                          sellPrice != null &&
+                          sellPrice < buyPrice) {
                         return 'أقل من الشراء';
                       }
                     }
@@ -726,7 +744,9 @@ class QatTypeFormState extends State<QatTypeForm> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              widget.qatType == null ? 'إضافة النوع' : 'حفظ التعديلات',
+                              widget.qatType == null
+                                  ? 'إضافة النوع'
+                                  : 'حفظ التعديلات',
                               style: AppTextStyles.button.copyWith(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -764,7 +784,7 @@ class QatTypeFormState extends State<QatTypeForm> {
     switch (unit) {
       case 'ربطة':
         return Icons.shopping_bag_rounded;
-      case 'كيس':
+      case 'علاقية':
         return Icons.inventory_2_rounded;
       case 'كيلو':
         return Icons.scale_rounded;

@@ -36,23 +36,21 @@ class ExpenseFormState extends State<ExpenseForm> {
   bool _isRecurring = false;
 
   final List<Map<String, dynamic>> _categories = [
+    {'name': 'عمولات بيع', 'icon': Icons.monetization_on_rounded, 'color': AppColors.success},
     {'name': 'رواتب', 'icon': Icons.payments_rounded, 'color': AppColors.primary},
-    {'name': 'إيجار', 'icon': Icons.home_rounded, 'color': AppColors.warning},
+    {'name': 'ايجار', 'icon': Icons.home_rounded, 'color': AppColors.warning},
     {'name': 'كهرباء', 'icon': Icons.bolt_rounded, 'color': AppColors.info},
     {'name': 'ماء', 'icon': Icons.water_drop_rounded, 'color': Color(0xFF0288D1)},
-    {'name': 'مواصلات', 'icon': Icons.directions_car_rounded, 'color': AppColors.success},
-    {'name': 'صيانة', 'icon': Icons.build_rounded, 'color': AppColors.danger},
     {'name': 'مشتريات', 'icon': Icons.shopping_cart_rounded, 'color': AppColors.purchases},
-    {'name': 'اتصالات', 'icon': Icons.phone_rounded, 'color': Color(0xFF7C3AED)},
-    {'name': 'تسويق', 'icon': Icons.campaign_rounded, 'color': Color(0xFFFF6F00)},
-    {'name': 'أخرى', 'icon': Icons.more_horiz_rounded, 'color': AppColors.textSecondary},
+    {'name': 'اتصالات وانترنت', 'icon': Icons.wifi_rounded, 'color': Color(0xFF7C3AED)},
+    {'name': 'غداء صبوح عشاء', 'icon': Icons.restaurant_rounded, 'color': Color(0xFFFF6F00)},
+    {'name': 'اخرى', 'icon': Icons.more_horiz_rounded, 'color': AppColors.textSecondary},
   ];
 
   final List<Map<String, dynamic>> _paymentMethods = [
     {'name': 'نقد', 'icon': Icons.payments_rounded},
-    {'name': 'بطاقة', 'icon': Icons.credit_card_rounded},
-    {'name': 'تحويل', 'icon': Icons.account_balance_rounded},
-    {'name': 'شيك', 'icon': Icons.receipt_rounded},
+    {'name': 'محفظة', 'icon': Icons.account_balance_wallet_rounded},
+    {'name': 'حوالة', 'icon': Icons.swap_horiz_rounded},
   ];
 
   @override

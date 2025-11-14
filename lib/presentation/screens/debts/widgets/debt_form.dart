@@ -36,7 +36,7 @@ class DebtFormState extends State<DebtForm> {
   int? _selectedCustomerId;
   String? _selectedCustomerName;
   String? _selectedCustomerPhone;
-  String _debtType = 'بيع آجل';
+  String _debtType = 'بيع اجل';
   DateTime _selectedDate = DateTime.now();
   DateTime? _dueDate;
 
@@ -53,18 +53,18 @@ class DebtFormState extends State<DebtForm> {
     _selectedCustomerId = data['customerId'];
     _selectedCustomerName = data['customerName'];
     _selectedCustomerPhone = data['customerPhone'];
-    _debtType = data['debtType'] ?? 'بيع آجل';
+    _debtType = data['debtType'] ?? 'بيع اجل';
     _amountController.text = data['amount']?.toString() ?? '';
     _descriptionController.text = data['description'] ?? '';
     _notesController.text = data['notes'] ?? '';
     if (data['date'] != null) {
-      _selectedDate = data['date'] is DateTime 
-          ? data['date'] 
+      _selectedDate = data['date'] is DateTime
+          ? data['date']
           : DateTime.parse(data['date']);
     }
     if (data['dueDate'] != null) {
-      _dueDate = data['dueDate'] is DateTime 
-          ? data['dueDate'] 
+      _dueDate = data['dueDate'] is DateTime
+          ? data['dueDate']
           : DateTime.parse(data['dueDate']);
     }
   }
@@ -81,7 +81,7 @@ class DebtFormState extends State<DebtForm> {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return false;
     }
-    
+
     if (_selectedCustomerId == null) {
       _showErrorSnackbar('يرجى اختيار العميل');
       return false;
@@ -138,23 +138,23 @@ class DebtFormState extends State<DebtForm> {
             _buildSectionTitle('معلومات العميل'),
             const SizedBox(height: 16),
             _buildCustomerSelector(),
-            
+
             const SizedBox(height: 24),
             _buildSectionTitle('تفاصيل الدين'),
             const SizedBox(height: 16),
-            
+
             _buildDebtTypeSelector(),
             const SizedBox(height: 16),
-            
+
             _buildAmountField(),
             const SizedBox(height: 16),
-            
+
             _buildDescriptionField(),
-            
+
             const SizedBox(height: 24),
             _buildSectionTitle('التواريخ'),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
                 Expanded(child: _buildDatePicker()),
@@ -162,16 +162,16 @@ class DebtFormState extends State<DebtForm> {
                 Expanded(child: _buildDueDatePicker()),
               ],
             ),
-            
+
             const SizedBox(height: 24),
             _buildSectionTitle('ملاحظات'),
             const SizedBox(height: 16),
-            
+
             _buildNotesField(),
-            
+
             const SizedBox(height: 24),
             _buildAmountPreview(),
-            
+
             const SizedBox(height: 24),
             _buildActionButtons(),
           ],
@@ -218,8 +218,8 @@ class DebtFormState extends State<DebtForm> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _selectedCustomerId == null 
-                ? AppColors.border 
+            color: _selectedCustomerId == null
+                ? AppColors.border
                 : AppColors.danger.withOpacity(0.3),
             width: 1.5,
           ),
@@ -259,11 +259,11 @@ class DebtFormState extends State<DebtForm> {
                   Text(
                     _selectedCustomerName ?? 'اختر العميل',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: _selectedCustomerId == null 
-                          ? AppColors.textSecondary 
+                      color: _selectedCustomerId == null
+                          ? AppColors.textSecondary
                           : AppColors.textPrimary,
-                      fontWeight: _selectedCustomerId == null 
-                          ? FontWeight.normal 
+                      fontWeight: _selectedCustomerId == null
+                          ? FontWeight.normal
                           : FontWeight.w600,
                     ),
                   ),
@@ -390,21 +390,24 @@ class DebtFormState extends State<DebtForm> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         customer.name,
-                                        style: AppTextStyles.bodyMedium.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: AppTextStyles.bodyMedium
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                       if (customer.phone != null) ...[
                                         const SizedBox(height: 4),
                                         Text(
                                           customer.phone!,
-                                          style: AppTextStyles.bodySmall.copyWith(
-                                            color: AppColors.textSecondary,
-                                          ),
+                                          style: AppTextStyles.bodySmall
+                                              .copyWith(
+                                                color: AppColors.textSecondary,
+                                              ),
                                         ),
                                       ],
                                     ],
@@ -429,8 +432,8 @@ class DebtFormState extends State<DebtForm> {
   }
 
   Widget _buildDebtTypeSelector() {
-    final types = ['بيع آجل', 'قرض', 'أخرى'];
-    
+    final types = ['بيع اجل', 'اخرى'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -448,13 +451,18 @@ class DebtFormState extends State<DebtForm> {
           children: types.map((type) {
             final isSelected = _debtType == type;
             return InkWell(
-              onTap: widget.isLoading ? null : () {
-                setState(() => _debtType = type);
-              },
+              onTap: widget.isLoading
+                  ? null
+                  : () {
+                      setState(() => _debtType = type);
+                    },
               borderRadius: BorderRadius.circular(20),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
@@ -471,7 +479,9 @@ class DebtFormState extends State<DebtForm> {
                   type,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
                 ),
               ),
@@ -532,7 +542,7 @@ class DebtFormState extends State<DebtForm> {
       style: AppTextStyles.bodyMedium,
       decoration: InputDecoration(
         labelText: 'وصف الدين *',
-        hintText: 'مثال: دين بيع قات - 20 كيس',
+        hintText: 'مثال: دين بيع قات - 20 علاقية',
         prefixIcon: Container(
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.all(8),
@@ -573,18 +583,20 @@ class DebtFormState extends State<DebtForm> {
 
   Widget _buildDatePicker() {
     return InkWell(
-      onTap: widget.isLoading ? null : () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: _selectedDate,
-          firstDate: DateTime(2000),
-          lastDate: DateTime.now(),
-          locale: const Locale('ar'),
-        );
-        if (date != null) {
-          setState(() => _selectedDate = date);
-        }
-      },
+      onTap: widget.isLoading
+          ? null
+          : () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2000),
+                lastDate: DateTime.now(),
+                locale: const Locale('ar'),
+              );
+              if (date != null) {
+                setState(() => _selectedDate = date);
+              }
+            },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -598,7 +610,11 @@ class DebtFormState extends State<DebtForm> {
           children: [
             Row(
               children: [
-                const Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'تاريخ الدين *',
@@ -624,18 +640,21 @@ class DebtFormState extends State<DebtForm> {
 
   Widget _buildDueDatePicker() {
     return InkWell(
-      onTap: widget.isLoading ? null : () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: _dueDate ?? _selectedDate.add(const Duration(days: 30)),
-          firstDate: _selectedDate,
-          lastDate: DateTime(2100),
-          locale: const Locale('ar'),
-        );
-        if (date != null) {
-          setState(() => _dueDate = date);
-        }
-      },
+      onTap: widget.isLoading
+          ? null
+          : () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate:
+                    _dueDate ?? _selectedDate.add(const Duration(days: 30)),
+                firstDate: _selectedDate,
+                lastDate: DateTime(2100),
+                locale: const Locale('ar'),
+              );
+              if (date != null) {
+                setState(() => _dueDate = date);
+              }
+            },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -649,7 +668,11 @@ class DebtFormState extends State<DebtForm> {
           children: [
             Row(
               children: [
-                const Icon(Icons.event_available, size: 16, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.event_available,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'تاريخ الاستحقاق',
@@ -666,8 +689,12 @@ class DebtFormState extends State<DebtForm> {
                   ? '${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}'
                   : 'غير محدد',
               style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.normal,
-                color: _dueDate != null ? AppColors.textPrimary : AppColors.textSecondary,
+                fontWeight: _dueDate != null
+                    ? FontWeight.w600
+                    : FontWeight.normal,
+                color: _dueDate != null
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
               ),
             ),
           ],
@@ -715,7 +742,10 @@ class DebtFormState extends State<DebtForm> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.5), width: 2),
+          borderSide: BorderSide(
+            color: AppColors.textSecondary.withOpacity(0.5),
+            width: 2,
+          ),
         ),
       ),
     );
@@ -723,7 +753,7 @@ class DebtFormState extends State<DebtForm> {
 
   Widget _buildAmountPreview() {
     final amount = double.tryParse(_amountController.text) ?? 0;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -736,7 +766,10 @@ class DebtFormState extends State<DebtForm> {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.danger.withOpacity(0.3), width: 1.5),
+        border: Border.all(
+          color: AppColors.danger.withOpacity(0.3),
+          width: 1.5,
+        ),
       ),
       child: Row(
         children: [
@@ -802,10 +835,7 @@ class DebtFormState extends State<DebtForm> {
               ),
               child: const Text(
                 'إلغاء',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -853,7 +883,9 @@ class DebtFormState extends State<DebtForm> {
                         const Icon(Icons.check_rounded, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          widget.initialData == null ? 'حفظ الدين' : 'حفظ التعديلات',
+                          widget.initialData == null
+                              ? 'حفظ الدين'
+                              : 'حفظ التعديلات',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

@@ -12,6 +12,7 @@ import 'widgets/purchase_item_card.dart';
 import 'widgets/purchase_summary.dart';
 import 'add_purchase_screen.dart';
 import 'purchase_details_screen.dart';
+import '../inventory/add_return_screen.dart';
 
 /// الشاشة الرئيسية لإدارة المشتريات - تصميم راقي
 class PurchasesScreen extends StatefulWidget {
@@ -658,7 +659,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                   child: PurchaseItemCard(
                     purchase: purchase,
                     onTap: () => _showPurchaseDetails(purchase),
-                    onDelete: () => _deletePurchase(purchase),
+                    onDelete: () => _openRefundScreen(purchase),
                     onCancel: purchase.status == 'نشط'
                         ? () => _cancelPurchase(purchase)
                         : null,
@@ -932,11 +933,14 @@ class _PurchasesScreenState extends State<PurchasesScreen>
     ).then((_) => _loadPurchases());
   }
 
-  Future<void> _deletePurchase(Purchase purchase) async {
+  void _openRefundScreen(Purchase purchase) {
     HapticFeedback.mediumImpact();
-    if (purchase.id != null) {
-      context.read<PurchasesBloc>().add(DeletePurchaseEvent(purchase.id!));
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddReturnScreen(),
+      ),
+    ).then((_) => _loadPurchases());
   }
 
   Future<void> _cancelPurchase(Purchase purchase) async {

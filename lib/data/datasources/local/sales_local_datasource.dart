@@ -51,11 +51,25 @@ class SalesLocalDataSource extends BaseLocalDataSource<SaleModel> {
   
   /// جلب المبيعات حسب التاريخ
   Future<List<SaleModel>> getByDate(String date) async {
-    return await getWhere(
+    print('🔍 [SalesLocalDataSource.getByDate] البحث عن مبيعات بتاريخ: $date');
+    
+    final results = await getWhere(
       where: '${SalesTable.cDate} = ?',
       whereArgs: [date],
       orderBy: '${SalesTable.cTime} DESC',
     );
+    
+    print('✅ [SalesLocalDataSource.getByDate] تم العثور على ${results.length} عملية بيع');
+    
+    if (results.isNotEmpty) {
+      print('📝 [SalesLocalDataSource.getByDate] أول عملية بيع:');
+      print('   - التاريخ: ${results.first.date}');
+      print('   - الوقت: ${results.first.time}');
+      print('   - المبلغ: ${results.first.totalAmount}');
+      print('   - الحالة: ${results.first.status}');
+    }
+    
+    return results;
   }
 
   /// جلب المبيعات حسب فترة زمنية

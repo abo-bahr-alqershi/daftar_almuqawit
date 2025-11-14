@@ -161,6 +161,7 @@ class BlocModule {
       updateSale: sl(),
       deleteSale: sl(),
       cancelSale: sl(),
+      invalidateStatistics: sl(),
     ));
     
     sl.registerFactory<QuickSaleBloc>(() => QuickSaleBloc(
@@ -177,6 +178,7 @@ class BlocModule {
       updatePurchase: sl(),
       deletePurchase: sl(),
       cancelPurchase: sl(),
+      invalidateStatistics: sl(),
     ));
     
     sl.registerFactory<PurchaseFormBloc>(PurchaseFormBloc.new);
@@ -206,6 +208,7 @@ class BlocModule {
       addExpense: sl<AddExpense>(),
       updateExpense: sl<UpdateExpense>(),
       deleteExpense: sl<DeleteExpense>(),
+      invalidateStatistics: sl(),
     ));
     
     sl.registerFactory<ExpenseFormBloc>(ExpenseFormBloc.new);
