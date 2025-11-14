@@ -7,13 +7,8 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/home/dashboard_event.dart';
 import '../../blocs/home/dashboard_state.dart';
-import '../../blocs/sync/sync_bloc.dart';
-import '../../blocs/sync/sync_state.dart';
 import '../../navigation/route_names.dart';
-import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart' as custom_error;
 import 'widgets/quick_stats_widget.dart';
-import 'widgets/sync_indicator.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -189,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'لوحة التحكم',
+                            'التحليلات',
                             style: AppTextStyles.h2.copyWith(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.w800,
@@ -207,17 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
 
-                    // أزرار الإجراءات
-                    BlocBuilder<SyncBloc, SyncState>(
-                      builder: (context, state) => SyncIndicator(
-                        isSyncing: state is SyncInProgress,
-                        lastSyncTime: state is SyncSuccess
-                            ? DateTime.now()
-                            : null,
-                        onTap: () => _showSyncDetails(context),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
+                    // زر التحديث
                     _buildActionButton(
                       Icons.refresh_rounded,
                       onPressed: () {
@@ -701,11 +686,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     ];
 
     return '${days[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
-  }
-
-  void _showSyncDetails(BuildContext context) {
-    HapticFeedback.lightImpact();
-    // عرض تفاصيل المزامنة
   }
 }
 

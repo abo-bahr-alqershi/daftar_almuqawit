@@ -9,6 +9,12 @@ import '../../../domain/entities/purchase.dart';
 import '../../blocs/home/dashboard_bloc.dart';
 import '../../blocs/home/dashboard_event.dart';
 import '../../blocs/home/dashboard_state.dart';
+import '../../blocs/sales/sales_bloc.dart';
+import '../../blocs/sales/sales_state.dart';
+import '../../blocs/purchases/purchases_bloc.dart';
+import '../../blocs/purchases/purchases_state.dart';
+import '../../blocs/expenses/expenses_bloc.dart';
+import '../../blocs/expenses/expenses_state.dart';
 import '../../blocs/sync/sync_bloc.dart';
 import '../../blocs/sync/sync_state.dart';
 import '../../blocs/sync/sync_event.dart';
@@ -66,50 +72,78 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            // خلفية متدرجة ديناميكية
-            _buildGradientBackground(),
+    return MultiBlocListener(
+      listeners: [
+        // الاستماع لنجاح عمليات المبيعات
+        BlocListener<SalesBloc, SalesState>(
+          listener: (context, state) {
+            if (state is SaleOperationSuccess) {
+              // إعادة تحميل Dashboard
+              context.read<DashboardBloc>().add(LoadDashboard());
+            }
+          },
+        ),
+        // الاستماع لنجاح عمليات المشتريات
+        BlocListener<PurchasesBloc, PurchasesState>(
+          listener: (context, state) {
+            if (state is PurchaseOperationSuccess) {
+              context.read<DashboardBloc>().add(LoadDashboard());
+            }
+          },
+        ),
+        // الاستماع لنجاح عمليات المصروفات
+        BlocListener<ExpensesBloc, ExpensesState>(
+          listener: (context, state) {
+            if (state is ExpenseOperationSuccess) {
+              context.read<DashboardBloc>().add(LoadDashboard());
+            }
+          },
+        ),
+      ],
+      child: Directionality(
+        textDirection: ui.TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: Stack(
+            children: [
+              // خلفية متدرجة ديناميكية
+              _buildGradientBackground(),
 
-            // المحتوى الرئيسي
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                // AppBar مخصص مع تأثيرات
-                _buildModernAppBar(topPadding),
+              // المحتوى الرئيسي
+              CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                slivers: [
+                  // AppBar مخصص مع تأثيرات
+                  _buildModernAppBar(topPadding),
 
-                // محتوى الشاشة
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
+                  // محتوى الشاشة
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
 
-                      // الإحصائيات السريعة
-                      BlocBuilder<DashboardBloc, DashboardState>(
-                        builder: (context, state) {
-                          if (state is DashboardLoading) {
-                            return _buildShimmerStats();
-                          }
-                          if (state is DashboardLoaded) {
-                            return Hero(
-                              tag: 'quick-stats',
-                              child: QuickStatsWidget(
-                                stats: state.dailyStats,
-                                yesterdayStats: state.yesterdayStats,
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
+                        // الإحصائيات السريعة
+                        BlocBuilder<DashboardBloc, DashboardState>(
+                          builder: (context, state) {
+                            if (state is DashboardLoading) {
+                              return _buildShimmerStats();
+                            }
+                            if (state is DashboardLoaded) {
+                              return Hero(
+                                tag: 'quick-stats',
+                                child: QuickStatsWidget(
+                                  stats: state.dailyStats,
+                                  yesterdayStats: state.yesterdayStats,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
 
                       const SizedBox(height: 32),
 
@@ -191,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen>
             _buildFloatingActionButton(context),
           ],
         ),
+      ),
       ),
     );
   }

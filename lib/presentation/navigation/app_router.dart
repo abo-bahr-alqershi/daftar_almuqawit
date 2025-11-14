@@ -7,6 +7,7 @@ import '../../domain/entities/purchase.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/activities_screen.dart';
+import '../screens/home/dashboard_screen.dart';
 import 'route_names.dart';
 import '../screens/suppliers/suppliers_screen.dart';
 import '../screens/customers/customers_screen.dart';
@@ -65,6 +66,8 @@ class AppRouter {
         return _buildRoute(const SplashScreen());
       case RouteNames.home:
         return _buildRoute(const HomeScreen());
+      case RouteNames.dashboard:
+        return _buildRoute(const DashboardScreen());
       case RouteNames.activities:
         return _buildRoute(const ActivitiesScreen());
       case RouteNames.suppliers:

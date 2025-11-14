@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/daily_statistics.dart';
+import '../../../navigation/route_names.dart';
 
 /// ويدجت الإحصائيات السريعة - تصميم Tesla/iOS متطور
 class QuickStatsWidget extends StatefulWidget {
@@ -109,7 +110,13 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
     );
   }
 
-  Widget _buildMainStatsCard() => Container(
+  Widget _buildMainStatsCard() => GestureDetector(
+    onTap: () {
+      // الانتقال إلى شاشة الداش بورد عند النقر على البطاقة الرئيسية
+      HapticFeedback.lightImpact();
+      Navigator.pushNamed(context, RouteNames.dashboard);
+    },
+    child: Container(
     height: 200,
     decoration: BoxDecoration(
       gradient: const LinearGradient(
@@ -303,6 +310,7 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
         ),
       ],
     ),
+    ),
   );
 
   Widget _buildStatsGrid() {
@@ -487,12 +495,31 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
     
     final netProfit = widget.stats!.netProfit;
     final totalSales = widget.stats!.totalSales;
+    final totalExpenses = widget.stats!.totalExpenses;
     
+    // إذا لم يكن هناك مبيعات، الأداء 0
     if (totalSales == 0) return 0.0;
     
+    // حساب هامش الربح الصافي (Net Profit Margin)
     final profitMargin = (netProfit / totalSales).abs();
     
-    return profitMargin.clamp(0.0, 1.0);
+    // حساب نسبة التحكم في المصروفات (Expense Ratio)
+    final expenseRatio = totalExpenses / totalSales;
+    
+    // حساب الأداء الكلي (يفضل أن يكون هامش الربح عالي والمصروفات منخفضة)
+    // نسبة الأداء = (هامش الربح × 0.7) + ((1 - نسبة المصروفات) × 0.3)
+    double performance = (profitMargin * 0.7);
+    
+    if (expenseRatio < 1) {
+      performance += ((1 - expenseRatio) * 0.3);
+    }
+    
+    // إذا كان هناك خسارة، نقلل من الأداء
+    if (netProfit < 0) {
+      performance = performance * 0.5;
+    }
+    
+    return performance.clamp(0.0, 1.0);
   }
 
   Color _getPerformanceColor() {
@@ -528,19 +555,66 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
   String _getProfitChangeText() {
     if (widget.stats == null) return '+0%';
     
-    final totalSales = widget.stats!.totalSales;
-    final netProfit = widget.stats!.netProfit;
+    // إذا لم يكن هناك بيانات الأمس، نعرض هامش الربح الحالي
+    if (widget.yesterdayStats == null) {
+      final totalSales = widget.stats!.totalSales;
+      final netProfit = widget.stats!.netProfit;
+      
+      if (totalSales == 0) return '+0%';
+      
+      final profitMargin = (netProfit / totalSales * 100);
+      final sign = profitMargin >= 0 ? '+' : '';
+      
+      return '$sign${profitMargin.toStringAsFixed(1)}%';
+    }
     
-    if (totalSales == 0) return '+0%';
+    // حساب التغيير في الربح بين اليوم والأمس
+    final todayProfit = widget.stats!.netProfit;
+    final yesterdayProfit = widget.yesterdayStats!.netProfit;
     
-    final profitMargin = (netProfit / totalSales * 100);
-    final sign = profitMargin >= 0 ? '+' : '';
+    if (yesterdayProfit == 0) {
+      // إذا كان ربح الأمس = 0
+      if (todayProfit > 0) {
+        return '+100%';
+      } else if (todayProfit < 0) {
+        return '-100%';
+      } else {
+        return '+0%';
+      }
+    }
     
-    return '$sign${profitMargin.toStringAsFixed(1)}%';
+    final changePercent = ((todayProfit - yesterdayProfit) / yesterdayProfit.abs() * 100);
+    final sign = changePercent >= 0 ? '+' : '';
+    
+    return '$sign${changePercent.toStringAsFixed(1)}%';
   }
 
   double? _calculateTrend(String type) {
-    if (widget.stats == null || widget.yesterdayStats == null) return null;
+    // إذا لم يكن هناك بيانات اليوم، لا نستطيع حساب الترند
+    if (widget.stats == null) return null;
+    
+    // إذا لم يكن هناك بيانات الأمس، نعرض الترند بناءً على القيمة الحالية فقط
+    if (widget.yesterdayStats == null) {
+      double todayValue = 0;
+      
+      switch (type) {
+        case 'sales':
+          todayValue = widget.stats!.totalSales;
+          break;
+        case 'purchases':
+          todayValue = widget.stats!.totalPurchases;
+          break;
+        case 'expenses':
+          todayValue = widget.stats!.totalExpenses;
+          break;
+        case 'debts':
+          todayValue = widget.stats!.newDebts + widget.stats!.collectedDebts;
+          break;
+      }
+      
+      // إذا كانت القيمة الحالية أكبر من 0، نعرض اتجاه صاعد
+      return todayValue > 0 ? 100.0 : 0.0;
+    }
     
     double today = 0;
     double yesterday = 0;

@@ -76,7 +76,30 @@ class GetDailyStatistics implements UseCase<DailyStatistics, GetDailyStatisticsP
         .fold<double>(0, (sum, sale) => sum + sale.paidAmount);
     
     // حساب الأرباح
-    final grossProfit = sales.fold<double>(0, (sum, sale) => sum + (sale.profit ?? 0));
+    // إذا كان الربح مخزن في قاعدة البيانات، استخدمه
+    // وإلا احسبه من الفرق بين سعر البيع وسعر التكلفة
+    double grossProfit = 0;
+    
+    print('💵 [GetDailyStatistics] تفاصيل حساب الربح:');
+    for (final sale in sales) {
+      double saleProfit;
+      
+      if (sale.profit > 0) {
+        // استخدام الربح المخزن
+        saleProfit = sale.profit;
+        print('   ✓ بيع #${sale.id}: ربح مخزن = $saleProfit');
+      } else {
+        // حساب الربح من الفرق بين السعر والتكلفة
+        final revenue = sale.totalAmount - sale.discount;
+        final cost = sale.costPrice * sale.quantity;
+        saleProfit = revenue - cost;
+        print('   ⚙ بيع #${sale.id}: الإيراد=$revenue - التكلفة=$cost = $saleProfit');
+        print('      (المبلغ=${sale.totalAmount}, الخصم=${sale.discount}, سعر التكلفة=${sale.costPrice}, الكمية=${sale.quantity})');
+      }
+      
+      grossProfit += saleProfit;
+    }
+    
     final netProfit = grossProfit - totalExpenses;
     
     print('📈 [GetDailyStatistics] الأرباح المحسوبة:');
