@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../data/datasources/local/purchase_local_datasource.dart';
 import '../../../../domain/entities/purchase.dart';
 import '../../../../domain/entities/supplier.dart';
 import '../../../../domain/entities/qat_type.dart';
@@ -29,16 +31,29 @@ class PurchaseForm extends StatefulWidget {
   });
 
   @override
-  State<PurchaseForm> createState() => _PurchaseFormState();
+  PurchaseFormState createState() => PurchaseFormState();
 }
 
-class _PurchaseFormState extends State<PurchaseForm> {
+// جعل الكلاس public للوصول للـ keys
+class PurchaseFormState extends State<PurchaseForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _quantityController;
   late final TextEditingController _unitPriceController;
   late final TextEditingController _paidAmountController;
   late final TextEditingController _invoiceNumberController;
   late final TextEditingController _notesController;
+
+  // مفاتيح التعليمات
+  final _invoiceNumberFieldKey = GlobalKey();
+  final _supplierFieldKey = GlobalKey();
+  final _dateFieldKey = GlobalKey();
+  final _qatTypeFieldKey = GlobalKey();
+  final _quantityFieldKey = GlobalKey();
+  final _unitFieldKey = GlobalKey();
+  final _priceFieldKey = GlobalKey();
+  final _paymentMethodKey = GlobalKey();
+  final _paidAmountKey = GlobalKey();
+  final _saveButtonKey = GlobalKey();
 
   int? _selectedSupplierId;
   int? _selectedQatTypeId;
@@ -52,10 +67,31 @@ class _PurchaseFormState extends State<PurchaseForm> {
   bool _isSubmitting = false;
   double _totalAmount = 0;
   double _remainingAmount = 0;
+  String _generatedInvoiceNumber = ''; // رقم الفاتورة المُولّد تلقائياً
+  bool _isLoadingInvoiceNumber = false;
 
   final List<String> _units = ['ربطة', 'كيس', 'كرتون', 'قطعة'];
   final List<String> _paymentMethods = ['نقد', 'آجل', 'حوالة', 'تحويل'];
   final List<String> _paymentStatuses = ['مدفوع', 'مدفوع جزئياً', 'غير مدفوع'];
+
+  // Getters لمفاتيح التعليمات
+  Map<String, GlobalKey> get tutorialKeys => {
+    'invoiceNumber': _invoiceNumberFieldKey,
+    'supplier': _supplierFieldKey,
+    'date': _dateFieldKey,
+    'qatType': _qatTypeFieldKey,
+    'quantity': _quantityFieldKey,
+    'unit': _unitFieldKey,
+    'price': _priceFieldKey,
+    'paymentMethod': _paymentMethodKey,
+    'paidAmount': _paidAmountKey,
+    'saveButton': _saveButtonKey,
+  };
+
+  // دالة لتفعيل التعليمات من الخارج
+  void showTutorial(BuildContext context, ScrollController? scrollController, {bool isEdit = false}) {
+    // سيتم استدعاؤها من شاشة الإضافة/التعديل
+  }
 
   @override
   void initState() {
@@ -86,13 +122,40 @@ class _PurchaseFormState extends State<PurchaseForm> {
       if (widget.purchase!.dueDate != null) {
         _dueDate = DateTime.parse(widget.purchase!.dueDate!);
       }
+      _generatedInvoiceNumber = widget.purchase!.invoiceNumber ?? '';
       _onQatTypeChanged(_selectedQatTypeId?.toString());
       _calculateTotal();
+    } else {
+      // توليد رقم فاتورة تلقائي للعمليات الجديدة فقط
+      _generateInvoiceNumber();
     }
 
     _quantityController.addListener(_calculateTotal);
     _unitPriceController.addListener(_calculateTotal);
     _paidAmountController.addListener(_calculateTotal);
+  }
+
+  /// توليد رقم فاتورة تلقائي
+  Future<void> _generateInvoiceNumber() async {
+    setState(() => _isLoadingInvoiceNumber = true);
+    
+    try {
+      final dataSource = getIt<PurchaseLocalDataSource>();
+      final invoiceNumber = await dataSource.generateInvoiceNumber();
+      
+      if (mounted) {
+        setState(() {
+          _generatedInvoiceNumber = invoiceNumber;
+          _invoiceNumberController.text = invoiceNumber;
+          _isLoadingInvoiceNumber = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error generating invoice number: $e');
+      if (mounted) {
+        setState(() => _isLoadingInvoiceNumber = false);
+      }
+    }
   }
 
   @override
@@ -214,9 +277,9 @@ class _PurchaseFormState extends State<PurchaseForm> {
         paidAmount: double.tryParse(_paidAmountController.text) ?? 0,
         remainingAmount: _remainingAmount,
         dueDate: _dueDate?.toIso8601String().split('T')[0],
-        invoiceNumber: _invoiceNumberController.text.trim().isEmpty
-            ? null
-            : _invoiceNumberController.text.trim(),
+        invoiceNumber: _generatedInvoiceNumber.isEmpty 
+            ? null 
+            : _generatedInvoiceNumber,
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -247,21 +310,34 @@ class _PurchaseFormState extends State<PurchaseForm> {
             ),
             const SizedBox(height: AppDimensions.spaceL),
 
-            SupplierSelector(
-              selectedSupplierId: _selectedSupplierId?.toString(),
-              suppliers: widget.suppliers,
-              onChanged: (id) {
-                setState(() => _selectedSupplierId = int.tryParse(id ?? ''));
-              },
+            // رقم الفاتورة التلقائي (أول حقل)
+            Container(
+              key: _invoiceNumberFieldKey,
+              child: _buildInvoiceNumberField(),
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
-            AppDatePicker(
-              label: 'تاريخ الشراء',
-              selectedDate: _selectedDate,
-              onDateSelected: (date) {
-                setState(() => _selectedDate = date ?? DateTime.now());
-              },
+            Container(
+              key: _supplierFieldKey,
+              child: SupplierSelector(
+                selectedSupplierId: _selectedSupplierId?.toString(),
+                suppliers: widget.suppliers,
+                onChanged: (id) {
+                  setState(() => _selectedSupplierId = int.tryParse(id ?? ''));
+                },
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spaceM),
+
+            Container(
+              key: _dateFieldKey,
+              child: AppDatePicker(
+                label: 'تاريخ الشراء',
+                selectedDate: _selectedDate,
+                onDateSelected: (date) {
+                  setState(() => _selectedDate = date ?? DateTime.now());
+                },
+              ),
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
@@ -273,26 +349,30 @@ class _PurchaseFormState extends State<PurchaseForm> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: AppTextField.number(
-                    controller: _quantityController,
-                    label: 'الكمية *',
-                    hint: '0',
-                    prefixIcon: Icons.inventory_2,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'الكمية مطلوبة';
-                      }
-                      final quantity = double.tryParse(value);
-                      if (quantity == null || quantity <= 0) {
-                        return 'كمية غير صحيحة';
-                      }
-                      return null;
-                    },
+                  child: Container(
+                    key: _quantityFieldKey,
+                    child: AppTextField.number(
+                      controller: _quantityController,
+                      label: 'الكمية *',
+                      hint: '0',
+                      prefixIcon: Icons.inventory_2,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'الكمية مطلوبة';
+                        }
+                        final quantity = double.tryParse(value);
+                        if (quantity == null || quantity <= 0) {
+                          return 'كمية غير صحيحة';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppDimensions.spaceM),
                 Expanded(
                   child: Column(
+                    key: _unitFieldKey,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -337,20 +417,23 @@ class _PurchaseFormState extends State<PurchaseForm> {
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
-            AppTextField.currency(
-              controller: _unitPriceController,
-              label: 'سعر الوحدة *',
-              hint: '0.00',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'السعر مطلوب';
-                }
-                final price = double.tryParse(value);
-                if (price == null || price <= 0) {
-                  return 'سعر غير صحيح';
-                }
-                return null;
-              },
+            Container(
+              key: _priceFieldKey,
+              child: AppTextField.currency(
+                controller: _unitPriceController,
+                label: 'سعر الوحدة *',
+                hint: '0.00',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'السعر مطلوب';
+                  }
+                  final price = double.tryParse(value);
+                  if (price == null || price <= 0) {
+                    return 'سعر غير صحيح';
+                  }
+                  return null;
+                },
+              ),
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
@@ -362,6 +445,7 @@ class _PurchaseFormState extends State<PurchaseForm> {
             const SizedBox(height: AppDimensions.spaceM),
 
             Column(
+              key: _paymentMethodKey,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -393,20 +477,23 @@ class _PurchaseFormState extends State<PurchaseForm> {
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
-            AppTextField.currency(
-              controller: _paidAmountController,
-              label: 'المبلغ المدفوع',
-              hint: '0.00',
-              validator: (value) {
-                final paid = double.tryParse(value ?? '0') ?? 0;
-                if (paid < 0) {
-                  return 'مبلغ غير صحيح';
-                }
-                if (paid > _totalAmount) {
-                  return 'المبلغ المدفوع أكبر من الإجمالي';
-                }
-                return null;
-              },
+            Container(
+              key: _paidAmountKey,
+              child: AppTextField.currency(
+                controller: _paidAmountController,
+                label: 'المبلغ المدفوع',
+                hint: '0.00',
+                validator: (value) {
+                  final paid = double.tryParse(value ?? '0') ?? 0;
+                  if (paid < 0) {
+                    return 'مبلغ غير صحيح';
+                  }
+                  if (paid > _totalAmount) {
+                    return 'المبلغ المدفوع أكبر من الإجمالي';
+                  }
+                  return null;
+                },
+              ),
             ),
             const SizedBox(height: AppDimensions.spaceM),
 
@@ -421,14 +508,6 @@ class _PurchaseFormState extends State<PurchaseForm> {
               ),
               const SizedBox(height: AppDimensions.spaceM),
             ],
-
-            AppTextField(
-              controller: _invoiceNumberController,
-              label: 'رقم الفاتورة (اختياري)',
-              hint: 'أدخل رقم الفاتورة',
-              prefixIcon: Icons.receipt_long,
-            ),
-            const SizedBox(height: AppDimensions.spaceM),
 
             AppTextField.multiline(
               controller: _notesController,
@@ -452,12 +531,15 @@ class _PurchaseFormState extends State<PurchaseForm> {
                 ],
                 Expanded(
                   flex: 2,
-                  child: AppButton.primary(
-                    text: widget.purchase == null ? 'إضافة' : 'حفظ التعديلات',
+                  child: Container(
+                    key: _saveButtonKey,
+                    child: AppButton.primary(
+                      text: widget.purchase == null ? 'إضافة' : 'حفظ التعديلات',
                     onPressed: _isSubmitting ? null : _handleSubmit,
                     isLoading: _isSubmitting,
                     icon: widget.purchase == null ? Icons.add : Icons.save,
                     fullWidth: true,
+                    ),
                   ),
                 ),
               ],
@@ -470,10 +552,11 @@ class _PurchaseFormState extends State<PurchaseForm> {
 
   Widget _buildQatTypeSection() {
     return Column(
+      key: _qatTypeFieldKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'نوع القات',
+          'نوع القات *',
           style: AppTextStyles.labelMedium.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -494,11 +577,30 @@ class _PurchaseFormState extends State<PurchaseForm> {
                 vertical: AppDimensions.paddingS,
               ),
               hintText: 'اختر نوع القات',
+              prefixIcon: Icon(Icons.category_outlined),
             ),
+            dropdownColor: AppColors.surface,
+            iconEnabledColor: AppColors.primary,
+            style: AppTextStyles.bodyMedium,
             items: widget.qatTypes.map((qatType) {
               return DropdownMenuItem(
                 value: qatType.id.toString(),
-                child: Text(qatType.name, style: AppTextStyles.bodyMedium),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.grass,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      qatType.name,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               );
             }).toList(),
             onChanged: _onQatTypeChanged,
@@ -511,6 +613,165 @@ class _PurchaseFormState extends State<PurchaseForm> {
           ),
         ),
       ],
+    );
+  }
+
+  /// بناء حقل رقم الفاتورة التلقائي
+  Widget _buildInvoiceNumberField() {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingM),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.05),
+            AppColors.success.withValues(alpha: 0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.receipt_long,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'رقم الفاتورة',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (_isLoadingInvoiceNumber)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'جاري التوليد...',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Text(
+                            _generatedInvoiceNumber.isEmpty 
+                                ? 'لم يتم التوليد' 
+                                : _generatedInvoiceNumber,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (_generatedInvoiceNumber.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.success,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'تلقائي',
+                                    style: TextStyle(
+                                      color: AppColors.success,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.info.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.info.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.info,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'رقم تلقائي تسلسلي يومي • غير قابل للتعديل',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.info,
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

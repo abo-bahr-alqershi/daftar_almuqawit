@@ -13,22 +13,16 @@ class QatTypeForm extends StatefulWidget {
     this.onCancel,
     this.isLoading = false,
     this.nameFieldKey,
-    this.priceFieldKey,
+    this.qualityFieldKey,
     this.saveButtonKey,
-    this.nameFocusNode,
-    this.buyPriceFocusNode,
-    this.sellPriceFocusNode,
   });
   final dynamic qatType;
   final VoidCallback? onSubmit;
   final VoidCallback? onCancel;
   final bool isLoading;
   final GlobalKey? nameFieldKey;
-  final GlobalKey? priceFieldKey;
+  final GlobalKey? qualityFieldKey;
   final GlobalKey? saveButtonKey;
-  final FocusNode? nameFocusNode;
-  final FocusNode? buyPriceFocusNode;
-  final FocusNode? sellPriceFocusNode;
 
   @override
   State<QatTypeForm> createState() => QatTypeFormState();
@@ -37,13 +31,9 @@ class QatTypeForm extends StatefulWidget {
 class QatTypeFormState extends State<QatTypeForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _buyPriceController = TextEditingController();
-  final _sellPriceController = TextEditingController();
 
-  // FocusNodes للحقول - استخدام الخارجية أو إنشاء داخلية
-  late FocusNode _nameFocusNode;
-  late FocusNode _buyPriceFocusNode;
-  late FocusNode _sellPriceFocusNode;
+  // FocusNode للحقل الوحيد المتبقي
+  final FocusNode _nameFocusNode = FocusNode();
 
   String _selectedQuality = 'ممتاز';
   String _selectedIcon = '🌿';
@@ -60,10 +50,8 @@ class QatTypeFormState extends State<QatTypeForm> {
   void initState() {
     super.initState();
 
-    // استخدام FocusNodes الممررة أو إنشاء جديدة
-    _nameFocusNode = widget.nameFocusNode ?? FocusNode();
-    _buyPriceFocusNode = widget.buyPriceFocusNode ?? FocusNode();
-    _sellPriceFocusNode = widget.sellPriceFocusNode ?? FocusNode();
+    // تحديد كامل الوحدات تلقائياً
+    _selectedUnits.addAll(_availableUnits);
 
     for (var unit in _availableUnits) {
       _unitBuyPriceControllers[unit] = TextEditingController();
@@ -72,15 +60,10 @@ class QatTypeFormState extends State<QatTypeForm> {
 
     if (widget.qatType != null) {
       _nameController.text = widget.qatType.name;
-      _buyPriceController.text = widget.qatType.defaultBuyPrice?.toString() ?? '';
-      _sellPriceController.text = widget.qatType.defaultSellPrice?.toString() ?? '';
       _selectedQuality = widget.qatType.qualityGrade ?? 'ممتاز';
       _selectedIcon = widget.qatType.icon ?? '🌿';
 
-      if (widget.qatType.availableUnits != null) {
-        _selectedUnits.addAll(widget.qatType.availableUnits);
-      }
-
+      // تحميل أسعار الوحدات إذا كانت موجودة
       if (widget.qatType.unitPrices != null) {
         widget.qatType.unitPrices.forEach((unit, prices) {
           if (_unitBuyPriceControllers.containsKey(unit)) {
@@ -95,13 +78,7 @@ class QatTypeFormState extends State<QatTypeForm> {
   @override
   void dispose() {
     _nameController.dispose();
-    _buyPriceController.dispose();
-    _sellPriceController.dispose();
-    
-    // التخلص من FocusNodes فقط إذا تم إنشاؤها داخلياً
-    if (widget.nameFocusNode == null) _nameFocusNode.dispose();
-    if (widget.buyPriceFocusNode == null) _buyPriceFocusNode.dispose();
-    if (widget.sellPriceFocusNode == null) _sellPriceFocusNode.dispose();
+    _nameFocusNode.dispose();
     
     for (var controller in _unitBuyPriceControllers.values) {
       controller.dispose();
@@ -114,14 +91,11 @@ class QatTypeFormState extends State<QatTypeForm> {
 
   bool validate() => _formKey.currentState?.validate() ?? false;
 
-  // إضافة دوال للوصول إلى FocusNodes من الخارج
-  FocusNode get nameFocusNode => _nameFocusNode;
-  FocusNode get buyPriceFocusNode => _buyPriceFocusNode;
-  FocusNode get sellPriceFocusNode => _sellPriceFocusNode;
 
   Map<String, dynamic> getFormData() {
     final Map<String, UnitPrice> unitPrices = {};
 
+    // تحديد كامل الوحدات مع أسعار افتراضية فارغة
     for (var unit in _selectedUnits) {
       final buyPrice = _unitBuyPriceControllers[unit]?.text;
       final sellPrice = _unitSellPriceControllers[unit]?.text;
@@ -135,12 +109,8 @@ class QatTypeFormState extends State<QatTypeForm> {
     return {
       'name': _nameController.text,
       'qualityGrade': _selectedQuality,
-      'defaultBuyPrice': _buyPriceController.text.isNotEmpty
-          ? double.parse(_buyPriceController.text)
-          : null,
-      'defaultSellPrice': _sellPriceController.text.isNotEmpty
-          ? double.parse(_sellPriceController.text)
-          : null,
+      'defaultBuyPrice': null, // إزالة الأسعار الافتراضية
+      'defaultSellPrice': null, // إزالة الأسعار الافتراضية
       'icon': _selectedIcon,
       'availableUnits': _selectedUnits.toList(),
       'unitPrices': unitPrices,
@@ -181,76 +151,8 @@ class QatTypeFormState extends State<QatTypeForm> {
 
         const SizedBox(height: 20),
 
-        _buildFormCard(
-          title: 'اختر الرمز',
-          icon: Icons.emoji_emotions_rounded,
-          color: AppColors.success,
-          child: _buildIconSelector(),
-        ),
-
-        const SizedBox(height: 20),
-
-        _buildFormCard(
-          title: 'الأسعار الافتراضية',
-          icon: Icons.attach_money_rounded,
-          color: AppColors.sales,
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      key: widget.priceFieldKey,
-                      controller: _buyPriceController,
-                      focusNode: _buyPriceFocusNode,
-                      label: 'سعر الشراء',
-                      hint: '0',
-                      icon: Icons.shopping_cart_rounded,
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _sellPriceController,
-                      focusNode: _sellPriceFocusNode,
-                      label: 'سعر البيع',
-                      hint: '0',
-                      icon: Icons.sell_rounded,
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => setState(() {}),
-                    ),
-                  ),
-                ],
-              ),
-              if (_buyPriceController.text.isNotEmpty &&
-                  _sellPriceController.text.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _buildProfitIndicator(),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        _buildFormCard(
-          title: 'الوحدات المتاحة',
-          icon: Icons.inventory_2_rounded,
-          color: AppColors.info,
-          child: _buildUnitsSelector(),
-        ),
-
-        if (_selectedUnits.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          ..._selectedUnits.map((unit) => Column(
-            children: [
-              _buildUnitPriceSection(unit),
-              const SizedBox(height: 16),
-            ],
-          )),
-        ],
+        // تم إخفاء حاوية اختيار الرمز حسب الطلب
+        // تم إخفاء حقول الأسعار الافتراضية والوحدات
 
         const SizedBox(height: 24),
 
@@ -360,6 +262,7 @@ class QatTypeFormState extends State<QatTypeForm> {
 
   Widget _buildQualitySelector() {
     return Container(
+      key: widget.qualityFieldKey,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.background.withOpacity(0.5),
@@ -670,7 +573,7 @@ class QatTypeFormState extends State<QatTypeForm> {
                     ],
                   ),
                   Text(
-                    '${_calculateUnitProfit(unit)} ر.ي',
+                    '0 ر.ي', // قيمة افتراضية
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.success,
                       fontWeight: FontWeight.w800,
@@ -685,8 +588,8 @@ class QatTypeFormState extends State<QatTypeForm> {
     );
   }
 
+  // تم حذف _buildProfitIndicator لأنه لم يعد مطلوباً
   Widget _buildProfitIndicator() {
-    final profit = _calculateProfit();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -727,7 +630,7 @@ class QatTypeFormState extends State<QatTypeForm> {
             ],
           ),
           Text(
-            '$profit ر.ي',
+            '0 ر.ي',
             style: AppTextStyles.titleLarge.copyWith(
               color: AppColors.success,
               fontWeight: FontWeight.w900,
@@ -870,23 +773,5 @@ class QatTypeFormState extends State<QatTypeForm> {
     }
   }
 
-  String _calculateProfit() {
-    try {
-      final buyPrice = double.parse(_buyPriceController.text);
-      final sellPrice = double.parse(_sellPriceController.text);
-      return (sellPrice - buyPrice).toStringAsFixed(0);
-    } catch (e) {
-      return '0';
-    }
-  }
-
-  String _calculateUnitProfit(String unit) {
-    try {
-      final buyPrice = double.parse(_unitBuyPriceControllers[unit]!.text);
-      final sellPrice = double.parse(_unitSellPriceControllers[unit]!.text);
-      return (sellPrice - buyPrice).toStringAsFixed(0);
-    } catch (e) {
-      return '0';
-    }
-  }
+  // تم حذف دوال حساب الربح لأنها لم تعد مطلوبة
 }

@@ -71,8 +71,8 @@ class _PurchasesScreenState extends State<PurchasesScreen>
   void _loadPurchases() {
     if (_filterType == 'اليوم') {
       context.read<PurchasesBloc>().add(
-            LoadTodayPurchases(_selectedDate.toIso8601String().split('T')[0]),
-          );
+        LoadTodayPurchases(_selectedDate.toIso8601String().split('T')[0]),
+      );
     } else {
       context.read<PurchasesBloc>().add(LoadPurchases());
     }
@@ -107,8 +107,9 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                       BlocBuilder<PurchasesBloc, PurchasesState>(
                         builder: (context, state) {
                           if (state is PurchasesLoaded) {
-                            final filteredPurchases =
-                                _filterPurchases(state.purchases);
+                            final filteredPurchases = _filterPurchases(
+                              state.purchases,
+                            );
                             return _buildQuickStatsWidget(filteredPurchases);
                           }
                           return const SizedBox.shrink();
@@ -117,7 +118,10 @@ class _PurchasesScreenState extends State<PurchasesScreen>
 
                       const SizedBox(height: 32),
 
-                      _buildSectionTitle('تصنيف المشتريات', Icons.filter_list_rounded),
+                      _buildSectionTitle(
+                        'تصنيف المشتريات',
+                        Icons.filter_list_rounded,
+                      ),
 
                       const SizedBox(height: 16),
 
@@ -125,7 +129,10 @@ class _PurchasesScreenState extends State<PurchasesScreen>
 
                       const SizedBox(height: 32),
 
-                      _buildSectionTitle('قائمة المشتريات', Icons.shopping_cart_rounded),
+                      _buildSectionTitle(
+                        'قائمة المشتريات',
+                        Icons.shopping_cart_rounded,
+                      ),
 
                       const SizedBox(height: 16),
 
@@ -147,13 +154,16 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                           }
 
                           if (state is PurchasesLoaded) {
-                            final filteredPurchases =
-                                _filterPurchases(state.purchases);
+                            final filteredPurchases = _filterPurchases(
+                              state.purchases,
+                            );
                             return _buildPurchasesList(filteredPurchases);
                           }
 
                           return _buildEmptyState(
-                              'لا يوجد بيانات', Icons.shopping_cart_outlined);
+                            'لا يوجد بيانات',
+                            Icons.shopping_cart_outlined,
+                          );
                         },
                       ),
 
@@ -172,19 +182,19 @@ class _PurchasesScreenState extends State<PurchasesScreen>
   }
 
   Widget _buildGradientBackground() => Container(
-        height: 400,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.purchases.withOpacity(0.08),
-              AppColors.info.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      );
+    height: 400,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.purchases.withOpacity(0.08),
+          AppColors.info.withOpacity(0.05),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
 
   Widget _buildModernAppBar(double topPadding) {
     final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
@@ -321,42 +331,48 @@ class _PurchasesScreenState extends State<PurchasesScreen>
       );
 
   Widget _buildSectionTitle(String title, IconData icon) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.purchases.withOpacity(0.1),
-                    AppColors.info.withOpacity(0.1),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 20, color: AppColors.purchases),
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.purchases.withOpacity(0.1),
+                AppColors.info.withOpacity(0.1),
+              ],
             ),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: AppTextStyles.h3.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-              ),
-            ),
-          ],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: AppColors.purchases),
         ),
-      );
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: AppTextStyles.h3.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildQuickStatsWidget(List<Purchase> purchases) {
     final totalAmount = purchases.fold<double>(
-        0, (sum, purchase) => sum + purchase.totalAmount);
-    final totalPaid =
-        purchases.fold<double>(0, (sum, purchase) => sum + purchase.paidAmount);
+      0,
+      (sum, purchase) => sum + purchase.totalAmount,
+    );
+    final totalPaid = purchases.fold<double>(
+      0,
+      (sum, purchase) => sum + purchase.paidAmount,
+    );
     final totalRemaining = purchases.fold<double>(
-        0, (sum, purchase) => sum + purchase.remainingAmount);
+      0,
+      (sum, purchase) => sum + purchase.remainingAmount,
+    );
     final operationCount = purchases.length;
 
     return Container(
@@ -433,8 +449,9 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
-                              border:
-                                  Border.all(color: Colors.white.withOpacity(0.3)),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -539,7 +556,9 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                   title: 'المتبقي',
                   value: totalRemaining.toStringAsFixed(0),
                   icon: Icons.account_balance_wallet_rounded,
-                  color: totalRemaining > 0 ? AppColors.danger : AppColors.success,
+                  color: totalRemaining > 0
+                      ? AppColors.danger
+                      : AppColors.success,
                 ),
               ),
               const SizedBox(width: 12),
@@ -559,66 +578,63 @@ class _PurchasesScreenState extends State<PurchasesScreen>
   }
 
   Widget _buildFilterChips() => SizedBox(
-        height: 50,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: _filterTypes.length,
-          itemBuilder: (context, index) {
-            final type = _filterTypes[index];
-            final isSelected = _filterType == type;
+    height: 50,
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: _filterTypes.length,
+      itemBuilder: (context, index) {
+        final type = _filterTypes[index];
+        final isSelected = _filterType == type;
 
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _filterType = type);
-                _loadPurchases();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(left: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                          colors: [AppColors.purchases, Color(0xFF6A1B9A)],
-                        )
-                      : null,
-                  color: isSelected ? null : AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: isSelected
-                      ? null
-                      : Border.all(color: AppColors.border.withOpacity(0.3)),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.purchases.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Text(
-                  type,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            );
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _filterType = type);
+            _loadPurchases();
           },
-        ),
-      );
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(left: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? const LinearGradient(
+                      colors: [AppColors.purchases, Color(0xFF6A1B9A)],
+                    )
+                  : null,
+              color: isSelected ? null : AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: isSelected
+                  ? null
+                  : Border.all(color: AppColors.border.withOpacity(0.3)),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.purchases.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Text(
+              type,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
 
   Widget _buildPurchasesList(List<Purchase> purchases) {
     if (purchases.isEmpty) {
-      return _buildEmptyState(
-        'لا توجد مشتريات',
-        Icons.shopping_cart_outlined,
-      );
+      return _buildEmptyState('لا توجد مشتريات', Icons.shopping_cart_outlined);
     }
 
     return Padding(
@@ -627,7 +643,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
         children: purchases.asMap().entries.map((entry) {
           final index = entry.key;
           final purchase = entry.value;
-          
+
           return TweenAnimationBuilder<double>(
             key: ValueKey(purchase.id),
             tween: Tween(begin: 0, end: 1),
@@ -657,212 +673,212 @@ class _PurchasesScreenState extends State<PurchasesScreen>
   }
 
   Widget _buildLoadingState() => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (index) => _buildShimmerCard()),
-        ),
-      );
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) => _buildShimmerCard()),
+    ),
+  );
 
   Widget _buildShimmerCard() => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppColors.border.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 14,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: AppColors.border.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 10,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.border.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      ],
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: AppColors.border.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-      );
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 14,
+                width: 150,
+                decoration: BoxDecoration(
+                  color: AppColors.border.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 10,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: AppColors.border.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildErrorState(PurchasesError state) => Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.bounceOut,
-                builder: (context, value, child) => Transform.scale(
-                  scale: value,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.danger.withOpacity(0.1),
-                          AppColors.danger.withOpacity(0.05),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.error_outline_rounded,
-                      size: 60,
-                      color: AppColors.danger,
-                    ),
+    child: Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.bounceOut,
+            builder: (context, value, child) => Transform.scale(
+              scale: value,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.danger.withOpacity(0.1),
+                      AppColors.danger.withOpacity(0.05),
+                    ],
                   ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  size: 60,
+                  color: AppColors.danger,
                 ),
               ),
-              const SizedBox(height: 24),
-              Text(
-                'حدث خطأ',
-                style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                state.message,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _loadPurchases();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.purchases,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text(
-                  'إعادة المحاولة',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 24),
+          Text(
+            'حدث خطأ',
+            style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            state.message,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              _loadPurchases();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.purchases,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text(
+              'إعادة المحاولة',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildEmptyState(String message, IconData icon) => Center(
-        child: Container(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) => Transform.scale(
-                  scale: value,
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.purchases.withOpacity(0.05),
-                          AppColors.info.withOpacity(0.03),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 70, color: AppColors.textHint),
+    child: Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) => Transform.scale(
+              scale: value,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.purchases.withOpacity(0.05),
+                      AppColors.info.withOpacity(0.03),
+                    ],
                   ),
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(icon, size: 70, color: AppColors.textHint),
               ),
-              const SizedBox(height: 24),
-              Text(
-                message,
-                style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'ابدأ بإضافة مشتريات جديدة',
-                style: TextStyle(color: AppColors.textHint, fontSize: 14),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _showAddPurchaseScreen();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.purchases,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text(
-                  'إضافة مشترى',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 24),
+          Text(
+            message,
+            style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'ابدأ بإضافة مشتريات جديدة',
+            style: TextStyle(color: AppColors.textHint, fontSize: 14),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              _showAddPurchaseScreen();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.purchases,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text(
+              'إضافة مشترى',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildFloatingActionButton(BuildContext context) => Positioned(
-        bottom: 20,
-        left: 20,
-        child: FloatingActionButton.extended(
-          onPressed: _showAddPurchaseScreen,
-          backgroundColor: AppColors.purchases,
-          icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
-          label: const Text(
-            'إضافة مشترى',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          elevation: 8,
-        ),
-      );
+    bottom: 20,
+    left: 20,
+    child: FloatingActionButton.extended(
+      onPressed: _showAddPurchaseScreen,
+      backgroundColor: AppColors.purchases,
+      icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),
+      label: const Text(
+        'إضافة مشترى',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
+      elevation: 8,
+    ),
+  );
 
   List<Purchase> _filterPurchases(List<Purchase> purchases) {
     var filtered = purchases;
@@ -966,52 +982,52 @@ class _ModernStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 24),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: AppTextStyles.h3.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-              ),
-            ),
-          ],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 24),
         ),
-      );
+        const SizedBox(height: 12),
+        Text(
+          title,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: AppTextStyles.h3.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _StatsBackgroundPainter extends CustomPainter {

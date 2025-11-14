@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/purchases_tutorial_service.dart';
 import '../../../domain/entities/purchase.dart';
 import '../../../domain/entities/supplier.dart';
 import '../../../domain/entities/qat_type.dart';
@@ -36,6 +37,9 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen>
 
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  
+  // مرجع لنموذج الشراء
+  final GlobalKey<PurchaseFormState> _formKey = GlobalKey<PurchaseFormState>();
 
   @override
   void initState() {
@@ -206,6 +210,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen>
                                   if (suppliersState is SuppliersLoaded &&
                                       qatTypesState is QatTypesLoaded) {
                                     return PurchaseForm(
+                                      key: _formKey,
                                       suppliers: suppliersState.suppliers,
                                       qatTypes: qatTypesState.qatTypes,
                                       onSubmit: _handleSubmit,
@@ -280,6 +285,65 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen>
           Navigator.pop(context);
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            // تفعيل التعليمات الحقيقية
+            final formState = _formKey.currentState;
+            if (formState != null && formState.mounted) {
+              final keys = formState.tutorialKeys;
+              
+              PurchasesTutorialService.showAddTutorial(
+                context: context,
+                invoiceNumberFieldKey: keys['invoiceNumber']!,
+                supplierFieldKey: keys['supplier']!,
+                dateFieldKey: keys['date']!,
+                qatTypeFieldKey: keys['qatType']!,
+                quantityFieldKey: keys['quantity']!,
+                unitFieldKey: keys['unit']!,
+                priceFieldKey: keys['price']!,
+                paymentMethodKey: keys['paymentMethod']!,
+                paidAmountKey: keys['paidAmount']!,
+                saveButtonKey: keys['saveButton']!,
+                scrollController: _scrollController,
+                onNext: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('🎉 تمت التعليمات بنجاح'),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('⚠️ يرجى انتظار تحميل النموذج أولاً'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        ),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

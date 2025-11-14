@@ -95,14 +95,20 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                             return _buildShimmerStats();
                           }
                           if (state is ExpensesLoaded) {
-                            final filteredExpenses = _filterExpenses(state.expenses);
+                            final filteredExpenses = _filterExpenses(
+                              state.expenses,
+                            );
                             return Column(
                               children: [
                                 _buildStatsCard(filteredExpenses),
                                 const SizedBox(height: 32),
                                 _buildSectionTitle(
-                                  _showChart ? 'التوزيع حسب الفئة' : 'قائمة المصروفات',
-                                  _showChart ? Icons.pie_chart_rounded : Icons.receipt_long_rounded,
+                                  _showChart
+                                      ? 'التوزيع حسب الفئة'
+                                      : 'قائمة المصروفات',
+                                  _showChart
+                                      ? Icons.pie_chart_rounded
+                                      : Icons.receipt_long_rounded,
                                 ),
                                 const SizedBox(height: 16),
                                 _buildFilterChips(),
@@ -321,7 +327,10 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   );
 
   Widget _buildStatsCard(List<Expense> expenses) {
-    final totalAmount = expenses.fold(0.0, (sum, expense) => sum + expense.amount);
+    final totalAmount = expenses.fold(
+      0.0,
+      (sum, expense) => sum + expense.amount,
+    );
     final todayExpenses = expenses.where((expense) {
       final today = DateTime.now();
       final expenseDate = DateTime.parse(expense.date);
@@ -333,12 +342,14 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
     final expensesByCategory = <String, double>{};
     for (final expense in expenses) {
-      expensesByCategory[expense.category] = 
+      expensesByCategory[expense.category] =
           (expensesByCategory[expense.category] ?? 0) + expense.amount;
     }
     final topCategory = expensesByCategory.entries.isEmpty
         ? 'لا يوجد'
-        : expensesByCategory.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+        : expensesByCategory.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -692,7 +703,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   Widget _buildChartView(List<Expense> expenses) {
     final expensesByCategory = <String, double>{};
     for (final expense in expenses) {
-      expensesByCategory[expense.category] = 
+      expensesByCategory[expense.category] =
           (expensesByCategory[expense.category] ?? 0) + expense.amount;
     }
 
@@ -779,7 +790,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         final weekStart = now.subtract(Duration(days: now.weekday - 1));
         return expenses.where((expense) {
           final expenseDate = DateTime.parse(expense.date);
-          return expenseDate.isAfter(weekStart.subtract(const Duration(days: 1)));
+          return expenseDate.isAfter(
+            weekStart.subtract(const Duration(days: 1)),
+          );
         }).toList();
       case 'هذا الشهر':
         return expenses.where((expense) {
@@ -800,9 +813,11 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
   void _showExpenseDetails(Expense expense) {
     HapticFeedback.lightImpact();
-    Navigator.pushNamed(context, RouteNames.expenseDetails, arguments: expense).then((
-      _,
-    ) {
+    Navigator.pushNamed(
+      context,
+      RouteNames.expenseDetails,
+      arguments: expense,
+    ).then((_) {
       context.read<ExpensesBloc>().add(LoadExpenses());
     });
   }

@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../../domain/entities/expense.dart';
+import '../../domain/entities/purchase.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/activities_screen.dart';
@@ -82,8 +83,8 @@ class AppRouter {
       case RouteNames.addPurchase:
         return _buildRoute(const AddPurchaseScreen());
       case RouteNames.editPurchase:
-        final purchaseId = settings.arguments as String;
-        return _buildRoute(EditPurchaseScreen(purchaseId: purchaseId));
+        final purchase = settings.arguments as Purchase;
+        return _buildRoute(EditPurchaseScreen(purchase: purchase));
       case RouteNames.purchaseDetails:
         final purchase = settings.arguments as dynamic;
         return _buildRoute(PurchaseDetailsScreen(purchase: purchase));

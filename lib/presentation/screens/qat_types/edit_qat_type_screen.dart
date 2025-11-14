@@ -2,7 +2,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/qat_type.dart';
@@ -33,11 +32,11 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
   final _formKey = GlobalKey<QatTypeFormState>();
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
-  
+
   final GlobalKey _nameFieldKey = GlobalKey();
-  final GlobalKey _priceFieldKey = GlobalKey();
+  final GlobalKey _qualityFieldKey = GlobalKey();
   final GlobalKey _saveButtonKey = GlobalKey();
-  
+
   bool _showTutorial = false;
 
   @override
@@ -89,18 +88,22 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
 
   void _startTutorial() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // انتظار لضمان رسم كامل العناصر قبل التمرير
+      await Future.delayed(const Duration(milliseconds: 500));
+      
       if (mounted && _showTutorial) {
         await QatTypesTutorialService.showEditTutorial(
           context: context,
           nameFieldKey: _nameFieldKey,
-          priceFieldKey: _priceFieldKey,
+          qualityFieldKey: _qualityFieldKey,
           saveButtonKey: _saveButtonKey,
           scrollController: _scrollController,
-          onNext: () {},
+          onNext: () {
+            setState(() {
+              _showTutorial = false;
+            });
+          },
         );
-        setState(() {
-          _showTutorial = false;
-        });
       }
     });
   }
@@ -206,7 +209,7 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
                                   qatType: widget.qatType,
                                   isLoading: isLoading,
                                   nameFieldKey: _nameFieldKey,
-                                  priceFieldKey: _priceFieldKey,
+                                  qualityFieldKey: _qualityFieldKey,
                                   saveButtonKey: _saveButtonKey,
                                   onSubmit: _submitQatType,
                                   onCancel: () {
@@ -274,6 +277,35 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
           Navigator.pop(context);
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: opacity < 0.5
+                  ? AppColors.surface.withOpacity(0.9)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              _showTutorial = true;
+            });
+            _startTutorial();
+          },
+        ),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

@@ -1,0 +1,1034 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import '../theme/app_colors.dart';
+
+/// خدمة التعليمات المحسنة لشاشات المشتريات
+class PurchasesTutorialService {
+  static TutorialCoachMark? _tutorial;
+
+  /// حساب الموضع المثالي للمحتوى مع معالجة دقيقة واحترافية شاملة
+  static CustomTargetContentPosition _calculatePosition({
+    required BuildContext context,
+    required GlobalKey targetKey,
+    required double contentHeight,
+  }) {
+    try {
+      final renderBox =
+          targetKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox == null) {
+        debugPrint('⚠️ RenderBox is null, using fallback position');
+        return CustomTargetContentPosition(top: 120);
+      }
+
+      final targetPosition = renderBox.localToGlobal(Offset.zero);
+      final targetSize = renderBox.size;
+      final screenHeight = MediaQuery.of(context).size.height;
+      final screenWidth = MediaQuery.of(context).size.width;
+      final safeAreaTop = MediaQuery.of(context).padding.top;
+      final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+      final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+      final targetTop = targetPosition.dy;
+      final targetBottom = targetPosition.dy + targetSize.height;
+      final targetHeight = targetSize.height;
+      final targetLeft = targetPosition.dx;
+
+      // حساب المساحة المتاحة الفعلية مع هامش أمان
+      final safetyMargin = 15.0;
+      final usableScreenTop = safeAreaTop + safetyMargin;
+      final usableScreenBottom = screenHeight - keyboardHeight - safeAreaBottom - safetyMargin;
+      final usableHeight = usableScreenBottom - usableScreenTop;
+      
+      final spaceAbove = targetTop - usableScreenTop;
+      final spaceBelow = usableScreenBottom - targetBottom;
+      final totalAvailableSpace = spaceAbove + spaceBelow;
+
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('🎯 Target Analysis:');
+      debugPrint('   Position: top=$targetTop, bottom=$targetBottom, left=$targetLeft');
+      debugPrint('   Size: width=${targetSize.width}, height=$targetHeight');
+      debugPrint('📱 Screen Info:');
+      debugPrint('   Total height=$screenHeight, width=$screenWidth');
+      debugPrint('   Keyboard=$keyboardHeight, SafeTop=$safeAreaTop, SafeBottom=$safeAreaBottom');
+      debugPrint('📏 Space Analysis:');
+      debugPrint('   Above target: $spaceAbove px');
+      debugPrint('   Below target: $spaceBelow px');
+      debugPrint('   Content needs: $contentHeight px');
+      debugPrint('   Total available: $totalAvailableSpace px');
+      debugPrint('   Usable area: $usableScreenTop → $usableScreenBottom ($usableHeight px)');
+
+      // استراتيجية ذكية محسنة متعددة المراحل:
+      
+      // المرحلة 1: هل يوجد مساحة كافية أسفل العنصر؟ (الوضع المفضل)
+      if (spaceBelow >= contentHeight + 30) {
+        final position = (targetBottom + 12).clamp(usableScreenTop, usableScreenBottom - contentHeight);
+        debugPrint('✅ Strategy: BELOW - Enough space (${spaceBelow.toStringAsFixed(0)} px)');
+        debugPrint('   Content at: $position px (clamped to safe area)');
+        debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        return CustomTargetContentPosition(top: position);
+      }
+
+      // المرحلة 2: هل يوجد مساحة كافية أعلى العنصر؟
+      if (spaceAbove >= contentHeight + 30) {
+        final position = (targetTop - contentHeight - 12).clamp(usableScreenTop, usableScreenBottom - contentHeight);
+        debugPrint('✅ Strategy: ABOVE - Enough space (${spaceAbove.toStringAsFixed(0)} px)');
+        debugPrint('   Content at: $position px (clamped to safe area)');
+        debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        return CustomTargetContentPosition(top: position);
+      }
+
+      // المرحلة 3: معالجة ذكية للمساحة المحدودة
+      debugPrint('⚠️ Limited space - Using smart positioning...');
+      
+      final belowRatio = totalAvailableSpace > 0 ? spaceBelow / totalAvailableSpace : 0;
+      final aboveRatio = totalAvailableSpace > 0 ? spaceAbove / totalAvailableSpace : 0;
+      
+      debugPrint('   Space ratio - Below: ${(belowRatio * 100).toStringAsFixed(1)}%, Above: ${(aboveRatio * 100).toStringAsFixed(1)}%');
+
+      // إذا كانت المساحة أسفل أكبر أو متساوية، نفضلها
+      if (spaceBelow >= spaceAbove) {
+        final idealPosition = targetBottom + 10;
+        final position = idealPosition.clamp(usableScreenTop, usableScreenBottom - contentHeight);
+        
+        debugPrint('✅ Strategy: BELOW (constrained) - ${spaceBelow.toStringAsFixed(0)} px available');
+        debugPrint('   Ideal: $idealPosition, Final: $position (clamped)');
+        debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        return CustomTargetContentPosition(top: position);
+      }
+
+      // المرحلة 4: المساحة أعلى أكبر
+      final idealPosition = targetTop - contentHeight - 10;
+      final position = idealPosition.clamp(usableScreenTop, usableScreenBottom - contentHeight);
+      
+      debugPrint('✅ Strategy: ABOVE (constrained) - ${spaceAbove.toStringAsFixed(0)} px available');
+      debugPrint('   Ideal: $idealPosition, Final: $position (clamped)');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return CustomTargetContentPosition(top: position);
+      
+    } catch (e) {
+      debugPrint('❌ Error calculating position: $e');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return CustomTargetContentPosition(top: 120);
+    }
+  }
+
+  /// تمرير استباقي ذكي محسّن مع معالجة احترافية لجميع السيناريوهات
+  static Future<void> _preScroll({
+    required BuildContext context,
+    required GlobalKey targetKey,
+    required ScrollController? scrollController,
+    required double contentHeight,
+  }) async {
+    if (scrollController == null || !scrollController.hasClients) {
+      debugPrint('⚠️ No scroll controller available');
+      return;
+    }
+
+    try {
+      final renderBox =
+          targetKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox == null) {
+        debugPrint('⚠️ RenderBox not available for scroll calculation');
+        return;
+      }
+
+      final targetPosition = renderBox.localToGlobal(Offset.zero);
+      final targetSize = renderBox.size;
+      final screenHeight = MediaQuery.of(context).size.height;
+      final safeAreaTop = MediaQuery.of(context).padding.top;
+      final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+      final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+      final elementTop = targetPosition.dy;
+      final elementBottom = targetPosition.dy + targetSize.height;
+      final elementHeight = targetSize.height;
+      final currentScrollOffset = scrollController.offset;
+
+      // حساب المنطقة المثالية لعرض العنصر مع هامش أمان محسّن
+      final topMargin = 100.0;
+      final bottomMargin = contentHeight + 100;
+      
+      final usableScreenTop = safeAreaTop + topMargin;
+      final usableScreenBottom = screenHeight - keyboardHeight - safeAreaBottom - bottomMargin;
+      final usableHeight = usableScreenBottom - usableScreenTop;
+
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('📜 Pre-Scroll Analysis (Enhanced):');
+      debugPrint('   Element: top=$elementTop, bottom=$elementBottom, height=$elementHeight');
+      debugPrint('   Current scroll: $currentScrollOffset');
+      debugPrint('   Usable area: $usableScreenTop → $usableScreenBottom ($usableHeight px)');
+      debugPrint('   Content needs: $contentHeight px + margins');
+
+      double scrollDelta = 0;
+      String strategy = '';
+
+      // استراتيجية محسّنة للتمرير:
+      
+      // الحالة 1: العنصر فوق المنطقة المثالية
+      if (elementTop < usableScreenTop) {
+        scrollDelta = elementTop - usableScreenTop - 40;
+        strategy = 'SCROLL UP - Element too high';
+        debugPrint('⬆️ $strategy');
+        debugPrint('   Element at $elementTop, target at $usableScreenTop');
+      }
+      // الحالة 2: العنصر أو نهايته تحت المنطقة المثالية
+      else if (elementBottom > usableScreenBottom) {
+        // نحسب المسافة المطلوبة لوضع العنصر في موضع مثالي
+        scrollDelta = elementTop - usableScreenTop - 40;
+        strategy = 'SCROLL DOWN - Element too low (CRITICAL)';
+        debugPrint('⬇️ $strategy');
+        debugPrint('   Element bottom at $elementBottom, usable bottom at $usableScreenBottom');
+        debugPrint('   Required scroll: $scrollDelta px');
+      }
+      // الحالة 3: العنصر في الموضع الصحيح - نتحقق من المساحة للمحتوى
+      else {
+        final spaceBelow = screenHeight - elementBottom - keyboardHeight - safeAreaBottom;
+        final spaceAbove = elementTop - safeAreaTop;
+        
+        debugPrint('   Space check: below=$spaceBelow, above=$spaceAbove');
+        
+        // إذا لا توجد مساحة كافية للمحتوى
+        if (spaceBelow < contentHeight + 40) {
+          // حاول إنشاء مساحة بتحريك العنصر للأعلى
+          scrollDelta = max(
+            (contentHeight + 50 - spaceBelow) * 0.7,
+            elementTop - usableScreenTop - 40,
+          );
+          strategy = 'FINE TUNE - Creating space below';
+          debugPrint('🔧 $strategy');
+          debugPrint('   Need ${contentHeight + 40} px, have $spaceBelow below');
+          debugPrint('   Calculated delta: $scrollDelta px');
+        } else {
+          strategy = 'NO SCROLL - Element in optimal position';
+          debugPrint('✅ $strategy');
+        }
+      }
+
+      // تنفيذ التمرير مع معالجة محسّنة
+      if (scrollDelta.abs() > 10) {
+        final minScroll = scrollController.position.minScrollExtent;
+        final maxScroll = scrollController.position.maxScrollExtent;
+        final targetOffset = (currentScrollOffset + scrollDelta).clamp(minScroll, maxScroll);
+        
+        // تحقق إذا التمرير المطلوب ممكن ومفيد
+        final actualDelta = (targetOffset - currentScrollOffset).abs();
+        if (actualDelta > 5) {
+          debugPrint('📍 Executing scroll:');
+          debugPrint('   From: $currentScrollOffset → To: $targetOffset');
+          debugPrint('   Delta: ${targetOffset - currentScrollOffset}');
+          debugPrint('   Bounds: min=$minScroll, max=$maxScroll');
+
+          await scrollController.animateTo(
+            targetOffset,
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeInOutCubic,
+          );
+
+          // انتظار استقرار التمرير
+          await Future.delayed(const Duration(milliseconds: 250));
+
+          debugPrint('✅ Scroll animation completed');
+        } else {
+          debugPrint('⚠️ Scroll delta too small ($actualDelta px), skipping');
+        }
+      }
+      
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error in pre-scroll: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
+  }
+
+  /// تعليمات إضافة عملية شراء (محدّثة مع رقم الفاتورة)
+  static Future<void> showAddTutorial({
+    required BuildContext context,
+    required GlobalKey invoiceNumberFieldKey,
+    required GlobalKey supplierFieldKey,
+    required GlobalKey dateFieldKey,
+    required GlobalKey qatTypeFieldKey,
+    required GlobalKey quantityFieldKey,
+    required GlobalKey unitFieldKey,
+    required GlobalKey priceFieldKey,
+    required GlobalKey paymentMethodKey,
+    required GlobalKey paidAmountKey,
+    required GlobalKey saveButtonKey,
+    required VoidCallback onNext,
+    ScrollController? scrollController,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    const contentHeight = 235.0; // محسّن للتوافق مع جميع الشاشات
+
+    await _preScroll(
+      context: context,
+      targetKey: invoiceNumberFieldKey,
+      scrollController: scrollController,
+      contentHeight: contentHeight,
+    );
+
+    final targetKeys = [
+      invoiceNumberFieldKey,
+      supplierFieldKey,
+      dateFieldKey,
+      qatTypeFieldKey,
+      quantityFieldKey,
+      unitFieldKey,
+      priceFieldKey,
+      paymentMethodKey,
+      paidAmountKey,
+      saveButtonKey,
+    ];
+
+    final targets = <TargetFocus>[];
+
+    // الخطوة 1: رقم الفاتورة التلقائي
+    targets.add(
+      TargetFocus(
+        identify: 'invoice_number_field',
+        keyTarget: invoiceNumberFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        paddingFocus: 8,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: invoiceNumberFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 1,
+                totalSteps: 10,
+                title: 'رقم الفاتورة التلقائي',
+                description:
+                    'رقم تسلسلي يُولّد تلقائياً لكل عملية شراء\nيساعد في تتبع وتنظيم المشتريات بدقة',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[1],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 2: اختيار المورد
+    targets.add(
+      TargetFocus(
+        identify: 'supplier_field',
+        keyTarget: supplierFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: supplierFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 2,
+                totalSteps: 10,
+                title: 'اختيار المورد',
+                description:
+                    'حدد المورد الذي تشتري منه القات\nيجب أن يكون المورد مسجل مسبقاً في النظام',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[2],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[0],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 3: تاريخ الشراء
+    targets.add(
+      TargetFocus(
+        identify: 'date_field',
+        keyTarget: dateFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: dateFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 3,
+                totalSteps: 10,
+                title: 'تاريخ الشراء',
+                description:
+                    'حدد تاريخ عملية الشراء\nيمكنك اختيار تاريخ اليوم أو تاريخ سابق',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[3],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[1],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 4: نوع القات
+    targets.add(
+      TargetFocus(
+        identify: 'qat_type_field',
+        keyTarget: qatTypeFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: qatTypeFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 4,
+                totalSteps: 10,
+                title: 'نوع القات',
+                description:
+                    'اختر نوع القات الذي تم شراؤه\nيظهر اسم النوع ودرجة جودته',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[4],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[2],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 5: الكمية
+    targets.add(
+      TargetFocus(
+        identify: 'quantity_field',
+        keyTarget: quantityFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: quantityFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 5,
+                totalSteps: 10,
+                title: 'كمية الشراء',
+                description: 'أدخل الكمية المشتراة\nيجب أن تكون رقم موجب',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[5],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[3],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 6: الوحدة
+    targets.add(
+      TargetFocus(
+        identify: 'unit_field',
+        keyTarget: unitFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: unitFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 6,
+                totalSteps: 10,
+                title: 'وحدة القياس',
+                description:
+                    'اختر وحدة القياس المناسبة\n(ربطة، كيس، كرتون، قطعة)',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[6],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[4],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 7: السعر
+    targets.add(
+      TargetFocus(
+        identify: 'price_field',
+        keyTarget: priceFieldKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: priceFieldKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 7,
+                totalSteps: 10,
+                title: 'سعر الوحدة',
+                description:
+                    'أدخل سعر الوحدة الواحدة\nسيتم حساب الإجمالي تلقائياً',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[7],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[5],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 8: طريقة الدفع
+    targets.add(
+      TargetFocus(
+        identify: 'payment_method_field',
+        keyTarget: paymentMethodKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        paddingFocus: 10,
+        enableOverlayTab: false,
+        enableTargetTab: false,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: paymentMethodKey,
+              contentHeight: contentHeight,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 8,
+                totalSteps: 10,
+                title: 'طريقة الدفع',
+                description:
+                    'اختر طريقة الدفع المستخدمة\n(نقد، آجل، حوالة، أو تحويل)',
+                onNext: () async {
+                  debugPrint('🎯 Moving from step 8 to step 9');
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[8],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  debugPrint('🎯 Moving from step 8 to step 7');
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[6],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 9: المبلغ المدفوع
+    targets.add(
+      TargetFocus(
+        identify: 'paid_amount_field',
+        keyTarget: paidAmountKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 10,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: paidAmountKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 9,
+                totalSteps: 10,
+                title: 'المبلغ المدفوع',
+                description:
+                    'أدخل المبلغ المدفوع فعلياً\nيمكن أن يكون كامل المبلغ أو جزء منه',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[9],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[7],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // الخطوة 10: زر الحفظ
+    targets.add(
+      TargetFocus(
+        identify: 'save_button',
+        keyTarget: saveButtonKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 10,
+                totalSteps: 10,
+                title: 'حفظ العملية',
+                description:
+                    'اضغط هنا لحفظ عملية الشراء\nتأكد من دقة جميع المعلومات قبل الحفظ',
+                onNext: () {
+                  controller.skip();
+                  onNext();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[8],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                isLastStep: true,
+                showSkip: false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.textPrimary,
+      opacityShadow: 0.90,
+      paddingFocus: 2,
+      alignSkip: Alignment.topLeft,
+      textSkip: "تخطي",
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      onFinish: () => _tutorial = null,
+      onSkip: () {
+        _tutorial = null;
+        return true;
+      },
+    );
+
+    _tutorial!.show(context: context, rootOverlay: true);
+  }
+
+  /// بناء محتوى الخطوة بتصميم مرن وديناميكي محسّن
+  static Widget _buildStepContent({
+    required BuildContext context,
+    required int stepNumber,
+    required int totalSteps,
+    required String title,
+    required String description,
+    required VoidCallback onNext,
+    VoidCallback? onPrevious,
+    VoidCallback? onSkip,
+    bool isLastStep = false,
+    bool showSkip = false,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final maxWidth = MediaQuery.of(context).size.width - 32;
+        final contentWidth = maxWidth.clamp(300.0, 400.0);
+        
+        // تحسين ديناميكي للارتفاع بناءً على حجم الشاشة
+        final dynamicMaxHeight = screenHeight < 700 
+            ? 280.0  // للشاشات الصغيرة
+            : screenHeight < 850
+                ? 300.0  // للشاشات المتوسطة
+                : 320.0; // للشاشات الكبيرة
+        
+        return Container(
+          width: contentWidth,
+          constraints: BoxConstraints(
+            minHeight: 180,
+            maxHeight: dynamicMaxHeight,
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // مؤشر التقدم - مدمج وأصغر
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.success],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'الخطوة $stepNumber من $totalSteps',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (showSkip && onSkip != null)
+                    TextButton(
+                      onPressed: onSkip,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        minimumSize: const Size(45, 28),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'تخطي',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // العنوان - مدمج
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(
+                      isLastStep
+                          ? Icons.check_circle_rounded
+                          : Icons.touch_app_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // الوصف - مع تحكم ديناميكي بالارتفاع
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.fade,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // أزرار التحكم - مدمجة
+              Row(
+                children: [
+                  if (onPrevious != null)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onPrevious,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'السابق',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 15,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (onPrevious != null) const SizedBox(width: 8),
+                  Expanded(
+                    flex: onPrevious != null ? 2 : 1,
+                    child: ElevatedButton(
+                      onPressed: onNext,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 3,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isLastStep ? 'فهمت!' : 'التالي',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (!isLastStep) ...[
+                            const SizedBox(width: 5),
+                            const Icon(Icons.arrow_back_rounded, size: 16),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static void dispose() {
+    _tutorial = null;
+  }
+}

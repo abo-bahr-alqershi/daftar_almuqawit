@@ -66,4 +66,57 @@ class PurchaseLocalDataSource extends BaseLocalDataSource<PurchaseModel> {
       orderBy: '${PurchasesTable.cDate} DESC, ${PurchasesTable.cTime} DESC',
     );
   }
+
+  /// توليد رقم فاتورة تلقائي تسلسلي
+  /// النمط: PUR-YYYYMMDD-XXXX
+  /// حيث XXXX هو رقم تسلسلي يومي
+  Future<String> generateInvoiceNumber() async {
+    final db = await dbHelper.database;
+    final today = DateTime.now();
+    final dateStr = '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
+    
+    // جلب عدد الفواتير اليوم
+    final result = await db.rawQuery(
+      '''
+      SELECT COUNT(*) as count 
+      FROM ${PurchasesTable.table} 
+      WHERE ${PurchasesTable.cDate} = ?
+      ''',
+      [today.toIso8601String().split('T')[0]],
+    );
+    
+    final count = (result.first['count'] as int?) ?? 0;
+    final sequenceNumber = (count + 1).toString().padLeft(4, '0');
+    
+    return 'PUR-$dateStr-$sequenceNumber';
+  }
+
+  /// التحقق من توفر رقم فاتورة
+  Future<bool> isInvoiceNumberAvailable(String invoiceNumber) async {
+    if (invoiceNumber.trim().isEmpty) return true;
+    
+    final result = await getWhere(
+      where: '${PurchasesTable.cInvoiceNumber} = ?',
+      whereArgs: [invoiceNumber],
+    );
+    
+    return result.isEmpty;
+  }
+
+  /// جلب آخر رقم فاتورة
+  Future<String?> getLastInvoiceNumber() async {
+    final db = await dbHelper.database;
+    final result = await db.rawQuery(
+      '''
+      SELECT ${PurchasesTable.cInvoiceNumber} 
+      FROM ${PurchasesTable.table} 
+      WHERE ${PurchasesTable.cInvoiceNumber} IS NOT NULL
+      ORDER BY ${PurchasesTable.cId} DESC 
+      LIMIT 1
+      ''',
+    );
+    
+    if (result.isEmpty) return null;
+    return result.first[PurchasesTable.cInvoiceNumber] as String?;
+  }
 }

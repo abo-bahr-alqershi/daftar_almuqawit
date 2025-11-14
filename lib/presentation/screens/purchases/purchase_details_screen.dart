@@ -776,7 +776,7 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditPurchaseScreen(purchaseId: widget.purchase.id?.toString() ?? '0'),
+        builder: (context) => EditPurchaseScreen(purchase: widget.purchase),
       ),
     );
     if (result == true && mounted) {

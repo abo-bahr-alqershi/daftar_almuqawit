@@ -2,7 +2,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/services/keyboard_manager.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/qat_type.dart';
@@ -21,7 +20,7 @@ class AddQatTypeScreen extends StatefulWidget {
 }
 
 class _AddQatTypeScreenState extends State<AddQatTypeScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -29,29 +28,16 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
 
-  // إدارة لوحة المفاتيح
-  final KeyboardManager _keyboardManager = KeyboardManager();
-
   // مفاتيح التعليمات التفاعلية
   final GlobalKey _nameFieldKey = GlobalKey();
-  final GlobalKey _priceFieldKey = GlobalKey();
+  final GlobalKey _qualityFieldKey = GlobalKey();
   final GlobalKey _saveButtonKey = GlobalKey();
 
-  // إضافة FocusNodes
-  final FocusNode _nameFocusNode = FocusNode();
-  final FocusNode _buyPriceFocusNode = FocusNode();
-  final FocusNode _sellPriceFocusNode = FocusNode();
-
   bool _showTutorial = false;
-  bool _tutorialInProgress = false;
 
   @override
   void initState() {
     super.initState();
-
-    // إضافة مراقب التغييرات
-    WidgetsBinding.instance.addObserver(this);
-
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -77,19 +63,13 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
       });
     });
 
-    // التحقق من معاملات التعليمات
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // انتظار إضافي لاستقرار الواجهة
-      await Future.delayed(const Duration(milliseconds: 500));
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
       if (args != null &&
           args['showTutorial'] == true &&
-          args['operation'] == 'add' &&
-          mounted &&
-          !_tutorialInProgress) {
+          args['operation'] == 'add') {
         setState(() {
           _showTutorial = true;
         });
@@ -100,72 +80,30 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
 
   @override
   void dispose() {
-    // إزالة مراقب التغييرات
-    WidgetsBinding.instance.removeObserver(this);
-
     _animationController.dispose();
     _scrollController.dispose();
-    _nameFocusNode.dispose();
-    _buyPriceFocusNode.dispose();
-    _sellPriceFocusNode.dispose();
     QatTypesTutorialService.dispose();
     super.dispose();
   }
 
-  @override
-  void didChangeMetrics() {
-    // مراقبة تغيرات لوحة المفاتيح
-    if (mounted) {
-      _keyboardManager.updateKeyboardVisibility(context);
-    }
-  }
-
   void _startTutorial() {
-    if (_tutorialInProgress) return;
-
-    _tutorialInProgress = true;
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // انتظار إضافي لضمان استقرار الواجهة تماماً
-      await Future.delayed(const Duration(milliseconds: 800));
+      // انتظار لضمان رسم كامل العناصر قبل التمرير
+      await Future.delayed(const Duration(milliseconds: 500));
 
-      if (mounted && _showTutorial && _tutorialInProgress) {
-        try {
-          // التأكد من إخفاء لوحة المفاتيح قبل البدء
-          await _keyboardManager.hideKeyboardAndWait(context);
-
-          // انتظار إضافي
-          await Future.delayed(const Duration(milliseconds: 300));
-
-          if (mounted) {
-            await QatTypesTutorialService.showAddTutorial(
-              context: context,
-              nameFieldKey: _nameFieldKey,
-              priceFieldKey: _priceFieldKey,
-              saveButtonKey: _saveButtonKey,
-              scrollController: _scrollController,
-              onNext: () {
-                setState(() {
-                  _showTutorial = false;
-                  _tutorialInProgress = false;
-                });
-              },
-              // تمرير FocusNodes
-              focusNodes: {
-                'name_field': _nameFocusNode,
-                'price_field': _buyPriceFocusNode,
-              },
-            );
-          }
-        } catch (e) {
-          debugPrint('Error starting tutorial: $e');
-          setState(() {
-            _showTutorial = false;
-            _tutorialInProgress = false;
-          });
-        }
-      } else {
-        _tutorialInProgress = false;
+      if (mounted && _showTutorial) {
+        await QatTypesTutorialService.showAddTutorial(
+          context: context,
+          nameFieldKey: _nameFieldKey,
+          qualityFieldKey: _qualityFieldKey,
+          saveButtonKey: _saveButtonKey,
+          scrollController: _scrollController,
+          onNext: () {
+            setState(() {
+              _showTutorial = false;
+            });
+          },
+        );
       }
     });
   }
@@ -198,18 +136,10 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
 
-    // مراقبة حالة لوحة المفاتيح للتصحيح
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    if (keyboardHeight > 0) {
-      debugPrint('Keyboard height: $keyboardHeight');
-    }
-
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        resizeToAvoidBottomInset:
-            true, // السماح بتغيير الحجم عند ظهور لوحة المفاتيح
         body: Stack(
           children: [
             _buildGradientBackground(),
@@ -248,13 +178,6 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                margin: EdgeInsets.only(
-                                  bottom: keyboardHeight > 0
-                                      ? keyboardHeight + 20
-                                      : 20,
-                                  left: 20,
-                                  right: 20,
-                                ),
                               ),
                             );
                             Navigator.of(context).pop(true);
@@ -269,26 +192,13 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                                       color: Colors.white,
                                     ),
                                     const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        state.message,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                      ),
-                                    ),
+                                    Text(state.message),
                                   ],
                                 ),
                                 backgroundColor: AppColors.danger,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                ),
-                                margin: EdgeInsets.only(
-                                  bottom: keyboardHeight > 0
-                                      ? keyboardHeight + 20
-                                      : 20,
-                                  left: 20,
-                                  right: 20,
                                 ),
                               ),
                             );
@@ -298,40 +208,20 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                           final isLoading = state is QatTypesLoading;
 
                           return Padding(
-                            padding: EdgeInsets.only(
-                              left: 20,
-                              right: 20,
-                              top: 20,
-                              bottom: keyboardHeight > 0
-                                  ? keyboardHeight + 20
-                                  : 20,
-                            ),
+                            padding: const EdgeInsets.all(20),
                             child: QatTypeForm(
                               key: _formKey,
+                              onSubmit: _submitQatType,
+                              onCancel: () => Navigator.of(context).pop(),
                               isLoading: isLoading,
                               nameFieldKey: _nameFieldKey,
-                              priceFieldKey: _priceFieldKey,
+                              qualityFieldKey: _qualityFieldKey,
                               saveButtonKey: _saveButtonKey,
-                              nameFocusNode: _nameFocusNode,
-                              buyPriceFocusNode: _buyPriceFocusNode,
-                              sellPriceFocusNode: _sellPriceFocusNode,
-                              onSubmit: _submitQatType,
-                              onCancel: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.of(context).pop();
-                              },
                             ),
                           );
                         },
                       ),
                     ),
-                  ),
-                ),
-
-                // إضافة مساحة إضافية في النهاية لضمان إمكانية التمرير
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: keyboardHeight > 0 ? keyboardHeight + 100 : 100,
                   ),
                 ),
               ],
@@ -385,45 +275,37 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
         ),
         onPressed: () {
           HapticFeedback.lightImpact();
-          // إخفاء لوحة المفاتيح قبل الرجوع
-          FocusScope.of(context).unfocus();
           Navigator.pop(context);
         },
       ),
       actions: [
-        if (!_tutorialInProgress)
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: opacity < 0.5
-                    ? AppColors.surface.withOpacity(0.9)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
-                ),
-              ),
-              child: const Icon(
-                Icons.help_outline_rounded,
-                color: AppColors.primary,
-                size: 20,
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: opacity < 0.5
+                  ? AppColors.surface.withOpacity(0.9)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
               ),
             ),
-            onPressed: () async {
-              HapticFeedback.lightImpact();
-
-              // إخفاء لوحة المفاتيح أولاً
-              FocusScope.of(context).unfocus();
-              await Future.delayed(const Duration(milliseconds: 300));
-
-              setState(() {
-                _showTutorial = true;
-              });
-              _startTutorial();
-            },
-            tooltip: 'عرض التعليمات',
+            child: const Icon(
+              Icons.help_outline_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
           ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              _showTutorial = true;
+            });
+            _startTutorial();
+          },
+          tooltip: 'عرض التعليمات',
+        ),
         const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -506,18 +388,6 @@ class _AddQatTypeScreenState extends State<AddQatTypeScreen>
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-        titlePadding: const EdgeInsets.symmetric(horizontal: 20),
-        title: AnimatedOpacity(
-          opacity: opacity,
-          duration: const Duration(milliseconds: 200),
-          child: Text(
-            'إضافة نوع قات',
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
             ),
           ),
         ),
