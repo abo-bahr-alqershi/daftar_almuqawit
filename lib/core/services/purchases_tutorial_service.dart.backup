@@ -3,18 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../theme/app_colors.dart';
 
-/// خدمة التعليمات المحسنة لشاشات المشتريات مع Transitions احترافية
+/// خدمة التعليمات المحسنة لشاشات المشتريات
 class PurchasesTutorialService {
   static TutorialCoachMark? _tutorial;
-  static bool _isTransitioning = false;
-  
-  /// معاملات التوقيت المحسّنة والآمنة للانتقالات السلسة
-  static const _timing = (
-    initialDelay: Duration(milliseconds: 200),
-    scrollDuration: Duration(milliseconds: 350),
-    scrollSettling: Duration(milliseconds: 180),
-    transitionGap: Duration(milliseconds: 100),
-  );
 
   /// حساب الموضع المثالي للمحتوى مع معالجة دقيقة واحترافية شاملة
   static CustomTargetContentPosition _calculatePosition({
@@ -275,12 +266,12 @@ class PurchasesTutorialService {
 
           await scrollController.animateTo(
             targetOffset,
-            duration: _timing.scrollDuration,
+            duration: const Duration(milliseconds: 450),
             curve: Curves.easeInOutCubic,
           );
 
-          // انتظار استقرار التمرير (محسّن)
-          await Future.delayed(_timing.scrollSettling);
+          // انتظار استقرار التمرير
+          await Future.delayed(const Duration(milliseconds: 250));
 
           debugPrint('✅ Scroll animation completed');
         } else {
@@ -312,7 +303,7 @@ class PurchasesTutorialService {
     required VoidCallback onNext,
     ScrollController? scrollController,
   }) async {
-    await Future.delayed(_timing.initialDelay);
+    await Future.delayed(const Duration(milliseconds: 300));
 
     const contentHeight = 235.0; // محسّن للتوافق مع جميع الشاشات
 

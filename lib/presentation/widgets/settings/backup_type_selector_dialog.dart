@@ -5,10 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 /// نوع النسخة الاحتياطية
-enum BackupType {
-  local,
-  googleDrive,
-}
+enum BackupType { local, googleDrive }
 
 /// قائمة منسدلة أنيقة لاختيار نوع النسخة الاحتياطية
 /// تظهر مباشرة تحت الزر عند الضغط عليه
@@ -113,7 +110,8 @@ class _BackupTypeDropdownContentState
 
     // حساب موقع القائمة (تحت الزر مباشرة)
     double top = widget.buttonPosition.dy + widget.buttonSize.height + 8;
-    double right = screenSize.width - widget.buttonPosition.dx - widget.buttonSize.width;
+    double right =
+        screenSize.width - widget.buttonPosition.dx - widget.buttonSize.width;
 
     // التأكد من أن القائمة لا تخرج عن حدود الشاشة
     const menuHeight = 200.0;
@@ -142,13 +140,16 @@ class _BackupTypeDropdownContentState
               curve: Curves.easeOut,
             ),
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, -0.1),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: widget.animation,
-                curve: Curves.easeOutCubic,
-              )),
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, -0.1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: widget.animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
               child: ScaleTransition(
                 scale: CurvedAnimation(
                   parent: widget.animation,
@@ -264,11 +265,7 @@ class _BackupTypeDropdownContentState
                             ]
                           : [],
                     ),
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 14),
 
@@ -317,4 +314,3 @@ class _BackupTypeDropdownContentState
     );
   }
 }
-

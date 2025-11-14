@@ -97,7 +97,7 @@ class _BackupScreenState extends State<BackupScreen> {
 
     try {
       final backupPath = await _backupService.createBackup();
-      
+
       final now = DateTime.now();
       final prefs = sl.get<SharedPreferencesService>();
       await prefs.setString(StorageKeys.lastBackupTime, now.toIso8601String());
@@ -175,7 +175,10 @@ class _BackupScreenState extends State<BackupScreen> {
         Navigator.pop(context); // إغلاق dialog التقدم
       }
       if (!mounted) return;
-      _showMessage('فشل رفع النسخة إلى Google Drive: ${e.toString()}', isError: true);
+      _showMessage(
+        'فشل رفع النسخة إلى Google Drive: ${e.toString()}',
+        isError: true,
+      );
       _logger.error('فشل رفع النسخة الاحتياطية', error: e);
     }
   }
@@ -318,7 +321,10 @@ class _BackupScreenState extends State<BackupScreen> {
 
       // تحميل النسخة من Google Drive
       final dir = await getApplicationDocumentsDirectory();
-      final localPath = p.join(dir.path, 'restore_${DateTime.now().millisecondsSinceEpoch}.db');
+      final localPath = p.join(
+        dir.path,
+        'restore_${DateTime.now().millisecondsSinceEpoch}.db',
+      );
 
       await googleDrive.downloadBackup(
         selectedBackup.id,
@@ -349,8 +355,10 @@ class _BackupScreenState extends State<BackupScreen> {
         Navigator.pop(context); // إغلاق dialog التقدم
       }
       if (!mounted) return;
-      _showMessage('فشل استعادة البيانات من Google Drive: ${e.toString()}',
-          isError: true);
+      _showMessage(
+        'فشل استعادة البيانات من Google Drive: ${e.toString()}',
+        isError: true,
+      );
       _logger.error('فشل استعادة البيانات', error: e);
     }
   }
@@ -382,7 +390,11 @@ class _BackupScreenState extends State<BackupScreen> {
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.arrow_forward_rounded, color: AppColors.textPrimary, size: 20),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.textPrimary,
+                size: 20,
+              ),
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -573,10 +585,7 @@ class _SectionCard extends StatelessWidget {
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      color.withOpacity(0.15),
-                      color.withOpacity(0.08),
-                    ],
+                    colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -637,10 +646,7 @@ class _ActionButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.12),
-            color.withOpacity(0.06),
-          ],
+          colors: [color.withOpacity(0.12), color.withOpacity(0.06)],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.2)),
@@ -648,10 +654,12 @@ class _ActionButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isLoading ? null : () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
+          onTap: isLoading
+              ? null
+              : () {
+                  HapticFeedback.lightImpact();
+                  onTap();
+                },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -733,10 +741,7 @@ class _InfoItem extends StatelessWidget {
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                color.withOpacity(0.15),
-                color.withOpacity(0.08),
-              ],
+              colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -762,10 +767,7 @@ class _ProgressDialog extends StatelessWidget {
   final String title;
   final String message;
 
-  const _ProgressDialog({
-    required this.title,
-    required this.message,
-  });
+  const _ProgressDialog({required this.title, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -935,10 +937,7 @@ class _BackupListItem extends StatelessWidget {
   final DriveBackupInfo backup;
   final VoidCallback onTap;
 
-  const _BackupListItem({
-    required this.backup,
-    required this.onTap,
-  });
+  const _BackupListItem({required this.backup, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -946,9 +945,7 @@ class _BackupListItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.3),
-        ),
+        border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),
       child: Material(
         color: Colors.transparent,
