@@ -224,14 +224,7 @@ class SuppliersTutorialService {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -258,6 +251,69 @@ class SuppliersTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'المورد': AppColors.info,
+      'الموردين': AppColors.info,
+      'منطقة المورد': AppColors.primary,
+      'تقييم الجودة': AppColors.info,
+      'مستوى الثقة': AppColors.warning,
+      'حفظ بيانات المورد': AppColors.success,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 

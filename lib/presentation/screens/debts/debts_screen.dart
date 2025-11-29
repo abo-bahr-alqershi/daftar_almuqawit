@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/services/debts_tutorial_service.dart';
 import '../../../domain/entities/debt.dart';
 import '../../blocs/debts/debts_bloc.dart';
 import '../../blocs/debts/debts_event.dart';
@@ -27,6 +28,12 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
   
+  final GlobalKey _statsCardsKey = GlobalKey();
+  final GlobalKey _filterChipsKey = GlobalKey();
+  final GlobalKey _debtsListKey = GlobalKey();
+  final GlobalKey _addDebtButtonKey = GlobalKey();
+  final GlobalKey _filtersButtonKey = GlobalKey();
+
   String _selectedStatus = 'الكل';
   String _selectedSort = 'التاريخ';
 
@@ -214,16 +221,56 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
         onPressed: () => Navigator.pop(context),
       ),
       actions: [
+        Container(
+          key: _filtersButtonKey,
+          child: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.filter_list_rounded, size: 20),
+            ),
+            onPressed: () => _showFiltersDialog(),
+          ),
+        ),
         IconButton(
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
-            child: const Icon(Icons.filter_list_rounded, size: 20),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
           ),
-          onPressed: () => _showFiltersDialog(),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+
+            DebtsTutorialService.showScreenTutorial(
+              context: context,
+              statsCardsKey: _statsCardsKey,
+              filterChipsKey: _filterChipsKey,
+              debtsListKey: _debtsListKey,
+              addDebtButtonKey: _addDebtButtonKey,
+              filtersButtonKey: _filtersButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('تمت جولة التعليمات لشاشة الديون'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
+          },
         ),
         const SizedBox(width: 8),
       ],
@@ -314,8 +361,10 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
 
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
+      child: Container(
+        key: _statsCardsKey,
+        child: Row(
+          children: [
           Expanded(
             child: _StatCard(
               title: 'إجمالي الديون',
@@ -351,11 +400,13 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildFilterSection() {
     return Container(
+      key: _filterChipsKey,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
@@ -416,11 +467,20 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
       itemCount: debts.length,
       itemBuilder: (context, index) {
         final debt = debts[index];
-        return DebtCard(
+        final card = DebtCard(
           debt: debt,
           onTap: () => _navigateToDetails(debt),
           onPayTap: () => _navigateToPayment(debt),
         );
+
+        if (index == 0) {
+          return Container(
+            key: _debtsListKey,
+            child: card,
+          );
+        }
+
+        return card;
       },
     );
   }
@@ -509,6 +569,7 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
       left: 20,
       right: 20,
       child: Container(
+        key: _addDebtButtonKey,
         height: 56,
         decoration: BoxDecoration(
           gradient: const LinearGradient(

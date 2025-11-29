@@ -224,14 +224,7 @@ class CustomersManagementTutorialService {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -258,6 +251,70 @@ class CustomersManagementTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'العملاء': AppColors.accent,
+      'عميل جديد': AppColors.success,
+      'العملاء المحظورين': AppColors.danger,
+      'الديون': AppColors.danger,
+      'حد الائتمان': AppColors.warning,
+      'VIP': AppColors.info,
+      'قائمة العملاء': AppColors.accent,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 
@@ -319,8 +376,7 @@ class CustomersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'العملاء المحظورون وإدارة المخاطر',
                 description:
-                    'من هنا يمكنك فتح قائمة العملاء المحظورين أو أصحاب المشاكل المتكررة.
-يساعدك هذا الزر على متابعة العملاء الذين لا تريد التعامل معهم حالياً أو تحتاج لمراقبتهم.',
+                    'من هنا يمكنك فتح قائمة العملاء المحظورين أو أصحاب المشاكل المتكررة. يساعدك هذا الزر على متابعة العملاء الذين لا تريد التعامل معهم حالياً أو تحتاج لمراقبتهم.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -361,8 +417,7 @@ class CustomersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'البحث عن عميل محدد',
                 description:
-                    'استخدم هذا الزر لفتح نافذة البحث المتقدم عن عميل حسب الاسم، الهاتف، أو اللقب.
-يسهّل عليك الوصول السريع لعميل معين من بين عدد كبير.',
+                    'استخدم هذا الزر لفتح نافذة البحث المتقدم عن عميل حسب الاسم، الهاتف، أو اللقب. يسهّل عليك الوصول السريع لعميل معين من بين عدد كبير.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -462,8 +517,7 @@ class CustomersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'نظرة عامة على العملاء والديون',
                 description:
-                    'تعرض هذه البطاقة إجمالي عدد العملاء، إجمالي الديون عليهم، وعدد العملاء النشطين.
-من هنا تحصل على صورة فورية عن وضع عملائك المالي.',
+                    'تعرض هذه البطاقة إجمالي عدد العملاء، إجمالي الديون عليهم، وعدد العملاء النشطين. من هنا تحصل على صورة فورية عن وضع عملائك المالي.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -513,8 +567,7 @@ class CustomersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'تصنيف العملاء حسب الحالة والنوع',
                 description:
-                    'من هنا يمكنك تصفية قائمة العملاء حسب الحالة (نشط، محظور) أو النوع (VIP، عليه دين، تجاوز الحد).
-يساعدك هذا على التركيز على شريحة معينة من عملائك.',
+                    'من هنا يمكنك تصفية قائمة العملاء حسب الحالة (نشط، محظور) أو النوع (VIP، عليه دين، تجاوز الحد). يساعدك هذا على التركيز على شريحة معينة من عملائك.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -564,8 +617,7 @@ class CustomersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'بطاقة بيانات العميل',
                 description:
-                    'يمثل كل كرت هنا عميلاً واحداً مع معلوماته الأساسية مثل الاسم، الهاتف، الديون، والحالة.
-يمكنك الضغط على الكرت لفتح تفاصيل العميل أو تنفيذ إجراءات مثل الحذف أو الحظر.',
+                    'يمثل كل كرت هنا عميلاً واحداً مع معلوماته الأساسية مثل الاسم، الهاتف، الديون، والحالة. يمكنك الضغط على الكرت لفتح تفاصيل العميل أو تنفيذ إجراءات مثل الحذف أو الحظر.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -611,8 +663,7 @@ class CustomersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'إضافة عميل جديد للنظام',
                 description:
-                    'هذا هو زر إضافة عميل جديد. من هنا يمكنك تسجيل عميل جديد مع جميع بياناته الأساسية.
-احرص على تسجيل عملائك أولاً قبل ربطهم بعمليات البيع والديون.',
+                    'هذا هو زر إضافة عميل جديد. من هنا يمكنك تسجيل عميل جديد مع جميع بياناته الأساسية. احرص على تسجيل عملائك أولاً قبل ربطهم بعمليات البيع والديون.',
                 onNext: () {
                   controller.skip();
                   onFinish?.call();

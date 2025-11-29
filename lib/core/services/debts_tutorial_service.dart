@@ -224,14 +224,7 @@ class DebtsTutorialService {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -258,6 +251,75 @@ class DebtsTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'الدين': AppColors.danger,
+      'الديون': AppColors.danger,
+      'ملخص الديون': AppColors.info,
+      'الديون المتأخرة': AppColors.danger,
+      'المعلقة': AppColors.warning,
+      'المدفوعة': AppColors.success,
+      'غير المدفوعة': AppColors.danger,
+      'تاريخ الاستحقاق': AppColors.warning,
+      'مبلغ الدين': AppColors.info,
+      'قائمة الديون': AppColors.info,
+      'سداد الدين': AppColors.success,
+      'حفظ الدين': AppColors.success,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 
@@ -693,6 +755,295 @@ class DebtsTutorialService {
         fontWeight: FontWeight.w600,
       ),
       onFinish: () => _tutorial = null,
+      onSkip: () {
+        _tutorial = null;
+        return true;
+      },
+    );
+
+    _tutorial!.show(context: context, rootOverlay: true);
+  }
+
+  static Future<void> showScreenTutorial({
+    required BuildContext context,
+    required GlobalKey statsCardsKey,
+    required GlobalKey filterChipsKey,
+    required GlobalKey debtsListKey,
+    required GlobalKey addDebtButtonKey,
+    required GlobalKey filtersButtonKey,
+    required ScrollController scrollController,
+    VoidCallback? onFinish,
+  }) async {
+    await Future.delayed(_timing.initialDelay);
+
+    const contentHeight = 260.0;
+
+    await _preScroll(
+      context: context,
+      targetKey: statsCardsKey,
+      scrollController: scrollController,
+      contentHeight: contentHeight,
+    );
+
+    final targetKeys = [
+      filtersButtonKey,
+      statsCardsKey,
+      filterChipsKey,
+      debtsListKey,
+      addDebtButtonKey,
+    ];
+
+    final totalSteps = targetKeys.length;
+    final targets = <TargetFocus>[];
+
+    // زر تصفية الديون
+    targets.add(
+      TargetFocus(
+        identify: 'debts_filters_button',
+        keyTarget: filtersButtonKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 14,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: filtersButtonKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 1,
+                totalSteps: totalSteps,
+                title: 'تصفية وعرض الديون',
+                description:
+                    'من هذا الزر يمكنك فتح لوحة الفلاتر لاختيار حالة الديون وطريقة ترتيبها، مثل الديون المعلقة أو المتأخرة.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[1],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // بطاقات إحصائيات الديون
+    targets.add(
+      TargetFocus(
+        identify: 'debts_stats',
+        keyTarget: statsCardsKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: statsCardsKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 2,
+                totalSteps: totalSteps,
+                title: 'ملخص الديون',
+                description:
+                    'هذه البطاقات تعطيك نظرة سريعة عن إجمالي عدد الديون، عدد الديون المتأخرة، وإجمالي المبلغ المتبقي على العملاء.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[2],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[0],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // فلاتر حالة الديون
+    targets.add(
+      TargetFocus(
+        identify: 'debts_filters_chips',
+        keyTarget: filterChipsKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: filterChipsKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 3,
+                totalSteps: totalSteps,
+                title: 'تصفية الديون حسب الحالة',
+                description:
+                    'استخدم هذه الأزرار للتبديل بين جميع الديون، الديون المعلقة، المتأخرة، أو المدفوعة بالكامل.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[3],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[1],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // قائمة الديون
+    targets.add(
+      TargetFocus(
+        identify: 'debts_list',
+        keyTarget: debtsListKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: debtsListKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 4,
+                totalSteps: totalSteps,
+                title: 'تفاصيل كل دين',
+                description:
+                    'في هذه المنطقة تظهر قائمة الديون مع اسم العميل، المبلغ الأصلي، المتبقي، وتاريخ الاستحقاق مع زر لتسديد الدين أو عرض التفاصيل.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[4],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[2],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // زر إضافة دين جديد
+    targets.add(
+      TargetFocus(
+        identify: 'debts_add_button',
+        keyTarget: addDebtButtonKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 5,
+                totalSteps: totalSteps,
+                title: 'إضافة دين جديد',
+                description:
+                    'استخدم هذا الزر لفتح شاشة تسجيل دين جديد على أحد العملاء، مع كل التفاصيل والمواعيد.',
+                onNext: () {
+                  controller.skip();
+                  onFinish?.call();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[3],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                isLastStep: true,
+                showSkip: false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.textPrimary,
+      opacityShadow: 0.9,
+      paddingFocus: 2,
+      alignSkip: Alignment.topLeft,
+      textSkip: 'تخطي',
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      onFinish: () {
+        _tutorial = null;
+        onFinish?.call();
+      },
       onSkip: () {
         _tutorial = null;
         return true;

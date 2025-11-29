@@ -1383,16 +1383,7 @@ class SalesTutorialService {
               Flexible(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  child: Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.fade,
-                  ),
+                  child: _buildHighlightedDescription(description),
                 ),
               ),
               const SizedBox(height: 14),
@@ -1476,6 +1467,74 @@ class SalesTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 13,
+      height: 1.4,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'البيع السريع': AppColors.sales,
+      'نوع القات': AppColors.sales,
+      'وحدة القياس': AppColors.info,
+      'كمية البيع': AppColors.primary,
+      'سعر الوحدة': AppColors.info,
+      'إجمالي الفاتورة': AppColors.info,
+      'طريقة الدفع': AppColors.warning,
+      'نقدي': AppColors.success,
+      'آجل': AppColors.danger,
+      'حفظ الفاتورة': AppColors.success,
+      'حفظ التعديلات': AppColors.success,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 }

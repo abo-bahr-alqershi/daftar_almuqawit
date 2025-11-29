@@ -224,14 +224,7 @@ class SuppliersManagementTutorialService {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -258,6 +251,69 @@ class SuppliersManagementTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'الموردين': AppColors.primary,
+      'قائمة الموردين': AppColors.primary,
+      'المشتريات': AppColors.purchases,
+      'تقييم الجودة': AppColors.info,
+      'مستوى الثقة': AppColors.warning,
+      'موثوق': AppColors.success,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 
@@ -319,8 +375,7 @@ class SuppliersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'عرض قائمة الموردين الكاملة',
                 description:
-                    'من هنا يمكنك فتح شاشة قائمة الموردين الكاملة مع تفاصيل أكثر وتنقل أسهل بين الموردين.
-مفيد عندما يكون لديك عدد كبير من الموردين وتريد استعراضهم بشكل جدولي.',
+                    'من هنا يمكنك فتح شاشة قائمة الموردين الكاملة مع تفاصيل أكثر وتنقل أسهل بين الموردين. مفيد عندما يكون لديك عدد كبير من الموردين وتريد استعراضهم بشكل جدولي.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -361,8 +416,7 @@ class SuppliersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'البحث عن مورد محدد',
                 description:
-                    'استخدم هذا الزر للبحث عن مورد حسب الاسم، الهاتف، أو المنطقة.
-يساعدك على الوصول السريع للمورد الذي تريد التعامل معه أو مراجعته.',
+                    'استخدم هذا الزر للبحث عن مورد حسب الاسم، الهاتف، أو المنطقة. يساعدك على الوصول السريع للمورد الذي تريد التعامل معه أو مراجعته.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -462,8 +516,7 @@ class SuppliersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'نظرة عامة على الموردين والمشتريات',
                 description:
-                    'تعرض هذه البطاقة إجمالي عدد الموردين، إجمالي قيمة المشتريات منهم، ومتوسط تقييم الجودة.
-من هنا يمكنك تقييم قوة شبكة الموردين لديك بسرعة.',
+                    'تعرض هذه البطاقة إجمالي عدد الموردين، إجمالي قيمة المشتريات منهم، ومتوسط تقييم الجودة. من هنا يمكنك تقييم قوة شبكة الموردين لديك بسرعة.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -513,8 +566,7 @@ class SuppliersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'تصنيف الموردين حسب الجودة والحالة',
                 description:
-                    'من هنا يمكنك تصفية الموردين حسب مستوى الثقة والجودة (موثوق، جيد، متوسط، ضعيف) أو حسب حالة الدين عليه.
-يساعدك هذا على اختيار أفضل الموردين والتعامل معهم.',
+                    'من هنا يمكنك تصفية الموردين حسب مستوى الثقة والجودة (موثوق، جيد، متوسط، ضعيف) أو حسب حالة الدين عليه. يساعدك هذا على اختيار أفضل الموردين والتعامل معهم.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -564,8 +616,7 @@ class SuppliersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'بطاقة بيانات المورد',
                 description:
-                    'يمثل كل كرت هنا مورداً واحداً مع معلوماته الأساسية مثل الاسم، المنطقة، التقييم، والديون.
-يمكنك الضغط على الكرت لفتح تفاصيل المورد ومعرفة تاريخ التعامل معه.',
+                    'يمثل كل كرت هنا مورداً واحداً مع معلوماته الأساسية مثل الاسم، المنطقة، التقييم، والديون. يمكنك الضغط على الكرت لفتح تفاصيل المورد ومعرفة تاريخ التعامل معه.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -611,8 +662,7 @@ class SuppliersManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'إضافة مورد جديد',
                 description:
-                    'هذا هو زر إضافة مورد جديد. من هنا يمكنك تسجيل مورد جديد مع بياناته وتقييمه.
-كلما كانت بيانات الموردين مرتبة، سهلت عليك إدارة المشتريات والديون.',
+                    'هذا هو زر إضافة مورد جديد. من هنا يمكنك تسجيل مورد جديد مع بياناته وتقييمه. كلما كانت بيانات الموردين مرتبة، سهلت عليك إدارة المشتريات والديون.',
                 onNext: () {
                   controller.skip();
                   onFinish?.call();

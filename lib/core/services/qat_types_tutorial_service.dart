@@ -534,6 +534,68 @@ class QatTypesTutorialService {
     _tutorial!.show(context: context);
   }
 
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.4,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'نوع القات': AppColors.primary,
+      'أنواع القات': AppColors.primary,
+      'درجة الجودة': AppColors.info,
+      'الجودة': AppColors.info,
+      'حفظ': AppColors.success,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
+    );
+  }
+
 
   /// محتوى محسن مع مراقبة ديناميكية للموضع
   static Widget _buildEnhancedStepContent({
@@ -650,14 +712,7 @@ class QatTypesTutorialService {
 
 
               // الوصف
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 20),
 
 

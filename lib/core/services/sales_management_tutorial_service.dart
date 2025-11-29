@@ -224,14 +224,7 @@ class SalesManagementTutorialService {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -258,6 +251,71 @@ class SalesManagementTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'البيع السريع': AppColors.sales,
+      'تحديث': AppColors.info,
+      'ملخص المبيعات': AppColors.info,
+      'تصفية المبيعات': AppColors.warning,
+      'قائمة المبيعات': AppColors.sales,
+      'بيع جديد': AppColors.success,
+      'المدفوعة': AppColors.success,
+      'غير المدفوعة': AppColors.danger,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 
@@ -317,7 +375,7 @@ class SalesManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'زر البيع السريع',
                 description:
-                    'من هنا يمكنك فتح شاشة البيع السريع مباشرة لتسجيل عملية بيع بسيطة وسريعة دون المرور بكل تفاصيل نموذج البيع.',
+                    'زر "البيع السريع" يستخدم لتسجيل فاتورة خفيفة وبسيطة. اضغط هنا عندما تريد بيع سريع بدون إدخال كل تفاصيل الفاتورة.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -358,7 +416,7 @@ class SalesManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'تحديث المبيعات',
                 description:
-                    'استخدم هذا الزر لإعادة تحميل بيانات المبيعات من النظام والتأكد من ظهور آخر التغييرات والعمليات.',
+                    'إذا شعرت أن الأرقام أو قائمة المبيعات غير محدثة، اضغط هنا لعمل "تحديث" وإعادة تحميل بيانات المبيعات من النظام.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -408,7 +466,7 @@ class SalesManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'ملخص أداء المبيعات',
                 description:
-                    'هذه البطاقة تعرض نظرة سريعة عن أداء المبيعات: إجمالي المبيعات، عدد العمليات، الربح، والمدفوع. تساعدك على تقييم وضع المبيعات الحالي فوراً دون فتح تقارير تفصيلية.',
+                    'في هذه البطاقة يظهر "ملخص المبيعات" بشكل مختصر: إجمالي المبيعات، عدد الفواتير، والربح التقريبي. نظرة سريعة هنا تكفي لتعرف وضع البيع اليومي.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -458,7 +516,7 @@ class SalesManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'تصفية قائمة المبيعات',
                 description:
-                    'من هنا يمكنك تصفية قائمة المبيعات حسب اليوم فقط، العمليات المدفوعة، غير المدفوعة، أو عمليات البيع السريع. استخدم هذه الأزرار للتركيز على نوع المبيعات الذي تريد متابعته.',
+                    'من هذه الأزرار يمكنك "تصفية المبيعات" في "قائمة المبيعات": عرض اليوم فقط، الفواتير "المدفوعة"، "غير المدفوعة"، أو عمليات "البيع السريع".',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -508,7 +566,7 @@ class SalesManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'قائمة عمليات البيع',
                 description:
-                    'في هذه المنطقة تظهر جميع عمليات البيع مع كل التفاصيل المهمة مثل التاريخ، حالة الدفع، إجمالي الفاتورة، وإجراءات مثل المعاينة أو الإلغاء.',
+                    'هنا تظهر "قائمة المبيعات". كل سطر يمثل فاتورة مع التاريخ، المبلغ، وحالة الدفع، ويمكنك الدخول للتفاصيل أو تنفيذ الإجراءات المتاحة.',
                 onNext: () async {
                   await _preScroll(
                     context: context,
@@ -554,7 +612,7 @@ class SalesManagementTutorialService {
                 totalSteps: totalSteps,
                 title: 'إضافة عملية بيع جديدة',
                 description:
-                    'هذا هو زر البيع العادي (بيع جديد). من هذا الزر يمكنك فتح نموذج إضافة بيع جديد بشكل مباشر، واستخدامه في كل مرة تريد تسجيل عملية بيع كاملة بكل تفاصيلها.',
+                    'هذا الزر لعمل "بيع جديد". اضغط هنا لفتح نموذج فاتورة كاملة عندما تريد تسجيل عملية بيع عادية بكل تفاصيلها.',
                 onNext: () {
                   controller.skip();
                   onFinish?.call();

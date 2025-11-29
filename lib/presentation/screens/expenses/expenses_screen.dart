@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/expenses_tutorial_service.dart';
 import '../../../domain/entities/expense.dart';
 import '../../blocs/expenses/expenses_bloc.dart';
 import '../../blocs/expenses/expenses_event.dart';
@@ -28,6 +29,13 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   double _scrollOffset = 0;
   String _selectedFilter = 'الكل';
   bool _showChart = false;
+
+  final GlobalKey _statsCardKey = GlobalKey();
+  final GlobalKey _filterChipsKey = GlobalKey();
+  final GlobalKey _expensesListKey = GlobalKey();
+  final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey _toggleViewButtonKey = GlobalKey();
+  final GlobalKey _refreshButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -236,18 +244,62 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         ),
       ),
       actions: [
-        _buildIconButton(
-          _showChart ? Icons.list_rounded : Icons.pie_chart_rounded,
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            setState(() => _showChart = !_showChart);
-          },
+        Container(
+          key: _toggleViewButtonKey,
+          child: _buildIconButton(
+            _showChart ? Icons.list_rounded : Icons.pie_chart_rounded,
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() => _showChart = !_showChart);
+            },
+          ),
         ),
-        _buildIconButton(
-          Icons.refresh_rounded,
+        Container(
+          key: _refreshButtonKey,
+          child: _buildIconButton(
+            Icons.refresh_rounded,
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.read<ExpensesBloc>().add(LoadExpenses());
+            },
+          ),
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
+          ),
           onPressed: () {
             HapticFeedback.lightImpact();
-            context.read<ExpensesBloc>().add(LoadExpenses());
+
+            ExpensesTutorialService.showScreenTutorial(
+              context: context,
+              statsCardKey: _statsCardKey,
+              filterChipsKey: _filterChipsKey,
+              expensesListKey: _expensesListKey,
+              addExpenseButtonKey: _fabKey,
+              toggleViewButtonKey: _toggleViewButtonKey,
+              refreshButtonKey: _refreshButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('تمت جولة التعليمات لشاشة المصروفات'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
           },
         ),
         const SizedBox(width: 12),
@@ -352,6 +404,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               .key;
 
     return Container(
+      key: _statsCardKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
@@ -691,11 +744,20 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       itemCount: expenses.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        return ExpenseCard(
+        final card = ExpenseCard(
           expense: expenses[index],
           onTap: () => _showExpenseDetails(expenses[index]),
           onDelete: () => _deleteExpense(expenses[index]),
         );
+
+        if (index == 0) {
+          return Container(
+            key: _expensesListKey,
+            child: card,
+          );
+        }
+
+        return card;
       },
     );
   }
@@ -765,6 +827,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     bottom: 20,
     left: 20,
     child: FloatingActionButton.extended(
+      key: _fabKey,
       onPressed: () => _navigateWithAnimation(context, RouteNames.addExpense),
       backgroundColor: AppColors.expense,
       icon: const Icon(Icons.add, color: Colors.white),

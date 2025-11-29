@@ -224,14 +224,7 @@ class ExpensesTutorialService {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              _buildHighlightedDescription(description),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -258,6 +251,72 @@ class ExpensesTutorialService {
           ),
         );
       },
+    );
+  }
+
+  static Widget _buildHighlightedDescription(String text) {
+    const baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.textSecondary,
+    );
+
+    final keywordStyles = <String, Color>{
+      'المصروفات': AppColors.expense,
+      'مصروف': AppColors.expense,
+      'ملخص المصروفات': AppColors.info,
+      'مصروف متكرر': AppColors.warning,
+      'قائمة المصروفات': AppColors.info,
+      'حفظ المصروف': AppColors.success,
+      'اليوم': AppColors.primary,
+      'الأسبوع': AppColors.primary,
+      'الشهر': AppColors.primary,
+    };
+
+    final spans = <TextSpan>[];
+    var index = 0;
+
+    while (index < text.length) {
+      int nearestStart = text.length;
+      String? matched;
+      Color? matchedColor;
+
+      keywordStyles.forEach((keyword, color) {
+        final i = text.indexOf(keyword, index);
+        if (i != -1 && i < nearestStart) {
+          nearestStart = i;
+          matched = keyword;
+          matchedColor = color;
+        }
+      });
+
+      if (matched == null) {
+        spans.add(TextSpan(text: text.substring(index), style: baseStyle));
+        break;
+      }
+
+      if (nearestStart > index) {
+        spans.add(
+          TextSpan(text: text.substring(index, nearestStart), style: baseStyle),
+        );
+      }
+
+      spans.add(
+        TextSpan(
+          text: matched,
+          style: baseStyle.copyWith(
+            color: matchedColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+
+      index = nearestStart + matched!.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textDirection: TextDirection.rtl,
     );
   }
 
@@ -693,6 +752,347 @@ class ExpensesTutorialService {
         fontWeight: FontWeight.w600,
       ),
       onFinish: () => _tutorial = null,
+      onSkip: () {
+        _tutorial = null;
+        return true;
+      },
+    );
+
+    _tutorial!.show(context: context, rootOverlay: true);
+  }
+
+  static Future<void> showScreenTutorial({
+    required BuildContext context,
+    required GlobalKey statsCardKey,
+    required GlobalKey filterChipsKey,
+    required GlobalKey expensesListKey,
+    required GlobalKey addExpenseButtonKey,
+    required GlobalKey toggleViewButtonKey,
+    required GlobalKey refreshButtonKey,
+    required ScrollController scrollController,
+    VoidCallback? onFinish,
+  }) async {
+    await Future.delayed(_timing.initialDelay);
+
+    const contentHeight = 260.0;
+
+    await _preScroll(
+      context: context,
+      targetKey: statsCardKey,
+      scrollController: scrollController,
+      contentHeight: contentHeight,
+    );
+
+    final targetKeys = [
+      toggleViewButtonKey,
+      refreshButtonKey,
+      statsCardKey,
+      filterChipsKey,
+      expensesListKey,
+      addExpenseButtonKey,
+    ];
+
+    final totalSteps = targetKeys.length;
+    final targets = <TargetFocus>[];
+
+    // زر عرض الرسم البياني/القائمة
+    targets.add(
+      TargetFocus(
+        identify: 'expenses_toggle_view',
+        keyTarget: toggleViewButtonKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 14,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: toggleViewButtonKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 1,
+                totalSteps: totalSteps,
+                title: 'التبديل بين القائمة والرسم البياني',
+                description:
+                    'من هنا يمكنك التبديل بين عرض قائمة المصروفات أو عرضها كرسم بياني حسب الفئة لتحليل أفضل.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[1],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // زر تحديث المصروفات
+    targets.add(
+      TargetFocus(
+        identify: 'expenses_refresh',
+        keyTarget: refreshButtonKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 14,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: refreshButtonKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 2,
+                totalSteps: totalSteps,
+                title: 'تحديث قائمة المصروفات',
+                description:
+                    'استخدم هذا الزر لإعادة تحميل بيانات المصروفات من النظام والتأكد من ظهور آخر العمليات.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[2],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[0],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // بطاقة ملخص المصروفات
+    targets.add(
+      TargetFocus(
+        identify: 'expenses_stats',
+        keyTarget: statsCardKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: statsCardKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 3,
+                totalSteps: totalSteps,
+                title: 'ملخص المصروفات',
+                description:
+                    'هذه البطاقة توضح إجمالي المصروفات، أهم الفئات، وبعض المؤشرات السريعة عن حركة المصروفات في الفترة الحالية.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[3],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[1],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // فلاتر الفترة الزمنية
+    targets.add(
+      TargetFocus(
+        identify: 'expenses_filters_chips',
+        keyTarget: filterChipsKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: filterChipsKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 4,
+                totalSteps: totalSteps,
+                title: 'تصفية المصروفات حسب المدة',
+                description:
+                    'يمكنك من هنا عرض مصروفات اليوم فقط، أو هذا الأسبوع، أو هذا الشهر، أو كل المصروفات المسجلة.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[4],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[2],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // قائمة المصروفات
+    targets.add(
+      TargetFocus(
+        identify: 'expenses_list',
+        keyTarget: expensesListKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.custom,
+            customPosition: _calculatePosition(
+              context: context,
+              targetKey: expensesListKey,
+              contentHeight: contentHeight,
+            ),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 5,
+                totalSteps: totalSteps,
+                title: 'تفاصيل كل مصروف',
+                description:
+                    'في هذه القائمة تظهر كل عملية مصروف مع فئتها، المبلغ، التاريخ، وإمكانية عرض التفاصيل أو الحذف.',
+                onNext: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[5],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.next();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[3],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                showSkip: true,
+                onSkip: () => controller.skip(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // زر إضافة مصروف جديد
+    targets.add(
+      TargetFocus(
+        identify: 'expenses_add_button',
+        keyTarget: addExpenseButtonKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.all(20),
+            builder: (context, controller) {
+              return _buildStepContent(
+                context: context,
+                stepNumber: 6,
+                totalSteps: totalSteps,
+                title: 'إضافة مصروف جديد',
+                description:
+                    'من هذا الزر يمكنك فتح شاشة إضافة مصروف جديد وتسجيل كل تفاصيله مثل الفئة، المبلغ، وطريقة الدفع.',
+                onNext: () {
+                  controller.skip();
+                  onFinish?.call();
+                },
+                onPrevious: () async {
+                  await _preScroll(
+                    context: context,
+                    targetKey: targetKeys[4],
+                    scrollController: scrollController,
+                    contentHeight: contentHeight,
+                  );
+                  controller.previous();
+                },
+                isLastStep: true,
+                showSkip: false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.textPrimary,
+      opacityShadow: 0.9,
+      paddingFocus: 2,
+      alignSkip: Alignment.topLeft,
+      textSkip: 'تخطي',
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      onFinish: () {
+        _tutorial = null;
+        onFinish?.call();
+      },
       onSkip: () {
         _tutorial = null;
         return true;
