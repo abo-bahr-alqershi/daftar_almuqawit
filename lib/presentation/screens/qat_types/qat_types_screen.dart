@@ -94,6 +94,7 @@ class _QatTypesScreenState extends State<QatTypesScreen>
           filterButtonKey: _filterButtonKey,
           listViewKey: _listViewKey,
           onNext: () {},
+          scrollController: _scrollController,
         );
         setState(() {
           _showTutorial = false;
@@ -298,6 +299,7 @@ class _QatTypesScreenState extends State<QatTypesScreen>
       actions: [
         _buildIconButton(
           Icons.search_rounded,
+          key: _searchFieldKey,
           onPressed: () => _showSearchDialog(),
         ),
         _buildIconButton(
@@ -307,13 +309,43 @@ class _QatTypesScreenState extends State<QatTypesScreen>
             _loadQatTypes();
           },
         ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+
+            QatTypesTutorialService.showMainTutorial(
+              context: context,
+              addButtonKey: _addButtonKey,
+              searchFieldKey: _searchFieldKey,
+              filterButtonKey: _filterButtonKey,
+              listViewKey: _listViewKey,
+              scrollController: _scrollController,
+              onNext: () {},
+            );
+          },
+        ),
         const SizedBox(width: 12),
       ],
     );
   }
 
-  Widget _buildIconButton(IconData icon, {required VoidCallback onPressed}) =>
+  Widget _buildIconButton(IconData icon,
+          {required VoidCallback onPressed, Key? key}) =>
       IconButton(
+        key: key,
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -638,6 +670,7 @@ class _QatTypesScreenState extends State<QatTypesScreen>
     final filters = ['الكل', 'ممتاز', 'جيد', 'عادي'];
 
     return Container(
+      key: _filterButtonKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       height: 45,
       child: ListView.separated(
@@ -699,6 +732,7 @@ class _QatTypesScreenState extends State<QatTypesScreen>
 
   Widget _buildQatTypesList(List<QatType> qatTypes) {
     return ListView.separated(
+      key: _listViewKey,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20),

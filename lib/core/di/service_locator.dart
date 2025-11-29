@@ -216,23 +216,51 @@ class ServiceLocator {
     sl.registerLazySingleton<GetCustomerHistory>(() => GetCustomerHistory(sl()));
 
     // Purchases
-    sl.registerLazySingleton<AddPurchase>(() => AddPurchase(sl()));
+    sl.registerLazySingleton<AddPurchase>(() => AddPurchase(
+          sl<PurchaseRepository>(),
+          sl<DebtRepository>(),
+          sl<SupplierRepository>(),
+        ));
     sl.registerLazySingleton<GetPurchases>(() => GetPurchases(sl()));
     sl.registerLazySingleton<GetTodayPurchases>(() => GetTodayPurchases(sl()));
     sl.registerLazySingleton<GetPurchasesBySupplier>(() => GetPurchasesBySupplier(sl()));
-    sl.registerLazySingleton<UpdatePurchase>(() => UpdatePurchase(sl()));
+    sl.registerLazySingleton<UpdatePurchase>(() => UpdatePurchase(
+          sl<PurchaseRepository>(),
+          sl<DebtRepository>(),
+          sl<SupplierRepository>(),
+        ));
     sl.registerLazySingleton<DeletePurchase>(() => DeletePurchase(sl()));
-    sl.registerLazySingleton<CancelPurchase>(() => CancelPurchase(sl()));
+    sl.registerLazySingleton<CancelPurchase>(() => CancelPurchase(
+          sl<PurchaseRepository>(),
+          sl<DebtRepository>(),
+          sl<SupplierRepository>(),
+        ));
 
     // Sales
-    sl.registerLazySingleton<AddSale>(() => AddSale(sl()));
+    sl.registerLazySingleton<AddSale>(() => AddSale(
+          sl<SalesRepository>(),
+          sl<DebtRepository>(),
+          sl<CustomerRepository>(),
+        ));
     sl.registerLazySingleton<GetSales>(() => GetSales(sl()));
     sl.registerLazySingleton<GetTodaySales>(() => GetTodaySales(sl()));
     sl.registerLazySingleton<GetSalesByCustomer>(() => GetSalesByCustomer(sl()));
-    sl.registerLazySingleton<UpdateSale>(() => UpdateSale(sl()));
+    sl.registerLazySingleton<UpdateSale>(() => UpdateSale(
+          sl<SalesRepository>(),
+          sl<DebtRepository>(),
+          sl<CustomerRepository>(),
+        ));
     sl.registerLazySingleton<DeleteSale>(() => DeleteSale(sl()));
-    sl.registerLazySingleton<QuickSale>(() => QuickSale(sl()));
-    sl.registerLazySingleton<CancelSale>(() => CancelSale(sl()));
+    sl.registerLazySingleton<QuickSale>(() => QuickSale(
+          sl<SalesRepository>(),
+          sl<DebtRepository>(),
+          sl<CustomerRepository>(),
+        ));
+    sl.registerLazySingleton<CancelSale>(() => CancelSale(
+          sl<SalesRepository>(),
+          sl<DebtRepository>(),
+          sl<CustomerRepository>(),
+        ));
     sl.registerLazySingleton<CheckStockAvailability>(() => CheckStockAvailability(
       purchaseRepository: sl<PurchaseRepository>(),
       salesRepository: sl<SalesRepository>(),
@@ -246,7 +274,12 @@ class ServiceLocator {
     sl.registerLazySingleton<GetDebtsByPerson>(() => GetDebtsByPerson(sl()));
     sl.registerLazySingleton<UpdateDebt>(() => UpdateDebt(sl()));
     sl.registerLazySingleton<DeleteDebt>(() => DeleteDebt(sl()));
-    sl.registerLazySingleton<PayDebt>(() => PayDebt(sl<DebtRepository>(), sl<DebtPaymentRepository>()));
+    sl.registerLazySingleton<PayDebt>(() => PayDebt(
+          sl<DebtRepository>(),
+          sl<DebtPaymentRepository>(),
+          sl<CustomerRepository>(),
+          sl<SupplierRepository>(),
+        ));
     sl.registerLazySingleton<PartialPayment>(() => PartialPayment(sl()));
     sl.registerLazySingleton<SendReminder>(() => SendReminder(sl<NotificationService>(), sl<DebtRepository>()));
 

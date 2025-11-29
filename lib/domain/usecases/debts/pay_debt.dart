@@ -5,14 +5,18 @@ import '../../entities/debt.dart';
 import '../../entities/debt_payment.dart';
 import '../../repositories/debt_repository.dart';
 import '../../repositories/debt_payment_repository.dart';
+import '../../repositories/customer_repository.dart';
+import '../../repositories/supplier_repository.dart';
 import '../base/base_usecase.dart';
 
 /// حالة استخدام سداد دين
 class PayDebt implements UseCase<int, PayDebtParams> {
   final DebtRepository debtRepo;
   final DebtPaymentRepository paymentRepo;
+  final CustomerRepository customerRepo;
+  final SupplierRepository supplierRepo;
   
-  PayDebt(this.debtRepo, this.paymentRepo);
+  PayDebt(this.debtRepo, this.paymentRepo, this.customerRepo, this.supplierRepo);
   
   @override
   Future<int> call(PayDebtParams params) async {
@@ -84,15 +88,20 @@ class PayDebt implements UseCase<int, PayDebtParams> {
       'receiptNumber': 'RCP-${DateTime.now().millisecondsSinceEpoch}',
     };
     
-    // إشعار العميل
+    // تحديث أرصدة الأطراف المرتبطة بالدين
     if (debt.personType == 'عميل') {
-      // يمكن إرسال إشعار عبر SMS أو push notification
+      // تقليل رصيد الدين الحالي على العميل
+      await customerRepo.updateDebt(debt.personId, -params.amount);
+
+      // يمكن إرسال إشعار للعميل عبر SMS أو push notification
       final notificationMessage = '''
 تم سداد دفعة بمبلغ ${params.amount} ريال
 المبلغ المتبقي: $newRemainingAmount ريال
 ''';
-      
       // هنا يمكن استدعاء notification service
+    } else if (debt.personType == 'مورد') {
+      // تقليل إجمالي الديون على المورد
+      await supplierRepo.updateTotalDebt(debt.personId, -params.amount);
     }
     
     return paymentId;

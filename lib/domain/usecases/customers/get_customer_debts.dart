@@ -8,5 +8,6 @@ class GetCustomerDebts implements UseCase<List<Debt>, int> {
   final DebtRepository repo;
   GetCustomerDebts(this.repo);
   @override
-  Future<List<Debt>> call(int customerId) => repo.getByPerson('customer', customerId);
+  Future<List<Debt>> call(int customerId) =>
+      repo.getByPerson('عميل', customerId);
 }

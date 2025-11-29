@@ -126,4 +126,9 @@ class SupplierRepositoryImpl implements SupplierRepository {
           allSuppliers.fold<double>(0, (sum, s) => sum + s.totalDebtToHim),
     };
   }
+
+  @override
+  Future<void> updateTotalDebt(int id, double amount) async {
+    await local.updateTotalDebt(id, amount);
+  }
 }

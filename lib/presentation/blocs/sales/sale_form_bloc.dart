@@ -97,6 +97,7 @@ class SaleFormBloc extends Bloc<SaleFormEvent, SaleFormState> {
         paidAmount: event.saleData['paidAmount'] as double? ?? 0.0,
         remainingAmount: (event.saleData['totalAmount'] as double) - 
                         (event.saleData['paidAmount'] as double? ?? 0.0),
+        dueDate: event.saleData['dueDate'] as String?,
         invoiceNumber: event.saleData['invoiceNumber'] as String?,
         notes: event.saleData['notes'] as String?,
         isQuickSale: false,

@@ -40,6 +40,7 @@ class SaleFormState extends State<SaleForm> {
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
   final _discountController = TextEditingController();
+  final _paidAmountController = TextEditingController();
   final _notesController = TextEditingController();
   final _invoiceNumberController = TextEditingController();
 
@@ -57,11 +58,13 @@ class SaleFormState extends State<SaleForm> {
   final _saveButtonKey = GlobalKey();
 
   DateTime _selectedDate = DateTime.now();
+  DateTime? _dueDate;
   String? _selectedCustomerId;
   String? _selectedQatTypeId;
   String? _selectedUnit;
   String _paymentMethod = 'نقد';
   double _totalAmount = 0;
+  double _remainingAmount = 0;
 
   List<String> _availableUnits = [];
   Map<String, double?> _unitSellPrices = {};
@@ -91,6 +94,7 @@ class SaleFormState extends State<SaleForm> {
     _quantityController.addListener(_calculateTotal);
     _priceController.addListener(_calculateTotal);
     _discountController.addListener(_calculateTotal);
+    _paidAmountController.addListener(_calculateTotal);
 
     // اختيار الوحدة الافتراضية الأولى
     _selectedUnit = 'ربطة';
@@ -137,9 +141,21 @@ class SaleFormState extends State<SaleForm> {
       _selectedCustomerId = data['customerId']?.toString();
       _selectedQatTypeId = data['qatTypeId']?.toString();
       _selectedUnit = data['unit'];
-      _paymentMethod = data['paymentMethod'] ?? 'نقدي';
+      _paymentMethod = data['paymentMethod'] ?? 'نقد';
+
+      // المبلغ المدفوع وتاريخ الاستحقاق (إن وُجدا)
+      if (data['paidAmount'] != null) {
+        _paidAmountController.text = data['paidAmount'].toString();
+      } else {
+        _paidAmountController.text = '0';
+      }
+
+      if (data['dueDate'] != null && (data['dueDate'] as String).isNotEmpty) {
+        _dueDate = DateTime.tryParse(data['dueDate'] as String);
+      }
     } else {
       _discountController.text = '0';
+      _paidAmountController.text = '0';
     }
   }
 
@@ -147,9 +163,14 @@ class SaleFormState extends State<SaleForm> {
     final quantity = double.tryParse(_quantityController.text) ?? 0.0;
     final price = double.tryParse(_priceController.text) ?? 0.0;
     final discount = double.tryParse(_discountController.text) ?? 0.0;
+    final paid = double.tryParse(_paidAmountController.text) ?? 0.0;
 
     setState(() {
       _totalAmount = (quantity * price) - discount;
+      _remainingAmount = _totalAmount - paid;
+      if (_remainingAmount < 0) {
+        _remainingAmount = 0;
+      }
     });
   }
 
@@ -232,6 +253,7 @@ class SaleFormState extends State<SaleForm> {
     _discountController.dispose();
     _notesController.dispose();
     _invoiceNumberController.dispose();
+    _paidAmountController.dispose();
     super.dispose();
   }
 
@@ -260,6 +282,10 @@ class SaleFormState extends State<SaleForm> {
           _buildPaymentMethodSection(),
           const SizedBox(height: 14),
           _buildDiscountSection(),
+          const SizedBox(height: 14),
+          _buildPaidAmountField(),
+          const SizedBox(height: 14),
+          _buildDueDateField(),
           const SizedBox(height: 14),
           _buildSummaryCard(),
           const SizedBox(height: 14),
@@ -804,12 +830,37 @@ class SaleFormState extends State<SaleForm> {
     ),
   );
 
+  Widget _buildPaidAmountField() => AppTextField.currency(
+        controller: _paidAmountController,
+        label: 'المبلغ المدفوع',
+        hint: '0.00',
+        validator: (value) {
+          final paid = double.tryParse(value ?? '0') ?? 0;
+          if (paid < 0) {
+            return 'مبلغ غير صحيح';
+          }
+          if (paid > _totalAmount) {
+            return 'المبلغ المدفوع أكبر من الإجمالي';
+          }
+          return null;
+        },
+      );
+
+  Widget _buildDueDateField() => AppDatePicker(
+        label: 'تاريخ الاستحقاق',
+        selectedDate: _dueDate,
+        firstDate: DateTime.now(),
+        onDateSelected: (date) => setState(() => _dueDate = date),
+      );
+
   Widget _buildSummaryCard() {
     final quantity = double.tryParse(_quantityController.text) ?? 0.0;
     final price = double.tryParse(_priceController.text) ?? 0.0;
     final discount = double.tryParse(_discountController.text) ?? 0.0;
     final subtotal = quantity * price;
     final total = subtotal - discount;
+    final paid = double.tryParse(_paidAmountController.text) ?? 0.0;
+    final remaining = total - paid;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -844,6 +895,19 @@ class SaleFormState extends State<SaleForm> {
             'الإجمالي',
             '${total.toStringAsFixed(2)} ريال',
             isTotal: true,
+          ),
+          const SizedBox(height: 8),
+          Container(height: 1, color: AppColors.border.withOpacity(0.1)),
+          const SizedBox(height: 8),
+          _buildSummaryRow(
+            'المبلغ المدفوع',
+            '${paid.toStringAsFixed(2)} ريال',
+          ),
+          const SizedBox(height: 4),
+          _buildSummaryRow(
+            'المتبقي',
+            '${(remaining < 0 ? 0 : remaining).toStringAsFixed(2)} ريال',
+            color: remaining > 0 ? AppColors.danger : AppColors.success,
           ),
         ],
       ),
@@ -927,6 +991,20 @@ class SaleFormState extends State<SaleForm> {
       final quantity = double.parse(_quantityController.text);
       final price = double.parse(_priceController.text);
       final discount = double.tryParse(_discountController.text) ?? 0.0;
+      final rawPaid = double.tryParse(_paidAmountController.text) ?? 0.0;
+
+      final total = (quantity * price) - discount;
+      double paidAmount = rawPaid;
+      if (paidAmount < 0) paidAmount = 0;
+      if (paidAmount > total) paidAmount = total;
+      final remaining = total - paidAmount;
+      final rawPaid = double.tryParse(_paidAmountController.text) ?? 0.0;
+
+      final total = (quantity * price) - discount;
+      double paidAmount = rawPaid;
+      if (paidAmount < 0) paidAmount = 0;
+      if (paidAmount > total) paidAmount = total;
+      final remaining = total - paidAmount;
 
       // التحقق من المخزون قبل البيع
       try {
@@ -1063,10 +1141,14 @@ class SaleFormState extends State<SaleForm> {
         'quantity': quantity,
         'unit': _selectedUnit,
         'unitPrice': price,
-        'totalAmount': (quantity * price) - discount,
+        'totalAmount': total,
         'discount': discount,
         'paymentMethod': _paymentMethod,
-        'paidAmount': (quantity * price) - discount, // المبلغ المدفوع = الإجمالي (دفع كامل افتراضيًا)
+        'paidAmount': paidAmount,
+        'remainingAmount': remaining,
+        'dueDate': _dueDate != null
+            ? _dueDate!.toIso8601String().split('T')[0]
+            : null,
         'invoiceNumber': _generatedInvoiceNumber.isEmpty
             ? null
             : _generatedInvoiceNumber,

@@ -22,6 +22,9 @@ abstract class SupplierRepository extends BaseRepository<Supplier> {
   
   /// الحصول على أفضل الموردين (حسب التقييم والمشتريات)
   Future<List<Supplier>> getTopSuppliers({int limit = 10});
+
+  /// تحديث إجمالي الديون على المورد (موجب لزيادة الدين، سالب للتخفيض)
+  Future<void> updateTotalDebt(int id, double amount);
   
   /// مزامنة مورد مع السحابة
   Future<void> syncSupplier(Supplier supplier);

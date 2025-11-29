@@ -56,6 +56,11 @@ class AddDebt implements UseCase<int, AddDebtParams> {
     
     // حفظ الدين
     final debtId = await debtRepo.add(debt);
+
+    // تحديث رصيد العميل (الدين الحالي)
+    if (customer.id != null) {
+      await customerRepo.updateDebt(customer.id!, params.amount);
+    }
     
     // إنشاء تذكيرات للسداد
     if (dueDate.isAfter(DateTime.now())) {

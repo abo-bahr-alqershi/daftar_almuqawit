@@ -60,4 +60,9 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
   @override
   Future<void> update(Customer entity) => local.update(_toModel(entity));
+
+  @override
+  Future<void> updateDebt(int id, double amount) async {
+    await local.updateDebt(id, amount);
+  }
 }
