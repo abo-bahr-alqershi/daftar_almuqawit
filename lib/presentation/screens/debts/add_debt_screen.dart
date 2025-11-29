@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/debts_tutorial_service.dart';
 import '../../../core/utils/validators.dart';
 import '../../../domain/entities/debt.dart';
 import '../../../domain/entities/customer.dart';
@@ -26,11 +27,18 @@ class AddDebtScreen extends StatefulWidget {
 
 class _AddDebtScreenState extends State<AddDebtScreen> {
   final _formKey = GlobalKey<DebtFormState>();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     context.read<CustomersBloc>().add(LoadCustomers());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _submitDebt() async {
@@ -70,6 +78,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
             _buildGradientBackground(),
             CustomScrollView(
               physics: const BouncingScrollPhysics(),
+              controller: _scrollController,
               slivers: [
                 _buildAppBar(context),
                 SliverToBoxAdapter(
@@ -180,6 +189,61 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           }
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            final formState = _formKey.currentState;
+            if (formState != null && formState.mounted) {
+              final keys = formState.tutorialKeys;
+
+              DebtsTutorialService.showFormTutorial(
+                context: context,
+                customerFieldKey: keys['customer']!,
+                debtTypeKey: keys['debtType']!,
+                amountFieldKey: keys['amount']!,
+                descriptionFieldKey: keys['description']!,
+                dateFieldKey: keys['date']!,
+                dueDateFieldKey: keys['dueDate']!,
+                notesFieldKey: keys['notes']!,
+                saveButtonKey: keys['saveButton']!,
+                scrollController: _scrollController,
+                onFinish: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('تمت التعليمات بنجاح'),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('يرجى انتظار تحميل النموذج أولاً'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

@@ -35,6 +35,15 @@ class ExpenseFormState extends State<ExpenseForm> {
   DateTime _selectedDate = DateTime.now();
   bool _isRecurring = false;
 
+  final GlobalKey _categorySectionKey = GlobalKey();
+  final GlobalKey _amountFieldKey = GlobalKey();
+  final GlobalKey _descriptionFieldKey = GlobalKey();
+  final GlobalKey _paymentMethodKey = GlobalKey();
+  final GlobalKey _datePickerKey = GlobalKey();
+  final GlobalKey _recurringSwitchKey = GlobalKey();
+  final GlobalKey _notesFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
+
   final List<Map<String, dynamic>> _categories = [
     {'name': 'عمولات بيع', 'icon': Icons.monetization_on_rounded, 'color': AppColors.success},
     {'name': 'رواتب', 'icon': Icons.payments_rounded, 'color': AppColors.primary},
@@ -187,6 +196,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildCategorySelector() {
     return Container(
+      key: _categorySectionKey,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -314,6 +324,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildAmountField() {
     return Container(
+      key: _amountFieldKey,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -385,6 +396,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildDescriptionField() {
     return Container(
+      key: _descriptionFieldKey,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -439,6 +451,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildPaymentMethodSelector() {
     return Container(
+      key: _paymentMethodKey,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -529,6 +542,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildDatePicker() {
     return Material(
+      key: _datePickerKey,
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
@@ -613,6 +627,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildRecurringSwitch() {
     return Container(
+      key: _recurringSwitchKey,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -689,6 +704,7 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   Widget _buildNotesField() {
     return Container(
+      key: _notesFieldKey,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -743,6 +759,7 @@ class ExpenseFormState extends State<ExpenseForm> {
         Expanded(
           flex: 2,
           child: ElevatedButton(
+            key: _saveButtonKey,
             onPressed: widget.isLoading ? null : widget.onSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.expense,
@@ -788,4 +805,15 @@ class ExpenseFormState extends State<ExpenseForm> {
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
+
+  Map<String, GlobalKey> get tutorialKeys => {
+        'category': _categorySectionKey,
+        'amount': _amountFieldKey,
+        'description': _descriptionFieldKey,
+        'paymentMethod': _paymentMethodKey,
+        'date': _datePickerKey,
+        'recurring': _recurringSwitchKey,
+        'notes': _notesFieldKey,
+        'saveButton': _saveButtonKey,
+      };
 }

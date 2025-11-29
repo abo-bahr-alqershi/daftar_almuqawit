@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/suppliers_tutorial_service.dart';
 import '../../../domain/entities/supplier.dart';
 import '../../blocs/suppliers/suppliers_bloc.dart';
 import '../../blocs/suppliers/suppliers_event.dart';
@@ -27,6 +28,14 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
+  
+  final GlobalKey _nameFieldKey = GlobalKey();
+  final GlobalKey _phoneFieldKey = GlobalKey();
+  final GlobalKey _areaFieldKey = GlobalKey();
+  final GlobalKey _ratingSectionKey = GlobalKey();
+  final GlobalKey _trustLevelKey = GlobalKey();
+  final GlobalKey _notesFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
   
   late AnimationController _animationController;
   late TextEditingController _nameController;
@@ -334,11 +343,56 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
         ),
       ),
       actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            SuppliersTutorialService.showFormTutorial(
+              context: context,
+              nameFieldKey: _nameFieldKey,
+              phoneFieldKey: _phoneFieldKey,
+              areaFieldKey: _areaFieldKey,
+              ratingSectionKey: _ratingSectionKey,
+              trustLevelKey: _trustLevelKey,
+              notesFieldKey: _notesFieldKey,
+              saveButtonKey: _saveButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('تمت التعليمات بنجاح'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
         // زر الحفظ
         Padding(
           padding: const EdgeInsets.only(left: 12),
           child: IconButton(
             icon: Container(
+              key: _saveButtonKey,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -507,6 +561,7 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
 
           // اسم المورد
           AppTextField(
+            key: _nameFieldKey,
             controller: _nameController,
             label: 'اسم المورد',
             hint: 'أدخل اسم المورد',
@@ -519,6 +574,7 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
 
           // رقم الهاتف
           AppTextField.phone(
+            key: _phoneFieldKey,
             controller: _phoneController,
             label: 'رقم الهاتف',
             hint: 'أدخل رقم الهاتف (اختياري)',
@@ -529,6 +585,7 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
 
           // المنطقة
           AppTextField(
+            key: _areaFieldKey,
             controller: _areaController,
             label: 'المنطقة',
             hint: 'أدخل المنطقة (اختياري)',
@@ -550,6 +607,7 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
 
           // ملاحظات
           AppTextField.multiline(
+            key: _notesFieldKey,
             controller: _notesController,
             label: 'ملاحظات',
             hint: 'أدخل ملاحظات إضافية (اختياري)',
@@ -572,6 +630,7 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
       ),
       const SizedBox(height: 12),
       Container(
+        key: _ratingSectionKey,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.warning.withOpacity(0.05),
@@ -618,6 +677,7 @@ class _EditSupplierScreenState extends State<EditSupplierScreen>
       ),
       const SizedBox(height: 12),
       Container(
+        key: _trustLevelKey,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.surface,

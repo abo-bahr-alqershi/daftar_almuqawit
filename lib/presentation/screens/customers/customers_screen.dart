@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/customers_management_tutorial_service.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
@@ -39,6 +40,14 @@ class _CustomersScreenState extends State<CustomersScreen>
     'عليه دين',
     'تجاوز الحد',
   ];
+
+  final GlobalKey _statsCardKey = GlobalKey();
+  final GlobalKey _filterChipsKey = GlobalKey();
+  final GlobalKey _customersListKey = GlobalKey();
+  final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey _blockedButtonKey = GlobalKey();
+  final GlobalKey _searchButtonKey = GlobalKey();
+  final GlobalKey _refreshButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -261,19 +270,68 @@ class _CustomersScreenState extends State<CustomersScreen>
         ),
       ),
       actions: [
-        _buildIconButton(
-          Icons.block_rounded,
-          onPressed: () => _navigateToBlockedCustomers(),
+        Container(
+          key: _blockedButtonKey,
+          child: _buildIconButton(
+            Icons.block_rounded,
+            onPressed: () => _navigateToBlockedCustomers(),
+          ),
         ),
-        _buildIconButton(
-          Icons.search_rounded,
-          onPressed: () => _showSearchSheet(context),
+        Container(
+          key: _searchButtonKey,
+          child: _buildIconButton(
+            Icons.search_rounded,
+            onPressed: () => _showSearchSheet(context),
+          ),
         ),
-        _buildIconButton(
-          Icons.refresh_rounded,
+        Container(
+          key: _refreshButtonKey,
+          child: _buildIconButton(
+            Icons.refresh_rounded,
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              context.read<CustomersBloc>().add(LoadCustomers());
+            },
+          ),
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
+          ),
           onPressed: () {
-            HapticFeedback.mediumImpact();
-            context.read<CustomersBloc>().add(LoadCustomers());
+            HapticFeedback.lightImpact();
+
+            CustomersManagementTutorialService.showScreenTutorial(
+              context: context,
+              statsCardKey: _statsCardKey,
+              filterChipsKey: _filterChipsKey,
+              customersListKey: _customersListKey,
+              fabKey: _fabKey,
+              blockedButtonKey: _blockedButtonKey,
+              searchButtonKey: _searchButtonKey,
+              refreshButtonKey: _refreshButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        const Text('تمت جولة التعليمات لشاشة إدارة العملاء'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
           },
         ),
         const SizedBox(width: 12),
@@ -333,6 +391,7 @@ class _CustomersScreenState extends State<CustomersScreen>
     final totalDebt = customers.fold(0.0, (sum, c) => sum + c.currentDebt);
 
     return Container(
+      key: _statsCardKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
@@ -531,6 +590,7 @@ class _CustomersScreenState extends State<CustomersScreen>
   }
 
   Widget _buildFilterChips() => SizedBox(
+    key: _filterChipsKey,
     height: 50,
     child: ListView.builder(
       scrollDirection: Axis.horizontal,
@@ -595,7 +655,10 @@ class _CustomersScreenState extends State<CustomersScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        children: customers.map((customer) {
+        children: customers.asMap().entries.map((entry) {
+          final index = entry.key;
+          final customer = entry.value;
+
           return TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: 1),
             duration: const Duration(milliseconds: 400),
@@ -606,12 +669,22 @@ class _CustomersScreenState extends State<CustomersScreen>
                 opacity: value.clamp(0.0, 1.0),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: CustomerCard(
-                    customer: customer,
-                    onTap: () => _showCustomerDetails(customer),
-                    onDelete: () => _deleteCustomer(customer),
-                    onToggleBlock: () => _toggleBlockCustomer(customer),
-                  ),
+                  child: index == 0
+                      ? Container(
+                          key: _customersListKey,
+                          child: CustomerCard(
+                            customer: customer,
+                            onTap: () => _showCustomerDetails(customer),
+                            onDelete: () => _deleteCustomer(customer),
+                            onToggleBlock: () => _toggleBlockCustomer(customer),
+                          ),
+                        )
+                      : CustomerCard(
+                          customer: customer,
+                          onTap: () => _showCustomerDetails(customer),
+                          onDelete: () => _deleteCustomer(customer),
+                          onToggleBlock: () => _toggleBlockCustomer(customer),
+                        ),
                 ),
               ),
             ),
@@ -818,6 +891,7 @@ class _CustomersScreenState extends State<CustomersScreen>
     bottom: 20,
     left: 20,
     child: FloatingActionButton.extended(
+      key: _fabKey,
       onPressed: _showAddCustomerScreen,
       backgroundColor: AppColors.accent,
       icon: const Icon(Icons.person_add_rounded, color: Colors.white),

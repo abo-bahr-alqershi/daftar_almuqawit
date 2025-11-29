@@ -21,10 +21,10 @@ class CustomerForm extends StatefulWidget {
   });
 
   @override
-  State<CustomerForm> createState() => _CustomerFormState();
+  State<CustomerForm> createState() => CustomerFormState();
 }
 
-class _CustomerFormState extends State<CustomerForm>
+class CustomerFormState extends State<CustomerForm>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
@@ -38,6 +38,26 @@ class _CustomerFormState extends State<CustomerForm>
   bool _isSubmitting = false;
 
   final List<String> _customerTypes = ['عادي', 'VIP', 'جديد'];
+
+  final GlobalKey _nameFieldKey = GlobalKey();
+  final GlobalKey _nicknameFieldKey = GlobalKey();
+  final GlobalKey _phoneFieldKey = GlobalKey();
+  final GlobalKey _customerTypeKey = GlobalKey();
+  final GlobalKey _creditLimitKey = GlobalKey();
+  final GlobalKey _blockStatusKey = GlobalKey();
+  final GlobalKey _notesFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
+
+  Map<String, GlobalKey> get tutorialKeys => {
+        'name': _nameFieldKey,
+        'nickname': _nicknameFieldKey,
+        'phone': _phoneFieldKey,
+        'customerType': _customerTypeKey,
+        'creditLimit': _creditLimitKey,
+        'blockStatus': _blockStatusKey,
+        'notes': _notesFieldKey,
+        'saveButton': _saveButtonKey,
+      };
 
   late AnimationController _mainController;
   late AnimationController _blockToggleController;
@@ -301,6 +321,7 @@ class _CustomerFormState extends State<CustomerForm>
           ),
           const SizedBox(height: 20),
           AppTextField(
+            key: _nameFieldKey,
             controller: _nameController,
             label: 'اسم العميل *',
             hint: 'أدخل اسم العميل',
@@ -317,6 +338,7 @@ class _CustomerFormState extends State<CustomerForm>
           ),
           const SizedBox(height: 16),
           AppTextField(
+            key: _nicknameFieldKey,
             controller: _nicknameController,
             label: 'الكنية (اختياري)',
             hint: 'أدخل الكنية',
@@ -324,6 +346,7 @@ class _CustomerFormState extends State<CustomerForm>
           ),
           const SizedBox(height: 16),
           AppTextField.phone(
+            key: _phoneFieldKey,
             controller: _phoneController,
             label: 'رقم الهاتف (اختياري)',
             hint: 'أدخل رقم الهاتف',
@@ -343,6 +366,7 @@ class _CustomerFormState extends State<CustomerForm>
 
   Widget _buildCustomerTypeSection() {
     return Container(
+      key: _customerTypeKey,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -452,6 +476,7 @@ class _CustomerFormState extends State<CustomerForm>
 
   Widget _buildCreditLimitSection() {
     return Container(
+      key: _creditLimitKey,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -514,6 +539,7 @@ class _CustomerFormState extends State<CustomerForm>
         _blockToggleController.forward(from: 0);
       },
       child: AnimatedContainer(
+        key: _blockStatusKey,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(20),
@@ -652,6 +678,7 @@ class _CustomerFormState extends State<CustomerForm>
 
   Widget _buildNotesSection() {
     return Container(
+      key: _notesFieldKey,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -739,6 +766,7 @@ class _CustomerFormState extends State<CustomerForm>
               ],
             ),
             child: AppButton.primary(
+              key: _saveButtonKey,
               text: widget.customer == null ? 'إضافة العميل' : 'حفظ التعديلات',
               onPressed: _isSubmitting ? null : _handleSubmit,
               isLoading: _isSubmitting,

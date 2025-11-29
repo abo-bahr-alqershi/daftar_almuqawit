@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/suppliers_management_tutorial_service.dart';
 import '../../../domain/entities/supplier.dart';
 import '../../blocs/suppliers/suppliers_bloc.dart';
 import '../../blocs/suppliers/suppliers_event.dart';
@@ -38,6 +39,14 @@ class _SuppliersScreenState extends State<SuppliersScreen>
     'ضعيف',
     'عليه دين',
   ];
+
+  final GlobalKey _statsCardKey = GlobalKey();
+  final GlobalKey _filterChipsKey = GlobalKey();
+  final GlobalKey _suppliersListKey = GlobalKey();
+  final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey _fullListButtonKey = GlobalKey();
+  final GlobalKey _searchButtonKey = GlobalKey();
+  final GlobalKey _refreshButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -269,19 +278,68 @@ class _SuppliersScreenState extends State<SuppliersScreen>
         ),
       ),
       actions: [
-        _buildIconButton(
-          Icons.list_rounded,
-          onPressed: () => _navigateToFullList(),
+        Container(
+          key: _fullListButtonKey,
+          child: _buildIconButton(
+            Icons.list_rounded,
+            onPressed: () => _navigateToFullList(),
+          ),
         ),
-        _buildIconButton(
-          Icons.search_rounded,
-          onPressed: () => _showSearchSheet(context),
+        Container(
+          key: _searchButtonKey,
+          child: _buildIconButton(
+            Icons.search_rounded,
+            onPressed: () => _showSearchSheet(context),
+          ),
         ),
-        _buildIconButton(
-          Icons.refresh_rounded,
+        Container(
+          key: _refreshButtonKey,
+          child: _buildIconButton(
+            Icons.refresh_rounded,
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              context.read<SuppliersBloc>().add(LoadSuppliers());
+            },
+          ),
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
+          ),
           onPressed: () {
-            HapticFeedback.mediumImpact();
-            context.read<SuppliersBloc>().add(LoadSuppliers());
+            HapticFeedback.lightImpact();
+
+            SuppliersManagementTutorialService.showScreenTutorial(
+              context: context,
+              statsCardKey: _statsCardKey,
+              filterChipsKey: _filterChipsKey,
+              suppliersListKey: _suppliersListKey,
+              fabKey: _fabKey,
+              fullListButtonKey: _fullListButtonKey,
+              searchButtonKey: _searchButtonKey,
+              refreshButtonKey: _refreshButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        const Text('تمت جولة التعليمات لشاشة إدارة الموردين'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
           },
         ),
         const SizedBox(width: 12),
@@ -352,6 +410,7 @@ class _SuppliersScreenState extends State<SuppliersScreen>
               suppliers.length;
 
     return Container(
+      key: _statsCardKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
@@ -542,6 +601,7 @@ class _SuppliersScreenState extends State<SuppliersScreen>
   }
 
   Widget _buildFilterChips() => SizedBox(
+    key: _filterChipsKey,
     height: 50,
     child: ListView.builder(
       scrollDirection: Axis.horizontal,
@@ -606,7 +666,10 @@ class _SuppliersScreenState extends State<SuppliersScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        children: suppliers.map((supplier) {
+        children: suppliers.asMap().entries.map((entry) {
+          final index = entry.key;
+          final supplier = entry.value;
+
           return TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: 1),
             duration: const Duration(milliseconds: 400),
@@ -617,11 +680,20 @@ class _SuppliersScreenState extends State<SuppliersScreen>
                 opacity: value.clamp(0.0, 1.0),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: SupplierCard(
-                    supplier: supplier,
-                    onTap: () => _showSupplierDetails(supplier),
-                    onDelete: null,
-                  ),
+                  child: index == 0
+                      ? Container(
+                          key: _suppliersListKey,
+                          child: SupplierCard(
+                            supplier: supplier,
+                            onTap: () => _showSupplierDetails(supplier),
+                            onDelete: null,
+                          ),
+                        )
+                      : SupplierCard(
+                          supplier: supplier,
+                          onTap: () => _showSupplierDetails(supplier),
+                          onDelete: null,
+                        ),
                 ),
               ),
             ),
@@ -828,6 +900,7 @@ class _SuppliersScreenState extends State<SuppliersScreen>
     bottom: 20,
     left: 20,
     child: FloatingActionButton.extended(
+      key: _fabKey,
       onPressed: _showAddSupplierScreen,
       backgroundColor: AppColors.primary,
       icon: const Icon(Icons.add_business_rounded, color: Colors.white),

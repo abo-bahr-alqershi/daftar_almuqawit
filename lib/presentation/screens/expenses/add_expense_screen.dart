@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/expenses_tutorial_service.dart';
 import '../../../domain/entities/expense.dart';
 import '../../blocs/expenses/expenses_bloc.dart';
 import '../../blocs/expenses/expenses_event.dart';
@@ -21,6 +22,13 @@ class AddExpenseScreen extends StatefulWidget {
 
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _formKey = GlobalKey<ExpenseFormState>();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submitExpense() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
@@ -57,6 +65,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             _buildGradientBackground(),
             CustomScrollView(
               physics: const BouncingScrollPhysics(),
+              controller: _scrollController,
               slivers: [
                 _buildAppBar(context),
                 SliverToBoxAdapter(
@@ -157,6 +166,61 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           }
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            final formState = _formKey.currentState;
+            if (formState != null && formState.mounted) {
+              final keys = formState.tutorialKeys;
+
+              ExpensesTutorialService.showFormTutorial(
+                context: context,
+                categorySectionKey: keys['category']!,
+                amountFieldKey: keys['amount']!,
+                descriptionFieldKey: keys['description']!,
+                paymentMethodKey: keys['paymentMethod']!,
+                dateFieldKey: keys['date']!,
+                recurringSwitchKey: keys['recurring']!,
+                notesFieldKey: keys['notes']!,
+                saveButtonKey: keys['saveButton']!,
+                scrollController: _scrollController,
+                onFinish: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('تمت التعليمات بنجاح'),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('يرجى انتظار تحميل النموذج أولاً'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

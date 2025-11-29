@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/sales_management_tutorial_service.dart';
 import '../../../domain/entities/sale.dart';
 import '../../blocs/sales/sales_bloc.dart';
 import '../../blocs/sales/sales_event.dart';
@@ -26,6 +27,13 @@ class _SalesScreenState extends State<SalesScreen>
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
   String _selectedFilter = 'الكل';
+
+  final GlobalKey _statsCardKey = GlobalKey();
+  final GlobalKey _filterChipsKey = GlobalKey();
+  final GlobalKey _salesListKey = GlobalKey();
+  final GlobalKey _fabKey = GlobalKey();
+  final GlobalKey _quickSaleButtonKey = GlobalKey();
+  final GlobalKey _refreshButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -226,17 +234,61 @@ class _SalesScreenState extends State<SalesScreen>
         ),
       ),
       actions: [
-        _buildIconButton(
-          Icons.flash_on_rounded,
-          onPressed: () =>
-              _navigateWithAnimation(context, RouteNames.quickSale),
-          badge: null,
+        Container(
+          key: _quickSaleButtonKey,
+          child: _buildIconButton(
+            Icons.flash_on_rounded,
+            onPressed: () =>
+                _navigateWithAnimation(context, RouteNames.quickSale),
+            badge: null,
+          ),
         ),
-        _buildIconButton(
-          Icons.refresh_rounded,
+        Container(
+          key: _refreshButtonKey,
+          child: _buildIconButton(
+            Icons.refresh_rounded,
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.read<SalesBloc>().add(LoadSales());
+            },
+          ),
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
+          ),
           onPressed: () {
             HapticFeedback.lightImpact();
-            context.read<SalesBloc>().add(LoadSales());
+
+            SalesManagementTutorialService.showScreenTutorial(
+              context: context,
+              statsCardKey: _statsCardKey,
+              filterChipsKey: _filterChipsKey,
+              salesListKey: _salesListKey,
+              fabKey: _fabKey,
+              quickSaleButtonKey: _quickSaleButtonKey,
+              refreshButtonKey: _refreshButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('تمت جولة التعليمات لشاشة المبيعات'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
           },
         ),
         const SizedBox(width: 12),
@@ -325,6 +377,7 @@ class _SalesScreenState extends State<SalesScreen>
     );
 
     return Container(
+      key: _statsCardKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
@@ -606,6 +659,7 @@ class _SalesScreenState extends State<SalesScreen>
     final filters = ['الكل', 'اليوم', 'مدفوع', 'غير مدفوع', 'بيع سريع'];
 
     return Container(
+      key: _filterChipsKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       height: 45,
       child: ListView.separated(
@@ -672,7 +726,7 @@ class _SalesScreenState extends State<SalesScreen>
       itemCount: sales.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        return SaleItemCard(
+        final card = SaleItemCard(
           sale: sales[index],
           onTap: () => _showSaleDetails(sales[index]),
           onDelete: () => _deleteSale(sales[index]),
@@ -680,6 +734,15 @@ class _SalesScreenState extends State<SalesScreen>
               ? () => _cancelSale(sales[index])
               : null,
         );
+
+        if (index == 0) {
+          return Container(
+            key: _salesListKey,
+            child: card,
+          );
+        }
+
+        return card;
       },
     );
   }
@@ -736,6 +799,7 @@ class _SalesScreenState extends State<SalesScreen>
     bottom: 20,
     left: 20,
     child: FloatingActionButton.extended(
+      key: _fabKey,
       onPressed: () => _navigateWithAnimation(context, RouteNames.addSale),
       backgroundColor: AppColors.sales,
       icon: const Icon(Icons.add, color: Colors.white),

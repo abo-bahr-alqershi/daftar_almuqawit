@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/purchases_management_tutorial_service.dart';
 import '../../../domain/entities/purchase.dart';
 import '../../blocs/purchases/purchases_bloc.dart';
 import '../../blocs/purchases/purchases_event.dart';
@@ -30,6 +31,13 @@ class _PurchasesScreenState extends State<PurchasesScreen>
 
   String _filterType = 'الكل';
   DateTime _selectedDate = DateTime.now();
+
+   final GlobalKey _statsCardKey = GlobalKey();
+   final GlobalKey _filterChipsKey = GlobalKey();
+   final GlobalKey _purchasesListKey = GlobalKey();
+   final GlobalKey _fabKey = GlobalKey();
+   final GlobalKey _dateFilterButtonKey = GlobalKey();
+   final GlobalKey _refreshButtonKey = GlobalKey();
 
   final List<String> _filterTypes = [
     'الكل',
@@ -286,30 +294,75 @@ class _PurchasesScreenState extends State<PurchasesScreen>
         ),
       ),
       actions: [
-        _buildIconButton(
-          Icons.calendar_today,
-          onPressed: () async {
-            HapticFeedback.lightImpact();
-            final date = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now(),
-            );
-            if (date != null) {
-              setState(() {
-                _selectedDate = date;
-                _filterType = 'اليوم';
-              });
-              _loadPurchases();
-            }
-          },
+        Container(
+          key: _dateFilterButtonKey,
+          child: _buildIconButton(
+            Icons.calendar_today,
+            onPressed: () async {
+              HapticFeedback.lightImpact();
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (date != null) {
+                setState(() {
+                  _selectedDate = date;
+                  _filterType = 'اليوم';
+                });
+                _loadPurchases();
+              }
+            },
+          ),
         ),
-        _buildIconButton(
-          Icons.refresh_rounded,
+        Container(
+          key: _refreshButtonKey,
+          child: _buildIconButton(
+            Icons.refresh_rounded,
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              _loadPurchases();
+            },
+          ),
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
+          ),
           onPressed: () {
-            HapticFeedback.mediumImpact();
-            _loadPurchases();
+            HapticFeedback.lightImpact();
+
+            PurchasesManagementTutorialService.showScreenTutorial(
+              context: context,
+              statsCardKey: _statsCardKey,
+              filterChipsKey: _filterChipsKey,
+              purchasesListKey: _purchasesListKey,
+              fabKey: _fabKey,
+              dateFilterButtonKey: _dateFilterButtonKey,
+              refreshButtonKey: _refreshButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        const Text('تمت جولة التعليمات لشاشة إدارة المشتريات'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
           },
         ),
         const SizedBox(width: 12),
@@ -377,6 +430,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
     final operationCount = purchases.length;
 
     return Container(
+      key: _statsCardKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
@@ -579,6 +633,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
   }
 
   Widget _buildFilterChips() => SizedBox(
+    key: _filterChipsKey,
     height: 50,
     child: ListView.builder(
       scrollDirection: Axis.horizontal,
@@ -656,14 +711,26 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                 opacity: value.clamp(0.0, 1.0),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: PurchaseItemCard(
-                    purchase: purchase,
-                    onTap: () => _showPurchaseDetails(purchase),
-                    onDelete: () => _openRefundScreen(purchase),
-                    onCancel: purchase.status == 'نشط'
-                        ? () => _cancelPurchase(purchase)
-                        : null,
-                  ),
+                  child: index == 0
+                      ? Container(
+                          key: _purchasesListKey,
+                          child: PurchaseItemCard(
+                            purchase: purchase,
+                            onTap: () => _showPurchaseDetails(purchase),
+                            onDelete: () => _openRefundScreen(purchase),
+                            onCancel: purchase.status == 'نشط'
+                                ? () => _cancelPurchase(purchase)
+                                : null,
+                          ),
+                        )
+                      : PurchaseItemCard(
+                          purchase: purchase,
+                          onTap: () => _showPurchaseDetails(purchase),
+                          onDelete: () => _openRefundScreen(purchase),
+                          onCancel: purchase.status == 'نشط'
+                              ? () => _cancelPurchase(purchase)
+                              : null,
+                        ),
                 ),
               ),
             ),
@@ -870,6 +937,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
     bottom: 20,
     left: 20,
     child: FloatingActionButton.extended(
+      key: _fabKey,
       onPressed: _showAddPurchaseScreen,
       backgroundColor: AppColors.purchases,
       icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.white),

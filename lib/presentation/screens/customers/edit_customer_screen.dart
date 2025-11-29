@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/customers_tutorial_service.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
@@ -14,10 +15,7 @@ import 'widgets/customer_form.dart';
 class EditCustomerScreen extends StatefulWidget {
   final Customer customer;
 
-  const EditCustomerScreen({
-    super.key,
-    required this.customer,
-  });
+  const EditCustomerScreen({super.key, required this.customer});
 
   @override
   State<EditCustomerScreen> createState() => _EditCustomerScreenState();
@@ -28,6 +26,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  final GlobalKey<CustomerFormState> _formKey = GlobalKey<CustomerFormState>();
 
   @override
   void initState() {
@@ -146,6 +145,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
 
                         // نموذج تعديل البيانات
                         CustomerForm(
+                          key: _formKey,
                           customer: widget.customer,
                           onSubmit: _handleUpdateCustomer,
                         ),
@@ -167,19 +167,19 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
   }
 
   Widget _buildGradientBackground() => Container(
-        height: 400,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withOpacity(0.08),
-              AppColors.accent.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      );
+    height: 400,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.primary.withOpacity(0.08),
+          AppColors.accent.withOpacity(0.05),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
 
   Widget _buildModernAppBar(double topPadding) {
     final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
@@ -211,6 +211,60 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
           Navigator.pop(context);
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            final formState = _formKey.currentState;
+            if (formState != null && formState.mounted) {
+              final keys = formState.tutorialKeys;
+              CustomersTutorialService.showEditTutorial(
+                context: context,
+                nameFieldKey: keys['name']!,
+                nicknameFieldKey: keys['nickname']!,
+                phoneFieldKey: keys['phone']!,
+                customerTypeKey: keys['customerType']!,
+                creditLimitKey: keys['creditLimit']!,
+                blockStatusKey: keys['blockStatus']!,
+                notesFieldKey: keys['notes']!,
+                saveButtonKey: keys['saveButton']!,
+                scrollController: _scrollController,
+                onFinish: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('تمت التعليمات بنجاح'),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('يرجى انتظار تحميل النموذج أولاً'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
@@ -299,10 +353,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.surface,
-              AppColors.surface.withOpacity(0.95),
-            ],
+            colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
@@ -379,16 +430,10 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
-          ],
+          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: fullWidth
           ? Row(
@@ -491,18 +536,11 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                color.withOpacity(0.2),
-                color.withOpacity(0.1),
-              ],
+              colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
             ),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: color,
-          ),
+          child: Icon(icon, size: 20, color: color),
         ),
         const SizedBox(width: 12),
         Text(
@@ -519,23 +557,20 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
   }
 
   Widget _buildDeleteButton(BuildContext context) => Positioned(
-        bottom: 20,
-        left: 20,
-        child: FloatingActionButton.extended(
-          onPressed: _deleteCustomer,
-          backgroundColor: AppColors.danger,
-          icon: const Icon(Icons.delete_rounded, color: Colors.white),
-          label: const Text(
-            'حذف العميل',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          elevation: 8,
-          extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
-        ),
-      );
+    bottom: 20,
+    left: 20,
+    child: FloatingActionButton.extended(
+      onPressed: _deleteCustomer,
+      backgroundColor: AppColors.danger,
+      icon: const Icon(Icons.delete_rounded, color: Colors.white),
+      label: const Text(
+        'حذف العميل',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
+      elevation: 8,
+      extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
+    ),
+  );
 
   Widget _buildDeleteConfirmationSheet() {
     return Container(
@@ -568,10 +603,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
             height: 64,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  AppColors.danger,
-                  AppColors.danger.withOpacity(0.8),
-                ],
+                colors: [AppColors.danger, AppColors.danger.withOpacity(0.8)],
               ),
               shape: BoxShape.circle,
               boxShadow: [
@@ -666,8 +698,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen>
                       HapticFeedback.heavyImpact();
                       Navigator.pop(context);
                       context.read<CustomersBloc>().add(
-                            DeleteCustomerEvent(widget.customer.id!),
-                          );
+                        DeleteCustomerEvent(widget.customer.id!),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.danger,

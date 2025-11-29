@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/customers_tutorial_service.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customer_form_bloc.dart';
 import '../../blocs/customers/customer_form_event.dart';
@@ -28,6 +29,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
+  
+  final GlobalKey _nameFieldKey = GlobalKey();
+  final GlobalKey _phoneFieldKey = GlobalKey();
+  final GlobalKey _addressFieldKey = GlobalKey();
+  final GlobalKey _notesFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
   
   late AnimationController _animationController;
   late AnimationController _fadeController;
@@ -302,6 +309,46 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           Navigator.pop(context);
         },
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            CustomersTutorialService.showAddTutorial(
+              context: context,
+              nameFieldKey: _nameFieldKey,
+              phoneFieldKey: _phoneFieldKey,
+              addressFieldKey: _addressFieldKey,
+              notesFieldKey: _notesFieldKey,
+              saveButtonKey: _saveButtonKey,
+              scrollController: _scrollController,
+              onFinish: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('تمت التعليمات بنجاح'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
@@ -465,23 +512,26 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           // حقل الاسم
           _buildAnimatedField(
             delay: 100,
-            child: AppTextField(
-              controller: _nameController,
-              label: 'اسم العميل *',
-              hint: 'أدخل اسم العميل',
-              prefixIcon: Icons.person_outline_rounded,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'الرجاء إدخال اسم العميل';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                HapticFeedback.selectionClick();
-                context.read<CustomerFormBloc>().add(
-                  CustomerNameChanged(value),
-                );
-              },
+            child: Container(
+              key: _nameFieldKey,
+              child: AppTextField(
+                controller: _nameController,
+                label: 'اسم العميل *',
+                hint: 'أدخل اسم العميل',
+                prefixIcon: Icons.person_outline_rounded,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'الرجاء إدخال اسم العميل';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  HapticFeedback.selectionClick();
+                  context.read<CustomerFormBloc>().add(
+                    CustomerNameChanged(value),
+                  );
+                },
+              ),
             ),
           ),
           
@@ -490,22 +540,25 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           // حقل الهاتف
           _buildAnimatedField(
             delay: 200,
-            child: AppTextField.phone(
-              controller: _phoneController,
-              label: 'رقم الهاتف *',
-              hint: 'أدخل رقم الهاتف',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'الرجاء إدخال رقم الهاتف';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                HapticFeedback.selectionClick();
-                context.read<CustomerFormBloc>().add(
-                  CustomerPhoneChanged(value),
-                );
-              },
+            child: Container(
+              key: _phoneFieldKey,
+              child: AppTextField.phone(
+                controller: _phoneController,
+                label: 'رقم الهاتف *',
+                hint: 'أدخل رقم الهاتف',
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'الرجاء إدخال رقم الهاتف';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  HapticFeedback.selectionClick();
+                  context.read<CustomerFormBloc>().add(
+                    CustomerPhoneChanged(value),
+                  );
+                },
+              ),
             ),
           ),
           
@@ -514,17 +567,20 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           // حقل العنوان
           _buildAnimatedField(
             delay: 300,
-            child: AppTextField(
-              controller: _addressController,
-              label: 'العنوان',
-              hint: 'أدخل عنوان العميل',
-              prefixIcon: Icons.location_on_outlined,
-              onChanged: (value) {
-                HapticFeedback.selectionClick();
-                context.read<CustomerFormBloc>().add(
-                  CustomerAddressChanged(value),
-                );
-              },
+            child: Container(
+              key: _addressFieldKey,
+              child: AppTextField(
+                controller: _addressController,
+                label: 'العنوان',
+                hint: 'أدخل عنوان العميل',
+                prefixIcon: Icons.location_on_outlined,
+                onChanged: (value) {
+                  HapticFeedback.selectionClick();
+                  context.read<CustomerFormBloc>().add(
+                    CustomerAddressChanged(value),
+                  );
+                },
+              ),
             ),
           ),
           
@@ -533,11 +589,14 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           // حقل الملاحظات
           _buildAnimatedField(
             delay: 400,
-            child: AppTextField.multiline(
-              controller: _notesController,
-              label: 'ملاحظات',
-              hint: 'أدخل ملاحظات إضافية',
-              maxLines: 3,
+            child: Container(
+              key: _notesFieldKey,
+              child: AppTextField.multiline(
+                controller: _notesController,
+                label: 'ملاحظات',
+                hint: 'أدخل ملاحظات إضافية',
+                maxLines: 3,
+              ),
             ),
           ),
         ],
@@ -584,6 +643,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           );
         },
         child: Container(
+          key: _saveButtonKey,
           height: 60,
           decoration: BoxDecoration(
             gradient: LinearGradient(

@@ -40,6 +40,15 @@ class DebtFormState extends State<DebtForm> {
   DateTime _selectedDate = DateTime.now();
   DateTime? _dueDate;
 
+  final GlobalKey _customerSelectorKey = GlobalKey();
+  final GlobalKey _debtTypeKey = GlobalKey();
+  final GlobalKey _amountFieldKey = GlobalKey();
+  final GlobalKey _descriptionFieldKey = GlobalKey();
+  final GlobalKey _dateFieldKey = GlobalKey();
+  final GlobalKey _dueDateFieldKey = GlobalKey();
+  final GlobalKey _notesFieldKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -213,6 +222,7 @@ class DebtFormState extends State<DebtForm> {
       onTap: widget.isLoading ? null : () => _showCustomerSelector(),
       borderRadius: BorderRadius.circular(12),
       child: Container(
+        key: _customerSelectorKey,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -435,6 +445,7 @@ class DebtFormState extends State<DebtForm> {
     final types = ['بيع اجل', 'اخرى'];
 
     return Column(
+      key: _debtTypeKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -494,6 +505,7 @@ class DebtFormState extends State<DebtForm> {
 
   Widget _buildAmountField() {
     return TextFormField(
+      key: _amountFieldKey,
       controller: _amountController,
       keyboardType: TextInputType.number,
       enabled: !widget.isLoading,
@@ -537,6 +549,7 @@ class DebtFormState extends State<DebtForm> {
 
   Widget _buildDescriptionField() {
     return TextFormField(
+      key: _descriptionFieldKey,
       controller: _descriptionController,
       enabled: !widget.isLoading,
       style: AppTextStyles.bodyMedium,
@@ -599,6 +612,7 @@ class DebtFormState extends State<DebtForm> {
             },
       borderRadius: BorderRadius.circular(12),
       child: Container(
+        key: _dateFieldKey,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -657,6 +671,7 @@ class DebtFormState extends State<DebtForm> {
             },
       borderRadius: BorderRadius.circular(12),
       child: Container(
+        key: _dueDateFieldKey,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -705,6 +720,7 @@ class DebtFormState extends State<DebtForm> {
 
   Widget _buildNotesField() {
     return TextFormField(
+      key: _notesFieldKey,
       controller: _notesController,
       enabled: !widget.isLoading,
       maxLines: 3,
@@ -857,6 +873,7 @@ class DebtFormState extends State<DebtForm> {
               ],
             ),
             child: ElevatedButton(
+              key: _saveButtonKey,
               onPressed: widget.isLoading ? null : widget.onSubmit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -899,4 +916,15 @@ class DebtFormState extends State<DebtForm> {
       ],
     );
   }
+
+  Map<String, GlobalKey> get tutorialKeys => {
+        'customer': _customerSelectorKey,
+        'debtType': _debtTypeKey,
+        'amount': _amountFieldKey,
+        'description': _descriptionFieldKey,
+        'date': _dateFieldKey,
+        'dueDate': _dueDateFieldKey,
+        'notes': _notesFieldKey,
+        'saveButton': _saveButtonKey,
+      };
 }
