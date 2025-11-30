@@ -49,6 +49,11 @@ class RouteNames {
   static const String saleDetails = '/sales/details';
   static const String quickSale = '/sales/quick';
 
+  // ========== Analytical Reports Routes ==========
+  static const String profitAnalysis = '/profit-analysis';
+  static const String customersReport = '/customers-report';
+  static const String productsReport = '/products-report';
+
   // ========== Inventory Routes  // المخزون
   static const String inventory = '/inventory';
 

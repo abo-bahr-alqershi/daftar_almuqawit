@@ -540,10 +540,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
               ),
             ),
             const SizedBox(height: 16),
-            ChartWidget(
+            SimpleTrendChart(
               title: 'المبيعات حسب اليوم',
-              chartType: ChartType.bar,
               data: chartData,
+              primaryColor: AppColors.info,
             ),
           ],
         ),

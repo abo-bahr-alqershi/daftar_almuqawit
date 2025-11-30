@@ -385,7 +385,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         'description': 'تحليل مفصل لهوامش الربح والتكاليف',
         'icon': Icons.trending_up_rounded,
         'color': AppColors.purchases,
-        'route': '/profit-analysis',
+        'route': RouteNames.profitAnalysis,
         'delay': 600,
       },
       {
@@ -393,7 +393,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         'description': 'تحليل سلوك العملاء وترتيبهم حسب المشتريات',
         'icon': Icons.people_rounded,
         'color': AppColors.debt,
-        'route': '/customers-report',
+        'route': RouteNames.customersReport,
         'delay': 650,
       },
       {
@@ -401,7 +401,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         'description': 'الأكثر مبيعاً والأقل مبيعاً وحركة المخزون',
         'icon': Icons.inventory_2_rounded,
         'color': AppColors.expense,
-        'route': '/products-report',
+        'route': RouteNames.productsReport,
         'delay': 700,
       },
     ];

@@ -40,6 +40,9 @@ import '../screens/reports/weekly_report_screen.dart';
 import '../screens/reports/monthly_report_screen.dart';
 import '../screens/reports/yearly_report_screen.dart';
 import '../screens/reports/custom_report_screen.dart';
+import '../screens/reports/profit_analysis_screen.dart';
+import '../screens/reports/customers_report_screen.dart';
+import '../screens/reports/products_report_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
 import '../screens/inventory/add_return_screen.dart';
 import '../screens/inventory/add_damaged_item_screen.dart';
@@ -148,6 +151,12 @@ class AppRouter {
         return _buildRoute(const YearlyReportScreen());
       case RouteNames.customReport:
         return _buildRoute(const CustomReportScreen());
+      case RouteNames.profitAnalysis:
+        return _buildRoute(const ProfitAnalysisScreen());
+      case RouteNames.customersReport:
+        return _buildRoute(const CustomersReportScreen());
+      case RouteNames.productsReport:
+        return _buildRoute(const ProductsReportScreen());
       default:
         return _buildRoute(const SplashScreen());
     }

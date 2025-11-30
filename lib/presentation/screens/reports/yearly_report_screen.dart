@@ -524,10 +524,10 @@ class _YearlyReportScreenState extends State<YearlyReportScreen>
               ),
             ),
             const SizedBox(height: 16),
-            ChartWidget(
+            SimpleTrendChart(
               title: 'مبيعات كل شهر',
-              chartType: ChartType.line,
               data: chartData,
+              primaryColor: AppColors.success,
             ),
           ],
         ),

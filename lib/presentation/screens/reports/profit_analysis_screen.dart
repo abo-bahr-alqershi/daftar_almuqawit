@@ -11,24 +11,24 @@ import '../../blocs/statistics/reports_event.dart';
 import '../../blocs/statistics/reports_state.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/error_widget.dart' as custom_error;
-import 'widgets/profit_card.dart';
 import 'widgets/chart_widget.dart';
-import 'widgets/export_options.dart';
 
-class CustomReportScreen extends StatefulWidget {
-  const CustomReportScreen({super.key});
+class ProfitAnalysisScreen extends StatefulWidget {
+  const ProfitAnalysisScreen({super.key});
 
   @override
-  State<CustomReportScreen> createState() => _CustomReportScreenState();
+  State<ProfitAnalysisScreen> createState() => _ProfitAnalysisScreenState();
 }
 
-class _CustomReportScreenState extends State<CustomReportScreen>
+class _ProfitAnalysisScreenState extends State<ProfitAnalysisScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
-  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
+
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 29));
   DateTime _endDate = DateTime.now();
+
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _displayFormat = DateFormat('d MMMM yyyy', 'ar');
 
@@ -61,11 +61,11 @@ class _CustomReportScreenState extends State<CustomReportScreen>
 
   void _loadReport() {
     context.read<ReportsBloc>().add(
-      GenerateCustomReportEvent(
-        startDate: _dateFormat.format(_startDate),
-        endDate: _dateFormat.format(_endDate),
-      ),
-    );
+          GenerateCustomReportEvent(
+            startDate: _dateFormat.format(_startDate),
+            endDate: _dateFormat.format(_endDate),
+          ),
+        );
   }
 
   @override
@@ -89,18 +89,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
                 SliverToBoxAdapter(
                   child: BlocConsumer<ReportsBloc, ReportsState>(
                     listener: (context, state) {
-                      if (state is ReportsSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: AppColors.success,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      } else if (state is ReportsError) {
+                      if (state is ReportsError) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(state.message),
@@ -115,7 +104,10 @@ class _CustomReportScreenState extends State<CustomReportScreen>
                     },
                     builder: (context, state) {
                       if (state is ReportsLoading) {
-                        return _buildShimmerLoading();
+                        return const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: LoadingWidget(),
+                        );
                       }
 
                       if (state is ReportsError) {
@@ -128,25 +120,30 @@ class _CustomReportScreenState extends State<CustomReportScreen>
                       }
 
                       if (state is ReportsLoaded) {
+                        final data = state.reportData;
+                        final dailyStats =
+                            data['dailyStatistics'] as List<dynamic>? ?? [];
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 20),
                             _buildDateRangePicker(),
                             const SizedBox(height: 24),
-                            _buildProfitCard(state.reportData),
+                            _buildSummaryCard(dailyStats),
                             const SizedBox(height: 24),
-                            _buildDetailedStats(state.reportData),
+                            _buildKeyInsights(dailyStats),
                             const SizedBox(height: 24),
-                            _buildDailyTrend(state.reportData),
-                            const SizedBox(height: 24),
-                            _buildCharts(state.reportData),
+                            _buildProfitTrendChart(dailyStats),
                             const SizedBox(height: 32),
                           ],
                         );
                       }
 
-                      return _buildShimmerLoading();
+                      return const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: LoadingWidget(),
+                      );
                     },
                   ),
                 ),
@@ -170,8 +167,8 @@ class _CustomReportScreenState extends State<CustomReportScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.accent.withOpacity(0.08),
-              AppColors.info.withOpacity(0.05),
+              AppColors.sales.withOpacity(0.08),
+              AppColors.primary.withOpacity(0.05),
               Colors.transparent,
             ],
           ),
@@ -208,34 +205,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
           ),
         ),
       ),
-      actions: [
-        BlocBuilder<ReportsBloc, ReportsState>(
-          builder: (context, state) {
-            if (state is ReportsLoaded) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.share_rounded,
-                        color: AppColors.accent, size: 20),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      _handleExport(ExportType.share, state.reportData);
-                    },
-                  ),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-        const SizedBox(width: 8),
-      ],
+      actions: const [SizedBox(width: 8)],
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
         titlePadding: EdgeInsets.only(bottom: 16, top: topPadding),
@@ -243,7 +213,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
           opacity: opacity,
           duration: const Duration(milliseconds: 200),
           child: Text(
-            'التقرير المخصص',
+            'تحليل الربح',
             style: AppTextStyles.headlineSmall.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -260,7 +230,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
                 opacity: 1 - opacity,
                 duration: const Duration(milliseconds: 200),
                 child: Text(
-                  'التقرير المخصص',
+                  'تحليل الربح',
                   style: AppTextStyles.displayMedium.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -282,7 +252,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
       opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: _animationController,
-          curve: const Interval(0.0, 0.4, curve: Curves.easeOutCubic),
+          curve: const Interval(0.0, 0.3, curve: Curves.easeOutCubic),
         ),
       ),
       child: InkWell(
@@ -310,15 +280,15 @@ class _CustomReportScreenState extends State<CustomReportScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.accent.withOpacity(0.1),
-                      AppColors.info.withOpacity(0.1),
+                      AppColors.sales.withOpacity(0.1),
+                      AppColors.primary.withOpacity(0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.date_range_rounded,
-                  color: AppColors.accent,
+                  color: AppColors.sales,
                   size: 24,
                 ),
               ),
@@ -363,12 +333,10 @@ class _CustomReportScreenState extends State<CustomReportScreen>
     );
   }
 
-  Widget _buildProfitCard(Map<String, dynamic> data) {
+  Widget _buildSummaryCard(List<dynamic> dailyStats) {
     double totalSales = 0.0;
     double totalPurchases = 0.0;
     double totalExpenses = 0.0;
-
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
 
     for (final day in dailyStats) {
       totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
@@ -387,35 +355,190 @@ class _CustomReportScreenState extends State<CustomReportScreen>
           curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
         ),
       ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        child: ProfitCard(
-          totalProfit: netProfit,
-          grossProfit: grossProfit,
-          netProfit: netProfit,
-          profitMargin: profitMargin,
-          period: '${_displayFormat.format(_startDate)} - ${_displayFormat.format(_endDate)}',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.sales, AppColors.primary],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'صافي الربح للفترة',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          Formatters.formatCurrency(netProfit),
+                          style: AppTextStyles.headlineSmall.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 22,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: profitMargin >= 0
+                          ? AppColors.success.withOpacity(0.12)
+                          : AppColors.danger.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          profitMargin >= 0
+                              ? Icons.trending_up_rounded
+                              : Icons.trending_down_rounded,
+                          size: 16,
+                          color: profitMargin >= 0
+                              ? AppColors.success
+                              : AppColors.danger,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${profitMargin.toStringAsFixed(1)}%',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: profitMargin >= 0
+                                ? AppColors.success
+                                : AppColors.danger,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _SummaryItem(
+                      label: 'المبيعات',
+                      value: Formatters.formatCurrency(totalSales),
+                      color: AppColors.sales,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SummaryItem(
+                      label: 'المشتريات',
+                      value: Formatters.formatCurrency(totalPurchases),
+                      color: AppColors.purchases,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _SummaryItem(
+                      label: 'المصروفات',
+                      value: Formatters.formatCurrency(totalExpenses),
+                      color: AppColors.expense,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SummaryItem(
+                      label: 'الربح الإجمالي',
+                      value: Formatters.formatCurrency(grossProfit),
+                      color: AppColors.info,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDetailedStats(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-    double cashBalance = 0.0;
-
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-
-    for (final day in dailyStats) {
-      totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
-      totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
-      totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
+  Widget _buildKeyInsights(List<dynamic> dailyStats) {
+    if (dailyStats.isEmpty) {
+      return const SizedBox.shrink();
     }
 
-    if (dailyStats.isNotEmpty) {
-      cashBalance = (dailyStats.last['cashBalance'] as num?)?.toDouble() ?? 0.0;
+    double maxProfit = -double.infinity;
+    double minProfit = double.infinity;
+    Map<String, dynamic>? bestDay;
+    Map<String, dynamic>? worstDay;
+
+    double totalNetProfit = 0.0;
+
+    for (final day in dailyStats) {
+      final net = (day['netProfit'] as num?)?.toDouble() ?? 0.0;
+      totalNetProfit += net;
+
+      if (net > maxProfit) {
+        maxProfit = net;
+        bestDay = day as Map<String, dynamic>;
+      }
+      if (net < minProfit) {
+        minProfit = net;
+        worstDay = day as Map<String, dynamic>;
+      }
+    }
+
+    final avgProfit = dailyStats.isNotEmpty
+        ? totalNetProfit / dailyStats.length
+        : 0.0;
+
+    String formatDay(Map<String, dynamic>? day) {
+      if (day == null) return '-';
+      final dateStr = day['date'] as String? ?? '';
+      if (dateStr.isEmpty) return '-';
+      try {
+        final date = DateTime.parse(dateStr);
+        return _displayFormat.format(date);
+      } catch (_) {
+        return dateStr;
+      }
     }
 
     return FadeTransition(
@@ -431,7 +554,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'الإحصائيات التفصيلية',
+              'أهم الملاحظات',
               style: AppTextStyles.headlineSmall.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
@@ -442,53 +565,33 @@ class _CustomReportScreenState extends State<CustomReportScreen>
             Row(
               children: [
                 Expanded(
-                  child: _StatCard(
-                    title: 'المبيعات',
-                    value: Formatters.formatCurrency(totalSales),
-                    icon: Icons.trending_up_rounded,
-                    color: AppColors.sales,
-                    delay: 400,
-                    controller: _animationController,
+                  child: _InsightCard(
+                    title: 'أفضل يوم ربحاً',
+                    subtitle: formatDay(bestDay),
+                    value: Formatters.formatCurrency(maxProfit.isFinite ? maxProfit : 0),
+                    icon: Icons.thumb_up_rounded,
+                    color: AppColors.success,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _StatCard(
-                    title: 'المشتريات',
-                    value: Formatters.formatCurrency(totalPurchases),
-                    icon: Icons.shopping_cart_rounded,
-                    color: AppColors.purchases,
-                    delay: 450,
-                    controller: _animationController,
+                  child: _InsightCard(
+                    title: 'أضعف يوم ربحاً',
+                    subtitle: formatDay(worstDay),
+                    value: Formatters.formatCurrency(minProfit.isFinite ? minProfit : 0),
+                    icon: Icons.thumb_down_rounded,
+                    color: AppColors.danger,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'المصروفات',
-                    value: Formatters.formatCurrency(totalExpenses),
-                    icon: Icons.payment_rounded,
-                    color: AppColors.expense,
-                    delay: 500,
-                    controller: _animationController,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    title: 'الرصيد النقدي',
-                    value: Formatters.formatCurrency(cashBalance),
-                    icon: Icons.account_balance_wallet_rounded,
-                    color: AppColors.info,
-                    delay: 550,
-                    controller: _animationController,
-                  ),
-                ),
-              ],
+            _InsightCard(
+              title: 'متوسط الربح اليومي',
+              subtitle: '${dailyStats.length} يوم',
+              value: Formatters.formatCurrency(avgProfit.isFinite ? avgProfit : 0),
+              icon: Icons.show_chart_rounded,
+              color: AppColors.info,
             ),
           ],
         ),
@@ -496,16 +599,14 @@ class _CustomReportScreenState extends State<CustomReportScreen>
     );
   }
 
-  Widget _buildDailyTrend(Map<String, dynamic> data) {
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-
+  Widget _buildProfitTrendChart(List<dynamic> dailyStats) {
     if (dailyStats.isEmpty) return const SizedBox.shrink();
 
     final chartData = <ChartDataPoint>[];
 
     for (final day in dailyStats) {
       final date = day['date'] as String? ?? '';
-      final sales = (day['totalSales'] as num?)?.toDouble() ?? 0.0;
+      final net = (day['netProfit'] as num?)?.toDouble() ?? 0.0;
 
       if (date.isNotEmpty) {
         try {
@@ -513,12 +614,12 @@ class _CustomReportScreenState extends State<CustomReportScreen>
           chartData.add(
             ChartDataPoint(
               label: dayLabel,
-              value: sales,
-              color: AppColors.accent,
+              value: net,
+              color: net >= 0 ? AppColors.success : AppColors.danger,
             ),
           );
-        } catch (e) {
-          // تجاهل الأخطاء في التاريخ
+        } catch (_) {
+          // تجاهل أخطاء التاريخ
         }
       }
     }
@@ -538,7 +639,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'اتجاه المبيعات اليومي',
+              'اتجاه صافي الربح اليومي',
               style: AppTextStyles.headlineSmall.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
@@ -547,112 +648,12 @@ class _CustomReportScreenState extends State<CustomReportScreen>
             ),
             const SizedBox(height: 16),
             SimpleTrendChart(
-              title: 'المبيعات حسب اليوم',
+              title: 'صافي الربح لكل يوم',
               data: chartData,
-              primaryColor: AppColors.accent,
+              primaryColor: AppColors.sales,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCharts(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-
-    for (final day in dailyStats) {
-      totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
-      totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
-      totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
-    }
-
-    final chartData = [
-      ChartDataPoint(label: 'المبيعات', value: totalSales, color: AppColors.sales),
-      ChartDataPoint(label: 'المشتريات', value: totalPurchases, color: AppColors.purchases),
-      ChartDataPoint(label: 'المصروفات', value: totalExpenses, color: AppColors.expense),
-    ];
-
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: const Interval(0.6, 1.0, curve: Curves.easeOutCubic),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'التوزيع الإجمالي',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ChartWidget(
-              title: 'نظرة عامة على المعاملات',
-              chartType: ChartType.bar,
-              data: chartData,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShimmerLoading() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(28),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -666,7 +667,7 @@ class _CustomReportScreenState extends State<CustomReportScreen>
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.light(
-            primary: AppColors.accent,
+            primary: AppColors.sales,
             onSurface: AppColors.textPrimary,
           ),
         ),
@@ -683,121 +684,133 @@ class _CustomReportScreenState extends State<CustomReportScreen>
       _loadReport();
     }
   }
-
-  void _handleExport(ExportType type, Map<String, dynamic> data) {
-    switch (type) {
-      case ExportType.print:
-        context.read<ReportsBloc>().add(PrintReportEvent('custom', data));
-        break;
-      case ExportType.share:
-        context.read<ReportsBloc>().add(ShareReportEvent('custom', data));
-        break;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('هذه الميزة قيد التطوير'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-    }
-  }
 }
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final int delay;
-  final AnimationController controller;
-
-  const _StatCard({
-    required this.title,
+class _SummaryItem extends StatelessWidget {
+  const _SummaryItem({
+    required this.label,
     required this.value,
-    required this.icon,
     required this.color,
-    required this.delay,
-    required this.controller,
   });
+
+  final String label;
+  final String value;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Interval(
-            (delay / 1200).clamp(0.0, 1.0),
-            ((delay + 300) / 1200).clamp(0.0, 1.0),
-            curve: Curves.easeOutCubic,
-          ),
-        ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withOpacity(0.12)),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border.withOpacity(0.1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 12,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightCard extends StatelessWidget {
+  const _InsightCard({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final String subtitle;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border.withOpacity(0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
                   ),
-                  child: Icon(icon, color: color, size: 18),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
                   ),
-                  child: Text(
-                    'ريال',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                    ),
-                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
               value,
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w900,
-                fontSize: 17,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: color,
+                fontWeight: FontWeight.w800,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.left,
             ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

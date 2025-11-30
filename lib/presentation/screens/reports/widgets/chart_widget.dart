@@ -295,19 +295,122 @@ class ChartWidget extends StatelessWidget {
       );
     }).toList(),
   );
+ }
 
-  /// الحصول على لون لمؤشر معين
-  Color _getColorForIndex(int index) {
-    final colors = [
-      AppColors.primary,
-      AppColors.sales,
-      AppColors.purchases,
-      AppColors.expense,
-      AppColors.debt,
-      AppColors.accent,
-    ];
+/// الحصول على لون افتراضي لمؤشر معين
+Color _getColorForIndex(int index) {
+  final colors = [
+    AppColors.primary,
+    AppColors.sales,
+    AppColors.purchases,
+    AppColors.expense,
+    AppColors.debt,
+    AppColors.accent,
+  ];
 
-    return colors[index % colors.length];
+  return colors[index % colors.length];
+}
+
+class SimpleTrendChart extends StatelessWidget {
+  const SimpleTrendChart({
+    required this.title,
+    required this.data,
+    super.key,
+    this.height = 200,
+    this.primaryColor = AppColors.primary,
+  });
+
+  final String title;
+  final List<ChartDataPoint> data;
+  final double height;
+  final Color primaryColor;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border.withOpacity(0.08)),
+        ),
+        child: Center(
+          child: Text(
+            'لا توجد بيانات لعرضها',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final total = data.fold<double>(0, (sum, p) => sum + p.value);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.headlineSmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                total.toStringAsFixed(0),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: height,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final colors = data
+                    .asMap()
+                    .entries
+                    .map((entry) =>
+                        entry.value.color ?? AppColors.primary.withOpacity(0.9))
+                    .toList();
+
+                return CustomPaint(
+                  size: Size(constraints.maxWidth, constraints.maxHeight),
+                  painter: _LineChartPainter(
+                    points: data,
+                    colors: colors,
+                    primaryColor: primaryColor,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

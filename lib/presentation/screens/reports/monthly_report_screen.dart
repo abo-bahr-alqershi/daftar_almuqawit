@@ -536,10 +536,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen>
               ),
             ),
             const SizedBox(height: 16),
-            ChartWidget(
+            SimpleTrendChart(
               title: 'المبيعات حسب اليوم',
-              chartType: ChartType.line,
               data: chartData,
+              primaryColor: AppColors.sales,
             ),
           ],
         ),
