@@ -166,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         onAddDebtPayment: () => _navigateWithAnimation(
                           context,
-                          RouteNames.debtPayments,
+                          RouteNames.debts,
                         ),
                         onAddExpense: () => _navigateWithAnimation(
                           context,

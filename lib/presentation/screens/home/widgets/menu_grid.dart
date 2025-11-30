@@ -131,7 +131,7 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         title: 'دفعات الديون',
         icon: Icons.payment_rounded,
         color: const Color(0xFF795548),
-        route: RouteNames.debtPayments,
+        route: RouteNames.debts,
         subtitle: 'سداد الديون',
       ),
     ]);

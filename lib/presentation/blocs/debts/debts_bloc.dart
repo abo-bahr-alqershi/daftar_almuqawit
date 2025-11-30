@@ -10,7 +10,7 @@ import '../../../domain/usecases/debts/get_debts.dart';
 import '../../../domain/usecases/debts/get_debts_by_person.dart';
 import '../../../domain/usecases/debts/get_overdue_debts.dart';
 import '../../../domain/usecases/debts/get_pending_debts.dart';
-import '../../../domain/usecases/debts/partial_payment.dart';
+import '../../../domain/usecases/debts/pay_debt.dart';
 import '../../../domain/usecases/debts/update_debt.dart';
 import 'debts_event.dart';
 import 'debts_state.dart';
@@ -24,7 +24,7 @@ class DebtsBloc extends Bloc<DebtsEvent, DebtsState> {
   final AddDebt addDebt;
   final UpdateDebt updateDebt;
   final DeleteDebt deleteDebt;
-  final PartialPayment partialPayment;
+  final PayDebt payDebt;
 
   DebtsBloc({
     required this.getDebts,
@@ -34,7 +34,7 @@ class DebtsBloc extends Bloc<DebtsEvent, DebtsState> {
     required this.addDebt,
     required this.updateDebt,
     required this.deleteDebt,
-    required this.partialPayment,
+    required this.payDebt,
   }) : super(DebtsInitial()) {
     on<LoadDebts>(_onLoadDebts);
     on<LoadPendingDebts>(_onLoadPendingDebts);
@@ -137,13 +137,15 @@ class DebtsBloc extends Bloc<DebtsEvent, DebtsState> {
   Future<void> _onPayDebt(PayDebtEvent event, Emitter<DebtsState> emit) async {
     try {
       final now = DateTime.now();
-      final payment = DebtPayment(
+      final params = PayDebtParams(
         debtId: event.id,
         amount: event.amount,
         paymentDate: now.toString().split(' ')[0],
-        paymentTime: '${now.hour}:${now.minute}',
+        paymentTime:
+            '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
       );
-      await partialPayment(payment);
+
+      await payDebt(params);
       emit(DebtOperationSuccess('تم تسجيل الدفعة بنجاح'));
       add(LoadDebts());
     } catch (e) {

@@ -181,6 +181,8 @@ class DebtCard extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
+                  _buildPersonTypeChip(),
+                  const SizedBox(width: 8),
                   if (debt.customerPhone != null) ...[
                     Icon(
                       Icons.phone_rounded,
@@ -216,6 +218,41 @@ class DebtCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPersonTypeChip() {
+    final isSupplier = debt.personType == 'مورد';
+    final Color typeColor = isSupplier ? AppColors.info : AppColors.primary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: typeColor.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: typeColor.withOpacity(0.4),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSupplier ? Icons.storefront_rounded : Icons.person_rounded,
+            size: 12,
+            color: typeColor,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isSupplier ? 'دين لمورد' : 'دين على عميل',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: typeColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -300,101 +337,125 @@ class DebtCard extends StatelessWidget {
   }
 
   Widget _buildFooter() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.calendar_today_rounded,
-          size: 14,
-          color: AppColors.textSecondary,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          _formatDate(debt.date),
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
-        ),
-        if (debt.dueDate != null) ...[
-          const SizedBox(width: 16),
-          Icon(
-            Icons.event_available_rounded,
-            size: 14,
-            color: _isOverdue() ? AppColors.danger : AppColors.textSecondary,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            'استحقاق: ${_formatDate(debt.dueDate!)}',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: _isOverdue() ? AppColors.danger : AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: _isOverdue() ? FontWeight.w600 : FontWeight.normal,
+        Row(
+          children: [
+            Icon(
+              Icons.calendar_today_rounded,
+              size: 14,
+              color: AppColors.textSecondary,
             ),
-          ),
-        ],
-        const Spacer(),
-        if (onPayTap != null && debt.remainingAmount > 0)
-          InkWell(
-            onTap: onPayTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.success, AppColors.primary],
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                _formatDate(debt.date),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
                 ),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.success.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                overflow: TextOverflow.visible,
+                softWrap: true,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.payment_rounded,
-                    size: 14,
-                    color: Colors.white,
+            ),
+            if (debt.dueDate != null) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.event_available_rounded,
+                size: 14,
+                color:
+                    _isOverdue() ? AppColors.danger : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  'استحقاق: ${_formatDate(debt.dueDate!)}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: _isOverdue()
+                        ? AppColors.danger
+                        : AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: _isOverdue()
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'دفع',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                  overflow: TextOverflow.visible,
+                  softWrap: true,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (onPayTap != null && debt.remainingAmount > 0)
+              InkWell(
+                onTap: onPayTap,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.success, AppColors.primary],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.success.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.payment_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'دفع',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (onReminderTap != null && debt.customerPhone != null) ...[
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: onReminderTap,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.info.withOpacity(0.3),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        if (onReminderTap != null && debt.customerPhone != null) ...[
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: onReminderTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.info.withOpacity(0.3),
+                  child: const Icon(
+                    Icons.notifications_active_rounded,
+                    size: 16,
+                    color: AppColors.info,
+                  ),
                 ),
               ),
-              child: const Icon(
-                Icons.notifications_active_rounded,
-                size: 16,
-                color: AppColors.info,
-              ),
-            ),
-          ),
-        ],
+            ],
+          ],
+        ),
       ],
     );
   }

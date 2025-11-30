@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../domain/entities/purchase.dart';
+import '../../../../domain/entities/supplier.dart';
+import '../../../../domain/repositories/supplier_repository.dart';
+import '../../../../domain/usecases/purchases/get_purchases_by_supplier.dart';
 
 /// بطاقة عرض المشترى - تصميم راقي
 class PurchaseItemCard extends StatefulWidget {
@@ -32,6 +36,11 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   bool _isPressed = false;
+  Supplier? _supplierSummary;
+  double? _supplierTotalPurchases;
+  double? _supplierTotalDebt;
+  bool _isSummaryLoading = false;
+  String? _summaryError;
 
   @override
   void initState() {
@@ -45,6 +54,8 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
       begin: 1,
       end: 0.98,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    _loadSupplierSummary();
   }
 
   @override
@@ -351,6 +362,10 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
                           ),
                         ),
 
+                        // ملخص المورد على مستوى النظام
+                        const SizedBox(height: 8),
+                        _buildSupplierSummarySection(),
+
                         // التاريخ والوقت
                         const SizedBox(height: 12),
                         Row(
@@ -486,6 +501,113 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
     );
   }
 
+  Widget _buildSupplierSummarySection() {
+    if (widget.purchase.supplierId == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_isSummaryLoading) {
+      return Row(
+        children: const [
+          SizedBox(
+            height: 16,
+            width: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text(
+            'جاري تحميل إجماليات المورد...',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_summaryError != null || _supplierSummary == null) {
+      return const SizedBox.shrink();
+    }
+
+    final totalPurchases = _supplierTotalPurchases ?? 0;
+    final totalDebt = _supplierTotalDebt ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surface.withOpacity(0.9),
+            AppColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildSummaryItem(
+              icon: Icons.shopping_bag_rounded,
+              label: 'إجمالي مشترياتنا من المورد',
+              value: '${totalPurchases.toStringAsFixed(0)} ر.ي',
+              color: AppColors.purchases,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSummaryItem(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'إجمالي الدين له',
+              value: '${totalDebt.toStringAsFixed(0)} ر.ي',
+              color: AppColors.danger,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInfoItem({
     required IconData icon,
     required String label,
@@ -583,6 +705,42 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
         return Icons.schedule_rounded;
       default:
         return Icons.help_rounded;
+    }
+  }
+
+  Future<void> _loadSupplierSummary() async {
+    if (widget.purchase.supplierId == null) return;
+
+    setState(() {
+      _isSummaryLoading = true;
+      _summaryError = null;
+    });
+
+    try {
+      final supplierRepo = getIt<SupplierRepository>();
+      final purchasesUseCase = getIt<GetPurchasesBySupplier>();
+
+      final supplier = await supplierRepo.getById(widget.purchase.supplierId!);
+      final purchases = await purchasesUseCase(widget.purchase.supplierId!);
+
+      final totalPurchases = purchases.fold<double>(
+        0,
+        (sum, p) => sum + p.totalAmount,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _supplierSummary = supplier;
+        _supplierTotalPurchases = totalPurchases;
+        _supplierTotalDebt = supplier?.totalDebtToHim;
+        _isSummaryLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSummaryLoading = false;
+        _summaryError = 'تعذر تحميل إجماليات المورد';
+      });
     }
   }
 }

@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../domain/entities/sale.dart';
+import '../../../domain/entities/customer.dart';
+import '../../../domain/repositories/customer_repository.dart';
+import '../../../domain/usecases/sales/get_sales_by_customer.dart';
 
 /// شاشة تفاصيل عملية البيع - تصميم هادئ وراقي
 class SaleDetailsScreen extends StatefulWidget {
@@ -25,6 +29,10 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen>
 
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  Customer? _customerSummary;
+  bool _isCustomerSummaryLoading = false;
+  String? _customerSummaryError;
+  double? _customerTotalPurchases;
 
   @override
   void initState() {
@@ -72,6 +80,8 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen>
         _scrollOffset = _scrollController.offset;
       });
     });
+
+    _loadCustomerSummary();
   }
 
   @override
@@ -120,6 +130,8 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen>
                             if (widget.sale.customerName != null)
                               _buildCustomerInfoCard(),
 
+                            _buildCustomerSummaryCard(),
+
                             // تفاصيل المنتج
                             _buildProductDetailsCard(),
 
@@ -149,6 +161,217 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildCustomerSummaryCard() {
+    if (widget.sale.customerId == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_isCustomerSummaryLoading) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+        ),
+        child: const Center(
+          child: SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (_customerSummary == null) {
+      if (_customerSummaryError != null) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          ),
+          child: Text(
+            _customerSummaryError!,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.danger,
+            ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    final customer = _customerSummary!;
+    final totalPurchases = _customerTotalPurchases ?? customer.totalPurchases;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surface,
+            AppColors.surface.withOpacity(0.95),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(
+          color: AppColors.border.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.sales.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.account_circle_rounded,
+                  color: AppColors.sales,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'إجماليات العميل على مستوى النظام',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'هذه الأرقام تخص جميع تعاملات العميل وليس هذه العملية فقط',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildCustomerSummaryItem(
+                  label: 'إجمالي مشتريات العميل',
+                  value: '${totalPurchases.toStringAsFixed(0)} ريال',
+                  color: AppColors.sales,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildCustomerSummaryItem(
+                  label: 'إجمالي الدين الحالي على العميل',
+                  value: '${customer.currentDebt.toStringAsFixed(0)} ريال',
+                  color: AppColors.debt,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerSummaryItem({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: AppTextStyles.bodyLarge.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadCustomerSummary() async {
+    if (widget.sale.customerId == null) return;
+
+    setState(() {
+      _isCustomerSummaryLoading = true;
+      _customerSummaryError = null;
+    });
+
+    try {
+      final customerRepo = getIt<CustomerRepository>();
+      final salesUseCase = getIt<GetSalesByCustomer>();
+
+      final customer = await customerRepo.getById(widget.sale.customerId!);
+      final sales = await salesUseCase(widget.sale.customerId!);
+
+      final totalPurchases = sales.fold<double>(
+        0,
+        (sum, s) => sum + s.totalAmount,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _customerSummary = customer;
+        _customerTotalPurchases = totalPurchases;
+        _isCustomerSummaryLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCustomerSummaryLoading = false;
+        _customerSummaryError = 'تعذر تحميل إجماليات العميل';
+      });
+    }
   }
 
   Widget _buildGradientBackground() => Container(
@@ -839,6 +1062,26 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen>
               'طريقة الدفع',
               widget.sale.paymentMethod,
               _getPaymentIcon(widget.sale.paymentMethod),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ملخص المبالغ الخاصة بالعميل
+            _buildDetailRow(
+              'إجمالي الفاتورة',
+              '${widget.sale.totalAmount.toStringAsFixed(0)} ريال',
+              Icons.receipt_long_rounded,
+            ),
+            _buildDetailRow(
+              'إجمالي المدفوع من العميل',
+              '${widget.sale.paidAmount.toStringAsFixed(0)} ريال',
+              Icons.check_circle_outline,
+            ),
+            _buildDetailRow(
+              'المبلغ المتبقي على العميل',
+              '${widget.sale.remainingAmount.toStringAsFixed(0)} ريال',
+              Icons.pending_actions_outlined,
+              color: AppColors.warning,
             ),
 
             const SizedBox(height: 20),

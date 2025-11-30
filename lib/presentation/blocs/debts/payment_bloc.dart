@@ -6,6 +6,7 @@ import '../../../domain/usecases/debt_payments/add_debt_payment.dart';
 import '../../../domain/usecases/debt_payments/update_debt_payment.dart';
 import '../../../domain/usecases/debt_payments/delete_debt_payment.dart';
 import '../../../domain/usecases/debt_payments/get_debt_payments_by_debt.dart';
+import '../../../domain/usecases/debts/pay_debt.dart';
 import 'payment_event.dart';
 import 'payment_state.dart';
 
@@ -23,12 +24,16 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   /// حالة استخدام جلب دفعات دين معين
   final GetDebtPaymentsByDebt getDebtPaymentsByDebt;
 
+  /// حالة استخدام سداد دين (تحديث جداول الديون مع تسجيل الدفعة)
+  final PayDebt payDebt;
+
   /// المُنشئ
   PaymentBloc({
     required this.addDebtPayment,
     required this.updateDebtPayment,
     required this.deleteDebtPayment,
     required this.getDebtPaymentsByDebt,
+    required this.payDebt,
   }) : super(PaymentInitial()) {
     on<AddPaymentEvent>(_onAddPayment);
     on<UpdatePaymentEvent>(_onUpdatePayment);
@@ -44,10 +49,20 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   ) async {
     try {
       emit(PaymentLoading());
-      
-      // استدعاء Use Case لإضافة الدفعة
-      final result = await addDebtPayment(event.payment);
-      
+
+      // استخدام Use Case سداد الدين لتسجيل الدفعة وتحديث المبالغ في الدين
+      final payment = event.payment;
+      final params = PayDebtParams(
+        debtId: payment.debtId,
+        amount: payment.amount,
+        paymentDate: payment.paymentDate,
+        paymentTime: payment.paymentTime,
+        paymentMethod: payment.paymentMethod,
+        notes: payment.notes,
+      );
+
+      final result = await payDebt(params);
+
       if (result > 0) {
         emit(PaymentAdded('تمت إضافة الدفعة بنجاح'));
       } else {

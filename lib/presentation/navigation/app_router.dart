@@ -117,7 +117,8 @@ class AppRouter {
       case RouteNames.debts:
         return _buildRoute(const DebtsScreen());
       case RouteNames.debtPayments:
-        return _buildRoute(const DebtPaymentsScreen());
+        final debtId = settings.arguments as int;
+        return _buildRoute(DebtPaymentsScreen(debtId: debtId));
       case RouteNames.addDebtPayment:
         final debtId = settings.arguments as int?;
         return _buildRoute(AddDebtPaymentScreen(debtId: debtId ?? 0));

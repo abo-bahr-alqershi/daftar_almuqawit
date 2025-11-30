@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../domain/entities/sale.dart';
+import '../../../../domain/repositories/customer_repository.dart';
+import '../../../../domain/usecases/sales/get_sales_by_customer.dart';
 
 /// بطاقة عرض عملية بيع - تصميم راقي هادئ
 class SaleItemCard extends StatefulWidget {
@@ -25,6 +28,16 @@ class SaleItemCard extends StatefulWidget {
 
 class _SaleItemCardState extends State<SaleItemCard> {
   bool _isExpanded = false;
+  double? _customerTotalPurchases;
+  double? _customerCurrentDebt;
+  bool _isCustomerSummaryLoading = false;
+  String? _customerSummaryError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerSummary();
+  }
 
   Color _getStatusColor() {
     if (widget.sale.status == 'ملغي') return AppColors.danger;
@@ -108,6 +121,113 @@ class _SaleItemCardState extends State<SaleItemCard> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCustomerSummarySection() {
+    if (widget.sale.customerId == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_isCustomerSummaryLoading) {
+      return Row(
+        children: const [
+          SizedBox(
+            height: 16,
+            width: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text(
+            'جاري تحميل إجماليات العميل...',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_customerSummaryError != null) {
+      return const SizedBox.shrink();
+    }
+
+    final totalPurchases = _customerTotalPurchases ?? 0;
+    final currentDebt = _customerCurrentDebt ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surface.withOpacity(0.95),
+            AppColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border.withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildCustomerSummaryItem(
+              icon: Icons.shopping_cart_rounded,
+              label: 'إجمالي مشتريات العميل',
+              value: '${totalPurchases.toStringAsFixed(0)} ريال',
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildCustomerSummaryItem(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'إجمالي الدين الحالي عليه',
+              value: '${currentDebt.toStringAsFixed(0)} ريال',
+              color: AppColors.debt,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerSummaryItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 
@@ -324,6 +444,8 @@ class _SaleItemCardState extends State<SaleItemCard> {
               value: widget.sale.notes!,
             ),
           ],
+          const SizedBox(height: 10),
+          _buildCustomerSummarySection(),
         ],
       ),
     );
@@ -438,6 +560,41 @@ class _SaleItemCardState extends State<SaleItemCard> {
         ],
       ),
     );
+  }
+
+  Future<void> _loadCustomerSummary() async {
+    if (widget.sale.customerId == null) return;
+
+    setState(() {
+      _isCustomerSummaryLoading = true;
+      _customerSummaryError = null;
+    });
+
+    try {
+      final customerRepo = getIt<CustomerRepository>();
+      final salesUseCase = getIt<GetSalesByCustomer>();
+
+      final customer = await customerRepo.getById(widget.sale.customerId!);
+      final sales = await salesUseCase(widget.sale.customerId!);
+
+      final totalPurchases = sales.fold<double>(
+        0,
+        (sum, s) => sum + s.totalAmount,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _customerTotalPurchases = totalPurchases;
+        _customerCurrentDebt = customer?.currentDebt;
+        _isCustomerSummaryLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCustomerSummaryLoading = false;
+        _customerSummaryError = 'تعذر تحميل إجماليات العميل';
+      });
+    }
   }
 }
 

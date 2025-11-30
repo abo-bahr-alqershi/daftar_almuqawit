@@ -16,6 +16,7 @@ import '../../../domain/usecases/debt_payments/get_debt_payments_by_debt.dart';
 import '../../../domain/usecases/debt_payments/update_debt_payment.dart';
 import '../../../domain/usecases/debts/get_overdue_debts.dart';
 import '../../../domain/usecases/debts/get_pending_debts.dart';
+import '../../../domain/usecases/debts/pay_debt.dart';
 import '../../../domain/usecases/expenses/add_expense.dart';
 import '../../../domain/usecases/expenses/delete_expense.dart';
 import '../../../domain/usecases/expenses/get_daily_expenses.dart';
@@ -82,193 +83,234 @@ import '../../services/backup_service.dart';
 
 class BlocModule {
   static Future<void> register(GetIt sl) async {
-    sl.registerFactory<AppBloc>(() => AppBloc(
-      prefsService: sl<SharedPreferencesService>(),
-      syncManager: sl<SyncManager>(),
-      backupService: sl<BackupService>(),
-      logger: sl<LoggerService>(),
-    ));
-    
+    sl.registerFactory<AppBloc>(
+      () => AppBloc(
+        prefsService: sl<SharedPreferencesService>(),
+        syncManager: sl<SyncManager>(),
+        backupService: sl<BackupService>(),
+        logger: sl<LoggerService>(),
+      ),
+    );
+
     sl.registerFactory<SplashBloc>(SplashBloc.new);
-    
-    sl.registerFactory<HomeBloc>(() => HomeBloc(
-      prefs: sl<SharedPreferencesService>(),
-      logger: sl<LoggerService>(),
-    ));
-    
+
+    sl.registerFactory<HomeBloc>(
+      () => HomeBloc(
+        prefs: sl<SharedPreferencesService>(),
+        logger: sl<LoggerService>(),
+      ),
+    );
+
     sl.registerFactory<AppSettingsBloc>(AppSettingsBloc.new);
-    
+
     sl.registerFactory<AuthBloc>(AuthBloc.new);
-    
-    sl.registerFactory<SyncBloc>(() => SyncBloc(
-      syncManager: sl<SyncManager>(),
-      syncAll: sl<SyncAll>(),
-      checkSyncStatus: sl<CheckSyncStatus>(),
-      queueOfflineOperation: sl<QueueOfflineOperation>(),
-      resolveConflicts: sl<ResolveConflicts>(),
-      connectivityService: sl<ConnectivityService>(),
-    ));
-    
-    sl.registerFactory<DashboardBloc>(() => DashboardBloc(
-      getDailyStatistics: sl<GetDailyStatistics>(),
-      getMonthlyStatistics: sl<GetMonthlyStatistics>(),
-      getTodaySales: sl<GetTodaySales>(),
-      getTodayPurchases: sl<GetTodayPurchases>(),
-      getPendingDebts: sl<GetPendingDebts>(),
-      getOverdueDebts: sl<GetOverdueDebts>(),
-    ));
-    
-    sl.registerFactory<SuppliersBloc>(() => SuppliersBloc(
-      getSuppliers: sl(),
-      addSupplier: sl(),
-      updateSupplier: sl(),
-      deleteSupplier: sl(),
-      searchSuppliersUseCase: sl(),
-    ));
-    
+
+    sl.registerFactory<SyncBloc>(
+      () => SyncBloc(
+        syncManager: sl<SyncManager>(),
+        syncAll: sl<SyncAll>(),
+        checkSyncStatus: sl<CheckSyncStatus>(),
+        queueOfflineOperation: sl<QueueOfflineOperation>(),
+        resolveConflicts: sl<ResolveConflicts>(),
+        connectivityService: sl<ConnectivityService>(),
+      ),
+    );
+
+    sl.registerFactory<DashboardBloc>(
+      () => DashboardBloc(
+        getDailyStatistics: sl<GetDailyStatistics>(),
+        getMonthlyStatistics: sl<GetMonthlyStatistics>(),
+        getTodaySales: sl<GetTodaySales>(),
+        getTodayPurchases: sl<GetTodayPurchases>(),
+        getPendingDebts: sl<GetPendingDebts>(),
+        getOverdueDebts: sl<GetOverdueDebts>(),
+      ),
+    );
+
+    sl.registerFactory<SuppliersBloc>(
+      () => SuppliersBloc(
+        getSuppliers: sl(),
+        addSupplier: sl(),
+        updateSupplier: sl(),
+        deleteSupplier: sl(),
+        searchSuppliersUseCase: sl(),
+      ),
+    );
+
     sl.registerFactory<SupplierFormBloc>(SupplierFormBloc.new);
-    
-    sl.registerFactory<CustomersBloc>(() => CustomersBloc(
-      getCustomers: sl(),
-      addCustomer: sl(),
-      updateCustomer: sl(),
-      deleteCustomer: sl(),
-      blockCustomer: sl(),
-      searchCustomersUseCase: sl(),
-    ));
-    
-    sl.registerFactory<CustomerFormBloc>(() => CustomerFormBloc(
-      addCustomer: sl(),
-      updateCustomer: sl(),
-      getCustomers: sl(),
-    ));
-    
+
+    sl.registerFactory<CustomersBloc>(
+      () => CustomersBloc(
+        getCustomers: sl(),
+        addCustomer: sl(),
+        updateCustomer: sl(),
+        deleteCustomer: sl(),
+        blockCustomer: sl(),
+        searchCustomersUseCase: sl(),
+      ),
+    );
+
+    sl.registerFactory<CustomerFormBloc>(
+      () => CustomerFormBloc(
+        addCustomer: sl(),
+        updateCustomer: sl(),
+        getCustomers: sl(),
+      ),
+    );
+
     sl.registerFactory<CustomerSearchBloc>(CustomerSearchBloc.new);
-    
-    sl.registerFactory<QatTypesBloc>(() => QatTypesBloc(
-      getQatTypes: sl(),
-      getQatTypeById: sl(),
-      addQatType: sl(),
-      updateQatType: sl(),
-      deleteQatType: sl(),
-    ));
-    
-    sl.registerFactory<SalesBloc>(() => SalesBloc(
-      getSales: sl(),
-      getTodaySales: sl(),
-      getSalesByCustomer: sl(),
-      addSale: sl(),
-      updateSale: sl(),
-      deleteSale: sl(),
-      cancelSale: sl(),
-      invalidateStatistics: sl(),
-    ));
-    
-    sl.registerFactory<QuickSaleBloc>(() => QuickSaleBloc(
-      quickSaleUseCase: sl(),
-    ));
-    
+
+    sl.registerFactory<QatTypesBloc>(
+      () => QatTypesBloc(
+        getQatTypes: sl(),
+        getQatTypeById: sl(),
+        addQatType: sl(),
+        updateQatType: sl(),
+        deleteQatType: sl(),
+      ),
+    );
+
+    sl.registerFactory<SalesBloc>(
+      () => SalesBloc(
+        getSales: sl(),
+        getTodaySales: sl(),
+        getSalesByCustomer: sl(),
+        addSale: sl(),
+        updateSale: sl(),
+        deleteSale: sl(),
+        cancelSale: sl(),
+        invalidateStatistics: sl(),
+      ),
+    );
+
+    sl.registerFactory<QuickSaleBloc>(
+      () => QuickSaleBloc(quickSaleUseCase: sl()),
+    );
+
     sl.registerFactory<SaleFormBloc>(SaleFormBloc.new);
-    
-    sl.registerFactory<PurchasesBloc>(() => PurchasesBloc(
-      getPurchases: sl(),
-      getTodayPurchases: sl(),
-      getPurchasesBySupplier: sl(),
-      addPurchase: sl(),
-      updatePurchase: sl(),
-      deletePurchase: sl(),
-      cancelPurchase: sl(),
-      invalidateStatistics: sl(),
-    ));
-    
+
+    sl.registerFactory<PurchasesBloc>(
+      () => PurchasesBloc(
+        getPurchases: sl(),
+        getTodayPurchases: sl(),
+        getPurchasesBySupplier: sl(),
+        addPurchase: sl(),
+        updatePurchase: sl(),
+        deletePurchase: sl(),
+        cancelPurchase: sl(),
+        invalidateStatistics: sl(),
+      ),
+    );
+
     sl.registerFactory<PurchaseFormBloc>(PurchaseFormBloc.new);
-    
-    sl.registerFactory<DebtsBloc>(() => DebtsBloc(
-      getDebts: sl(),
-      getPendingDebts: sl(),
-      getOverdueDebts: sl(),
-      getDebtsByPerson: sl(),
-      addDebt: sl(),
-      updateDebt: sl(),
-      deleteDebt: sl(),
-      partialPayment: sl(),
-    ));
-    
-    sl.registerFactory<PaymentBloc>(() => PaymentBloc(
-      addDebtPayment: sl<AddDebtPayment>(),
-      updateDebtPayment: sl<UpdateDebtPayment>(),
-      deleteDebtPayment: sl<DeleteDebtPayment>(),
-      getDebtPaymentsByDebt: sl<GetDebtPaymentsByDebt>(),
-    ));
-    
-    sl.registerFactory<ExpensesBloc>(() => ExpensesBloc(
-      repository: sl<ExpenseRepository>(),
-      getTodayExpenses: sl<GetDailyExpenses>(),
-      getExpensesByType: sl<GetExpensesByCategory>(),
-      addExpense: sl<AddExpense>(),
-      updateExpense: sl<UpdateExpense>(),
-      deleteExpense: sl<DeleteExpense>(),
-      invalidateStatistics: sl(),
-    ));
-    
+
+    sl.registerFactory<DebtsBloc>(
+      () => DebtsBloc(
+        getDebts: sl(),
+        getPendingDebts: sl(),
+        getOverdueDebts: sl(),
+        getDebtsByPerson: sl(),
+        addDebt: sl(),
+        updateDebt: sl(),
+        deleteDebt: sl(),
+        payDebt: sl(),
+      ),
+    );
+
+    sl.registerFactory<PaymentBloc>(
+      () => PaymentBloc(
+        addDebtPayment: sl<AddDebtPayment>(),
+        updateDebtPayment: sl<UpdateDebtPayment>(),
+        deleteDebtPayment: sl<DeleteDebtPayment>(),
+        getDebtPaymentsByDebt: sl<GetDebtPaymentsByDebt>(),
+        payDebt: sl<PayDebt>(),
+      ),
+    );
+
+    sl.registerFactory<ExpensesBloc>(
+      () => ExpensesBloc(
+        repository: sl<ExpenseRepository>(),
+        getTodayExpenses: sl<GetDailyExpenses>(),
+        getExpensesByType: sl<GetExpensesByCategory>(),
+        addExpense: sl<AddExpense>(),
+        updateExpense: sl<UpdateExpense>(),
+        deleteExpense: sl<DeleteExpense>(),
+        invalidateStatistics: sl(),
+      ),
+    );
+
     sl.registerFactory<ExpenseFormBloc>(ExpenseFormBloc.new);
-    
-    sl.registerFactory<AccountingBloc>(() => AccountingBloc(
-      salesRepository: sl<SalesRepository>(),
-      purchaseRepository: sl<PurchaseRepository>(),
-      expenseRepository: sl<ExpenseRepository>(),
-    ));
-    
-    sl.registerFactory<CashManagementBloc>(() => CashManagementBloc(
-      getDailyStats: sl<GetDailyStatistics>(),
-      logger: sl<LoggerService>(),
-    ));
-    
-    sl.registerFactory<StatisticsBloc>(() => StatisticsBloc(
-      getDailyStats: sl<GetDailyStatistics>(),
-      repository: sl<StatisticsRepository>(),
-      getMonthStats: sl<GetMonthlyStatistics>(),
-      getYearStats: sl<GetYearlyReport>(),
-    ));
-    
-    sl.registerFactory<ReportsBloc>(() => ReportsBloc(
-      printReport: sl<PrintReport>(),
-      shareReport: sl<ShareReport>(),
-      getDailyStats: sl<GetDailyStatistics>(),
-      getMonthlyStats: sl<GetMonthlyStatistics>(),
-      getWeeklyReport: sl<GetWeeklyReport>(),
-      getYearlyReport: sl<GetYearlyReport>(),
-      logger: sl<LoggerService>(),
-    ));
-    
-    sl.registerFactory<SettingsBloc>(() => SettingsBloc(
-      prefs: sl<SharedPreferencesService>(),
-      logger: sl<LoggerService>(),
-      syncManager: sl<SyncManager>(),
-      backupService: sl<BackupService>(),
-    ));
-    
-    sl.registerFactory<BackupBloc>(() => BackupBloc(
-      createBackup: sl<CreateBackup>(),
-      restoreBackup: sl<RestoreBackup>(),
-      exportToExcel: sl<ExportToExcel>(),
-      scheduleAutoBackup: sl<ScheduleAutoBackup>(),
-      logger: sl<LoggerService>(),
-    ));
-    
-    sl.registerFactory<InventoryBloc>(() => InventoryBloc(
-      getInventoryList: sl<GetInventoryList>(),
-      getInventoryTransactions: sl<GetInventoryTransactions>(),
-      getInventoryStatistics: sl<GetInventoryStatistics>(),
-      updateInventoryItem: sl<UpdateInventoryItem>(),
-      adjustInventoryQuantity: sl<AdjustInventoryQuantity>(),
-      addReturn: sl<AddReturn>(),
-      getReturnsList: sl<GetReturnsList>(),
-      confirmReturn: sl<ConfirmReturn>(),
-      getReturnsStatistics: sl<GetReturnsStatistics>(),
-      addDamagedItem: sl<AddDamagedItem>(),
-      getDamagedItemsList: sl<GetDamagedItemsList>(),
-      getDamageStatistics: sl<GetDamageStatistics>(),
-    ));
+
+    sl.registerFactory<AccountingBloc>(
+      () => AccountingBloc(
+        salesRepository: sl<SalesRepository>(),
+        purchaseRepository: sl<PurchaseRepository>(),
+        expenseRepository: sl<ExpenseRepository>(),
+      ),
+    );
+
+    sl.registerFactory<CashManagementBloc>(
+      () => CashManagementBloc(
+        getDailyStats: sl<GetDailyStatistics>(),
+        logger: sl<LoggerService>(),
+      ),
+    );
+
+    sl.registerFactory<StatisticsBloc>(
+      () => StatisticsBloc(
+        getDailyStats: sl<GetDailyStatistics>(),
+        repository: sl<StatisticsRepository>(),
+        getMonthStats: sl<GetMonthlyStatistics>(),
+        getYearStats: sl<GetYearlyReport>(),
+      ),
+    );
+
+    sl.registerFactory<ReportsBloc>(
+      () => ReportsBloc(
+        printReport: sl<PrintReport>(),
+        shareReport: sl<ShareReport>(),
+        getDailyStats: sl<GetDailyStatistics>(),
+        getMonthlyStats: sl<GetMonthlyStatistics>(),
+        getWeeklyReport: sl<GetWeeklyReport>(),
+        getYearlyReport: sl<GetYearlyReport>(),
+        logger: sl<LoggerService>(),
+      ),
+    );
+
+    sl.registerFactory<SettingsBloc>(
+      () => SettingsBloc(
+        prefs: sl<SharedPreferencesService>(),
+        logger: sl<LoggerService>(),
+        syncManager: sl<SyncManager>(),
+        backupService: sl<BackupService>(),
+      ),
+    );
+
+    sl.registerFactory<BackupBloc>(
+      () => BackupBloc(
+        createBackup: sl<CreateBackup>(),
+        restoreBackup: sl<RestoreBackup>(),
+        exportToExcel: sl<ExportToExcel>(),
+        scheduleAutoBackup: sl<ScheduleAutoBackup>(),
+        logger: sl<LoggerService>(),
+      ),
+    );
+
+    sl.registerFactory<InventoryBloc>(
+      () => InventoryBloc(
+        getInventoryList: sl<GetInventoryList>(),
+        getInventoryTransactions: sl<GetInventoryTransactions>(),
+        getInventoryStatistics: sl<GetInventoryStatistics>(),
+        updateInventoryItem: sl<UpdateInventoryItem>(),
+        adjustInventoryQuantity: sl<AdjustInventoryQuantity>(),
+        addReturn: sl<AddReturn>(),
+        getReturnsList: sl<GetReturnsList>(),
+        confirmReturn: sl<ConfirmReturn>(),
+        getReturnsStatistics: sl<GetReturnsStatistics>(),
+        addDamagedItem: sl<AddDamagedItem>(),
+        getDamagedItemsList: sl<GetDamagedItemsList>(),
+        getDamageStatistics: sl<GetDamageStatistics>(),
+      ),
+    );
   }
 }

@@ -4,7 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../domain/entities/purchase.dart';
+import '../../../domain/entities/supplier.dart';
+import '../../../domain/repositories/supplier_repository.dart';
+import '../../../domain/usecases/purchases/get_purchases_by_supplier.dart';
 import '../../blocs/purchases/purchases_bloc.dart';
 import '../../blocs/purchases/purchases_event.dart';
 import '../../widgets/common/confirm_dialog.dart';
@@ -29,6 +33,10 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  Supplier? _supplierSummary;
+  bool _isSupplierSummaryLoading = false;
+  String? _supplierSummaryError;
+  double? _supplierTotalPurchases;
 
   @override
   void initState() {
@@ -44,6 +52,8 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
         _scrollOffset = _scrollController.offset;
       });
     });
+
+    _loadSupplierSummary();
   }
 
   @override
@@ -87,6 +97,8 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
                         
                         const SizedBox(height: 16),
                         _buildPaymentCard(statusColor),
+                        const SizedBox(height: 16),
+                        _buildSupplierSummaryCard(),
                         
                         if (widget.purchase.notes != null && widget.purchase.notes!.isNotEmpty) ...[
                           const SizedBox(height: 16),
@@ -109,6 +121,209 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildSupplierSummaryCard() {
+    if (widget.purchase.supplierId == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_isSupplierSummaryLoading) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withOpacity(0.1)),
+        ),
+        child: const Center(
+          child: SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (_supplierSummary == null) {
+      if (_supplierSummaryError != null) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border.withOpacity(0.1)),
+          ),
+          child: Text(
+            _supplierSummaryError!,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.danger,
+            ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    final supplier = _supplierSummary!;
+    final totalPurchases = _supplierTotalPurchases ?? supplier.totalPurchases;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surface,
+            AppColors.surface.withOpacity(0.98),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: AppColors.info,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'إجماليات المورد على مستوى النظام',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'هذه الأرقام تخص جميع تعاملات المورد وليس هذه العملية فقط',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryItem(
+                  label: 'إجمالي مشترياتنا من المورد',
+                  value: '${totalPurchases.toStringAsFixed(0)} ر.ي',
+                  color: AppColors.purchases,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryItem(
+                  label: 'إجمالي الدين له في النظام',
+                  value: '${supplier.totalDebtToHim.toStringAsFixed(0)} ر.ي',
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: AppTextStyles.bodyLarge.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadSupplierSummary() async {
+    if (widget.purchase.supplierId == null) return;
+
+    setState(() {
+      _isSupplierSummaryLoading = true;
+      _supplierSummaryError = null;
+    });
+
+    try {
+      final supplierRepo = getIt<SupplierRepository>();
+      final purchasesUseCase = getIt<GetPurchasesBySupplier>();
+
+      final supplier = await supplierRepo.getById(widget.purchase.supplierId!);
+      final purchases = await purchasesUseCase(widget.purchase.supplierId!);
+
+      final totalPurchases = purchases.fold<double>(
+        0,
+        (sum, p) => sum + p.totalAmount,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _supplierSummary = supplier;
+        _supplierTotalPurchases = totalPurchases;
+        _isSupplierSummaryLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSupplierSummaryLoading = false;
+        _supplierSummaryError = 'تعذر تحميل إجماليات المورد';
+      });
+    }
   }
 
   Widget _buildGradientBackground() => Container(
@@ -556,6 +771,25 @@ class _PurchaseDetailsScreenState extends State<PurchaseDetailsScreen>
             ),
             const SizedBox(height: 20),
             _buildDetailRow(Icons.payment_rounded, 'طريقة الدفع', widget.purchase.paymentMethod, AppColors.primary),
+            const SizedBox(height: 16),
+            _buildDetailRow(
+              Icons.receipt_long_rounded,
+              'إجمالي الفاتورة',
+              '${widget.purchase.totalAmount.toStringAsFixed(0)} ر.ي',
+              AppColors.purchases,
+            ),
+            _buildDetailRow(
+              Icons.check_circle_rounded,
+              'إجمالي المدفوع للمورد',
+              '${widget.purchase.paidAmount.toStringAsFixed(0)} ر.ي',
+              AppColors.success,
+            ),
+            _buildDetailRow(
+              Icons.pending_actions_rounded,
+              'المبلغ المتبقي للمورد',
+              '${widget.purchase.remainingAmount.toStringAsFixed(0)} ر.ي',
+              AppColors.danger,
+            ),
             if (widget.purchase.dueDate != null)
               _buildDetailRow(Icons.event_rounded, 'تاريخ الاستحقاق', widget.purchase.dueDate!, AppColors.warning),
           ],

@@ -11,6 +11,7 @@ import '../../blocs/debts/debts_bloc.dart';
 import '../../blocs/debts/debts_event.dart';
 import '../../blocs/debts/debts_state.dart';
 import '../../widgets/common/confirm_dialog.dart';
+import '../../navigation/route_names.dart';
 import './widgets/debt_card.dart';
 import './widgets/debt_filters.dart';
 import './add_debt_screen.dart';
@@ -647,7 +648,15 @@ class _DebtsScreenState extends State<DebtsScreen> with SingleTickerProviderStat
   }
 
   void _navigateToPayment(Debt debt) async {
-    // Navigate to payment
+    if (debt.id == null) return;
+
+    await Navigator.pushNamed(
+      context,
+      RouteNames.debtPayments,
+      arguments: debt.id,
+    );
+
+    _loadDebts();
   }
 }
 
