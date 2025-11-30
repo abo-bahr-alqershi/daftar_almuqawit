@@ -80,30 +80,33 @@ class CustomerRankingWidget extends StatelessWidget {
         children: [
           // العنوان
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTextStyles.h3.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.h3.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  
-                  const SizedBox(height: 4),
-                  
-                  Text(
-                    _getRankingTypeLabel(),
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
+                    const SizedBox(height: 4),
+                    Text(
+                      _getRankingTypeLabel(),
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -304,10 +307,14 @@ class _CustomerRankingTile extends StatelessWidget {
                         color: AppColors.textHint,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        customer.phone!,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
+                      Expanded(
+                        child: Text(
+                          customer.phone!,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -319,10 +326,14 @@ class _CustomerRankingTile extends StatelessWidget {
                       color: AppColors.textHint,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      '${customer.transactionCount} معاملة',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.textSecondary,
+                    Flexible(
+                      child: Text(
+                        '${customer.transactionCount} معاملة',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
