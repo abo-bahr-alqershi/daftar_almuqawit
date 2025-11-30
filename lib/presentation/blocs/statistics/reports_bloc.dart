@@ -57,7 +57,10 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       _logger.info('إنشاء تقرير يومي للتاريخ: ${event.date}');
 
       final stats = await _getDailyStats(
-        GetDailyStatisticsParams(date: event.date),
+        GetDailyStatisticsParams(
+          date: event.date,
+          forceRefresh: true,
+        ),
       );
 
       final reportData = {
@@ -166,14 +169,32 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     try {
       emit(ReportsLoading('جاري إنشاء التقرير الأسبوعي...'));
       _logger.info('إنشاء تقرير أسبوعي: ${event.startDate} - ${event.endDate}');
+      // نحسب إحصائيات كل يوم في الفترة المحددة باستخدام GetDailyStatistics
+      final startDate = DateTime.parse(event.startDate);
+      final endDate = DateTime.parse(event.endDate);
+      final days = endDate.difference(startDate).inDays + 1;
 
-      final stats = await _getWeeklyReport(event.startDate);
+      final stats = <dynamic>[];
+      for (var i = 0; i < days; i++) {
+        final date = startDate.add(Duration(days: i));
+        final dateStr = date.toIso8601String().split('T')[0];
+        final dailyStats = await _getDailyStats(
+          GetDailyStatisticsParams(
+            date: dateStr,
+            forceRefresh: true,
+          ),
+        );
+        stats.add(dailyStats.toJson());
+      }
 
       final reportData = {
         'type': 'weekly',
         'startDate': event.startDate,
         'endDate': event.endDate,
-        'statistics': stats.map((s) => s.toJson()).toList(),
+        // قائمة الإحصائيات اليومية للأسبوع
+        'dailyStatistics': stats,
+        // مفتاح عام للاستخدام المشترك في الطباعة/المشاركة
+        'statistics': stats,
       };
 
       emit(ReportsLoaded(reportData));
@@ -197,6 +218,9 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       final reportData = {
         'type': 'yearly',
         'year': event.year,
+        // قائمة الإحصائيات المجملة شهرياً كما تتوقع شاشة التقرير السنوي
+        'monthlyStatistics': stats.map((s) => s.toJson()).toList(),
+        // مفتاح عام للاستخدام في الطباعة/المشاركة أو أي استخدامات أخرى
         'statistics': stats.map((s) => s.toJson()).toList(),
       };
 
@@ -234,6 +258,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         'type': 'custom',
         'startDate': event.startDate,
         'endDate': event.endDate,
+        'dailyStatistics': stats,
         'statistics': stats,
       };
 

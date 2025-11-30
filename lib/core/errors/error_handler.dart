@@ -113,7 +113,9 @@ class ErrorHandler {
   }
 
   /// معالجة استثناءات Firebase
-  static Failure _handleFirebaseException(firebase.FirebaseException exception) {
+  static Failure _handleFirebaseException(
+    firebase.FirebaseException exception,
+  ) {
     final code = exception.code;
     final message = exception.message ?? 'حدث خطأ في Firebase';
 
@@ -180,28 +182,17 @@ class ErrorHandler {
   }
 
   /// تحويل الفشل إلى رسالة قابلة للعرض للمستخدم
-  static String getDisplayMessage(Failure failure) {
-    return failure.message;
-  }
+  static String getDisplayMessage(Failure failure) => failure.message;
 
   /// التحقق من نوع الفشل
-  static bool isNetworkFailure(Failure failure) {
-    return failure is NetworkFailure;
-  }
+  static bool isNetworkFailure(Failure failure) => failure is NetworkFailure;
 
-  static bool isDatabaseFailure(Failure failure) {
-    return failure is DatabaseFailure;
-  }
+  static bool isDatabaseFailure(Failure failure) => failure is DatabaseFailure;
 
-  static bool isAuthFailure(Failure failure) {
-    return failure is AuthFailure;
-  }
+  static bool isAuthFailure(Failure failure) => failure is AuthFailure;
 
-  static bool isCacheFailure(Failure failure) {
-    return failure is CacheFailure;
-  }
+  static bool isCacheFailure(Failure failure) => failure is CacheFailure;
 
-  static bool isValidationFailure(Failure failure) {
-    return failure is ValidationFailure;
-  }
+  static bool isValidationFailure(Failure failure) =>
+      failure is ValidationFailure;
 }

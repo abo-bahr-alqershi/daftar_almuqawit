@@ -12,7 +12,6 @@ import '../../../core/services/local/shared_preferences_service.dart';
 import '../../../core/constants/storage_keys.dart';
 import '../../../core/di/injection_container.dart';
 import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart';
 import '../../widgets/common/confirm_dialog.dart';
 import '../../blocs/settings/settings_bloc.dart';
 import '../../blocs/settings/settings_event.dart';

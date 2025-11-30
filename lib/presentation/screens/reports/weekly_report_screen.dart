@@ -62,10 +62,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
 
   void _calculateWeekRange() {
     final now = DateTime.now();
-    final weekday = now.weekday;
-    final startOfWeek = now.subtract(Duration(days: (weekday == 7 ? 0 : weekday + 1)));
-    final endOfWeek = startOfWeek.add(const Duration(days: 6));
-    
+    // نجعل الأسبوع عبارة عن 7 أيام متتالية تنتهي باليوم الحالي
+    final endOfWeek = DateTime(now.year, now.month, now.day);
+    final startOfWeek = endOfWeek.subtract(const Duration(days: 6));
+
     setState(() {
       _selectedWeekStart = startOfWeek;
       _selectedWeekEnd = endOfWeek;
@@ -670,9 +670,9 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
 
     if (picked != null) {
       HapticFeedback.lightImpact();
-      final weekday = picked.weekday;
-      final startOfWeek = picked.subtract(Duration(days: (weekday == 7 ? 0 : weekday + 1)));
-      final endOfWeek = startOfWeek.add(const Duration(days: 6));
+      // نحدد الفترة لتكون 7 أيام تنتهي في اليوم المختار
+      final endOfWeek = DateTime(picked.year, picked.month, picked.day);
+      final startOfWeek = endOfWeek.subtract(const Duration(days: 6));
 
       setState(() {
         _selectedWeekStart = startOfWeek;

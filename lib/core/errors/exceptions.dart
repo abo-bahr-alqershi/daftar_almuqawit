@@ -1,20 +1,21 @@
 /// استثناءات مخصصة للتطبيق
-/// 
+///
 /// يحتوي على جميع أنواع الاستثناءات المستخدمة في طبقة البيانات
 abstract class AppException implements Exception {
+  const AppException(this.message, {this.cause, this.code});
+
   /// رسالة الخطأ
   final String message;
-  
+
   /// السبب الأصلي للخطأ
   final Object? cause;
-  
+
   /// كود الخطأ
   final String? code;
 
-  const AppException(this.message, {this.cause, this.code});
-
   @override
-  String toString() => 'AppException: $message${code != null ? ' (Code: $code)' : ''}';
+  String toString() =>
+      'AppException: $message${code != null ? ' (Code: $code)' : ''}';
 }
 
 // ========== استثناءات قاعدة البيانات ==========
@@ -29,20 +30,19 @@ class DatabaseException extends AppException {
 
 /// استثناء عند فشل إنشاء قاعدة البيانات
 class DatabaseCreationException extends DatabaseException {
-  const DatabaseCreationException([String message = 'فشل إنشاء قاعدة البيانات'])
-      : super(message);
+  const DatabaseCreationException([super.message = 'فشل إنشاء قاعدة البيانات']);
 }
 
 /// استثناء عند فشل الترحيل
 class DatabaseMigrationException extends DatabaseException {
-  const DatabaseMigrationException([String message = 'فشل ترحيل قاعدة البيانات'])
-      : super(message);
+  const DatabaseMigrationException([
+    super.message = 'فشل ترحيل قاعدة البيانات',
+  ]);
 }
 
 /// استثناء عند فشل الاستعلام
 class DatabaseQueryException extends DatabaseException {
-  const DatabaseQueryException([String message = 'فشل تنفيذ الاستعلام'])
-      : super(message);
+  const DatabaseQueryException([super.message = 'فشل تنفيذ الاستعلام']);
 }
 
 // ========== استثناءات الشبكة ==========
@@ -57,20 +57,17 @@ class NetworkException extends AppException {
 
 /// استثناء عدم وجود اتصال بالإنترنت
 class NoInternetException extends NetworkException {
-  const NoInternetException([String message = 'لا يوجد اتصال بالإنترنت'])
-      : super(message);
+  const NoInternetException([super.message = 'لا يوجد اتصال بالإنترنت']);
 }
 
 /// استثناء انتهاء مهلة الاتصال
 class TimeoutException extends NetworkException {
-  const TimeoutException([String message = 'انتهت مهلة الاتصال'])
-      : super(message);
+  const TimeoutException([super.message = 'انتهت مهلة الاتصال']);
 }
 
 /// استثناء خطأ في الخادم
 class ServerException extends NetworkException {
-  const ServerException([String message = 'خطأ في الخادم'])
-      : super(message);
+  const ServerException([super.message = 'خطأ في الخادم']);
 }
 
 // ========== استثناءات Firebase ==========
@@ -85,17 +82,17 @@ class FirebaseException extends AppException {
 
 /// استثناء المصادقة
 class AuthException extends FirebaseException {
-  const AuthException(super.message, {super.code}) : super();
+  const AuthException(super.message, {super.code});
 }
 
 /// استثناء Firestore
 class FirestoreException extends FirebaseException {
-  const FirestoreException(super.message, {super.code}) : super();
+  const FirestoreException(super.message, {super.code});
 }
 
 /// استثناء Firebase Storage
 class StorageException extends FirebaseException {
-  const StorageException(super.message, {super.code}) : super();
+  const StorageException(super.message, {super.code});
 }
 
 // ========== استثناءات التخزين المحلي ==========
@@ -110,14 +107,14 @@ class CacheException extends AppException {
 
 /// استثناء عدم وجود بيانات مخزنة
 class CacheNotFoundException extends CacheException {
-  const CacheNotFoundException([String message = 'لا توجد بيانات مخزنة'])
-      : super(message);
+  const CacheNotFoundException([super.message = 'لا توجد بيانات مخزنة']);
 }
 
 /// استثناء انتهاء صلاحية البيانات المخزنة
 class CacheExpiredException extends CacheException {
-  const CacheExpiredException([String message = 'انتهت صلاحية البيانات المخزنة'])
-      : super(message);
+  const CacheExpiredException([
+    super.message = 'انتهت صلاحية البيانات المخزنة',
+  ]);
 }
 
 // ========== استثناءات التحقق من الصحة ==========
@@ -132,16 +129,15 @@ class ValidationException extends AppException {
 
 /// استثناء بيانات غير صالحة
 class InvalidDataException extends ValidationException {
-  const InvalidDataException([String message = 'البيانات غير صالحة'])
-      : super(message);
+  const InvalidDataException([super.message = 'البيانات غير صالحة']);
 }
 
 /// استثناء حقل مطلوب
 class RequiredFieldException extends ValidationException {
-  final String fieldName;
-  
   const RequiredFieldException(this.fieldName)
-      : super('الحقل "$fieldName" مطلوب');
+    : super('الحقل "$fieldName" مطلوب');
+
+  final String fieldName;
 }
 
 // ========== استثناءات الصلاحيات ==========
@@ -156,8 +152,7 @@ class PermissionException extends AppException {
 
 /// استثناء رفض الصلاحية
 class PermissionDeniedException extends PermissionException {
-  const PermissionDeniedException([String message = 'تم رفض الصلاحية'])
-      : super(message);
+  const PermissionDeniedException([super.message = 'تم رفض الصلاحية']);
 }
 
 // ========== استثناءات المزامنة ==========
@@ -172,32 +167,27 @@ class SyncException extends AppException {
 
 /// استثناء تعارض البيانات
 class ConflictException extends SyncException {
-  const ConflictException([String message = 'تعارض في البيانات'])
-      : super(message);
+  const ConflictException([super.message = 'تعارض في البيانات']);
 }
 
 /// استثناء فشل المزامنة
 class SyncFailedException extends SyncException {
-  const SyncFailedException([String message = 'فشلت عملية المزامنة'])
-      : super(message);
+  const SyncFailedException([super.message = 'فشلت عملية المزامنة']);
 }
 
 // ========== استثناءات عامة ==========
 
 /// استثناء غير متوقع
 class UnexpectedException extends AppException {
-  const UnexpectedException([String message = 'حدث خطأ غير متوقع'])
-      : super(message);
+  const UnexpectedException([super.message = 'حدث خطأ غير متوقع']);
 }
 
 /// استثناء غير مطبق
 class NotImplementedException extends AppException {
-  const NotImplementedException([String message = 'هذه الميزة غير مطبقة بعد'])
-      : super(message);
+  const NotImplementedException([super.message = 'هذه الميزة غير مطبقة بعد']);
 }
 
 /// استثناء عنصر غير موجود
 class NotFoundException extends AppException {
-  const NotFoundException([String message = 'العنصر غير موجود'])
-      : super(message);
+  const NotFoundException([super.message = 'العنصر غير موجود']);
 }

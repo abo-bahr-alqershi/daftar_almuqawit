@@ -55,7 +55,11 @@ class StatisticsLocalDataSource extends BaseLocalDataSource<DailyStatisticsModel
 
   Future<Map<String, dynamic>> getDailyStatistics(String date) async {
     final query = ReportQueries.dailyStatistics(date);
-    final results = await rawQuery(query, [date, date, date, date, date]);
+    // نمرر نفس التاريخ لكل الاستعلامات الفرعية داخل dailyStatistics
+    final results = await rawQuery(
+      query,
+      [date, date, date, date, date, date, date],
+    );
     
     if (results.isEmpty) {
       return {

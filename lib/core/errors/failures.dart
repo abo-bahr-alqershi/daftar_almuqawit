@@ -3,23 +3,26 @@
 /// يتم استخدامها في طبقة Domain والـ Presentation
 /// لتمثيل نتائج العمليات الفاشلة بشكل آمن
 sealed class Failure {
+  const Failure(this.message, {this.code});
+
   /// رسالة الفشل
   final String message;
   
   /// كود الخطأ (اختياري)
   final String? code;
 
-  const Failure(this.message, {this.code});
-
   @override
-  String toString() => 'Failure: $message${code != null ? ' (Code: $code)' : ''}';
+  String toString() =>
+      'Failure: $message${code != null ? ' (Code: $code)' : ''}';
   
   @override
   bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Failure && 
-           other.message == message && 
-           other.code == code;
+    if (identical(this, other)) {
+      return true;
+    }
+    return other is Failure &&
+        other.message == message &&
+        other.code == code;
   }
   
   @override

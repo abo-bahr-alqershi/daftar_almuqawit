@@ -998,13 +998,6 @@ class SaleFormState extends State<SaleForm> {
       if (paidAmount < 0) paidAmount = 0;
       if (paidAmount > total) paidAmount = total;
       final remaining = total - paidAmount;
-      final rawPaid = double.tryParse(_paidAmountController.text) ?? 0.0;
-
-      final total = (quantity * price) - discount;
-      double paidAmount = rawPaid;
-      if (paidAmount < 0) paidAmount = 0;
-      if (paidAmount > total) paidAmount = total;
-      final remaining = total - paidAmount;
 
       // التحقق من المخزون قبل البيع
       try {

@@ -165,14 +165,14 @@ class DatabaseConstants {
   /// التاريخ
   static const String columnSaleDate = 'date';
   
-  /// الإجمالي
-  static const String columnSaleTotal = 'total';
+  /// الإجمالي (يتوافق مع عمود total_amount في جدول المبيعات)
+  static const String columnSaleTotal = 'total_amount';
   
-  /// المدفوع
-  static const String columnSalePaid = 'paid';
+  /// المدفوع (يتوافق مع عمود paid_amount في جدول المبيعات)
+  static const String columnSalePaid = 'paid_amount';
   
-  /// المتبقي
-  static const String columnSaleRemaining = 'remaining';
+  /// المتبقي (يتوافق مع عمود remaining_amount في جدول المبيعات)
+  static const String columnSaleRemaining = 'remaining_amount';
   
   /// طريقة الدفع
   static const String columnSalePaymentMethod = 'payment_method';
@@ -191,14 +191,14 @@ class DatabaseConstants {
   /// التاريخ
   static const String columnPurchaseDate = 'date';
   
-  /// الإجمالي
-  static const String columnPurchaseTotal = 'total';
+  /// الإجمالي (يتوافق مع عمود total_amount في جدول المشتريات)
+  static const String columnPurchaseTotal = 'total_amount';
   
-  /// المدفوع
-  static const String columnPurchasePaid = 'paid';
+  /// المدفوع (يتوافق مع عمود paid_amount في جدول المشتريات)
+  static const String columnPurchasePaid = 'paid_amount';
   
-  /// المتبقي
-  static const String columnPurchaseRemaining = 'remaining';
+  /// المتبقي (يتوافق مع عمود remaining_amount في جدول المشتريات)
+  static const String columnPurchaseRemaining = 'remaining_amount';
   
   /// طريقة الدفع
   static const String columnPurchasePaymentMethod = 'payment_method';

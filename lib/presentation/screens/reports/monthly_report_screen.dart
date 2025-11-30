@@ -355,7 +355,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen>
     double totalPurchases = 0.0;
     double totalExpenses = 0.0;
 
-    final statistics = data['statistics'] as List<dynamic>? ?? [];
+    final rawStatistics = data['statistics'];
+    final List<dynamic> statistics = rawStatistics is List ? rawStatistics : const [];
 
     for (final stat in statistics) {
       totalSales += (stat['totalSales'] as num?)?.toDouble() ?? 0.0;
@@ -393,7 +394,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen>
     double totalExpenses = 0.0;
     double cashBalance = 0.0;
 
-    final statistics = data['statistics'] as List<dynamic>? ?? [];
+    final rawStatistics = data['statistics'];
+    final List<dynamic> statistics = rawStatistics is List ? rawStatistics : const [];
 
     for (final stat in statistics) {
       totalSales += (stat['totalSales'] as num?)?.toDouble() ?? 0.0;
@@ -484,7 +486,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen>
   }
 
   Widget _buildDailyPerformance(Map<String, dynamic> data) {
-    final statistics = data['statistics'] as List<dynamic>? ?? [];
+    final rawStatistics = data['statistics'];
+    final List<dynamic> statistics = rawStatistics is List ? rawStatistics : const [];
 
     if (statistics.isEmpty) return const SizedBox.shrink();
 
@@ -549,7 +552,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen>
     double totalPurchases = 0.0;
     double totalExpenses = 0.0;
 
-    final statistics = data['statistics'] as List<dynamic>? ?? [];
+    final rawStatistics = data['statistics'];
+    final List<dynamic> statistics = rawStatistics is List ? rawStatistics : const [];
 
     for (final stat in statistics) {
       totalSales += (stat['totalSales'] as num?)?.toDouble() ?? 0.0;

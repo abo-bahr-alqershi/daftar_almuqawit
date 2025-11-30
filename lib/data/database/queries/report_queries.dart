@@ -10,20 +10,55 @@ class ReportQueries {
   /// استعلام الإحصائيات اليومية
   static String dailyStatistics(String date) {
     return '''
-      SELECT 
-        COALESCE(SUM(CASE WHEN s.${DatabaseConstants.columnSaleStatus} = 'completed' THEN s.${DatabaseConstants.columnSaleTotal} ELSE 0 END), 0) as total_sales,
-        COALESCE(SUM(CASE WHEN s.${DatabaseConstants.columnSalePaymentMethod} = 'cash' THEN s.${DatabaseConstants.columnSalePaid} ELSE 0 END), 0) as cash_sales,
-        COALESCE(SUM(CASE WHEN s.${DatabaseConstants.columnSalePaymentMethod} = 'credit' THEN s.${DatabaseConstants.columnSaleRemaining} ELSE 0 END), 0) as credit_sales,
-        COALESCE(SUM(p.${DatabaseConstants.columnPurchaseTotal}), 0) as total_purchases,
-        COALESCE(SUM(e.${DatabaseConstants.columnExpenseAmount}), 0) as total_expenses,
-        COALESCE(SUM(d.${DatabaseConstants.columnDebtPaidAmount}), 0) as collected_debts,
-        COALESCE(SUM(CASE WHEN d.${DatabaseConstants.columnCreatedAt} = ? THEN d.${DatabaseConstants.columnDebtOriginalAmount} ELSE 0 END), 0) as new_debts
-      FROM ${DatabaseConstants.tableSales} s
-      LEFT JOIN ${DatabaseConstants.tablePurchases} p ON DATE(p.${DatabaseConstants.columnPurchaseDate}) = ?
-      LEFT JOIN ${DatabaseConstants.tableExpenses} e ON DATE(e.${DatabaseConstants.columnExpenseDate}) = ?
-      LEFT JOIN ${DatabaseConstants.tableDebts} d ON DATE(d.${DatabaseConstants.columnCreatedAt}) = ?
-      WHERE DATE(s.${DatabaseConstants.columnSaleDate}) = ?
-      AND s.${DatabaseConstants.columnIsDeleted} = 0
+      SELECT
+        -- إجمالي المبيعات لليوم المحدد
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnSaleTotal}), 0)
+          FROM ${DatabaseConstants.tableSales}
+          WHERE DATE(${DatabaseConstants.columnSaleDate}) = ?
+        ) as total_sales,
+
+        -- المبيعات النقدية
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnSalePaid}), 0)
+          FROM ${DatabaseConstants.tableSales}
+          WHERE DATE(${DatabaseConstants.columnSaleDate}) = ?
+        ) as cash_sales,
+
+        -- المبيعات الآجلة (الديون الجديدة من المبيعات)
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnSaleRemaining}), 0)
+          FROM ${DatabaseConstants.tableSales}
+          WHERE DATE(${DatabaseConstants.columnSaleDate}) = ?
+        ) as credit_sales,
+
+        -- إجمالي المشتريات لليوم المحدد
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnPurchaseTotal}), 0)
+          FROM ${DatabaseConstants.tablePurchases}
+          WHERE DATE(${DatabaseConstants.columnPurchaseDate}) = ?
+        ) as total_purchases,
+
+        -- إجمالي المصروفات لليوم المحدد
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnExpenseAmount}), 0)
+          FROM ${DatabaseConstants.tableExpenses}
+          WHERE DATE(${DatabaseConstants.columnExpenseDate}) = ?
+        ) as total_expenses,
+
+        -- إجمالي المبالغ المحصلة من الديون في هذا اليوم
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnDebtPaidAmount}), 0)
+          FROM ${DatabaseConstants.tableDebts}
+          WHERE DATE(date) = ?
+        ) as collected_debts,
+
+        -- إجمالي الديون الجديدة المنشأة في هذا اليوم
+        (
+          SELECT COALESCE(SUM(${DatabaseConstants.columnDebtOriginalAmount}), 0)
+          FROM ${DatabaseConstants.tableDebts}
+          WHERE DATE(date) = ?
+        ) as new_debts
     ''';
   }
 
@@ -39,7 +74,6 @@ class ReportQueries {
       FROM ${DatabaseConstants.tableSales}
       WHERE strftime('%Y', ${DatabaseConstants.columnSaleDate}) = ?
       AND strftime('%m', ${DatabaseConstants.columnSaleDate}) = ?
-      AND ${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY DATE(${DatabaseConstants.columnSaleDate})
       ORDER BY date DESC
     ''';
@@ -57,8 +91,6 @@ class ReportQueries {
         COALESCE(AVG(s.${DatabaseConstants.columnSaleTotal}), 0) as avg_purchase
       FROM ${DatabaseConstants.tableCustomers} c
       LEFT JOIN ${DatabaseConstants.tableSales} s ON c.${DatabaseConstants.columnId} = s.${DatabaseConstants.columnSaleCustomerId}
-      WHERE c.${DatabaseConstants.columnIsDeleted} = 0
-      AND s.${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY c.${DatabaseConstants.columnId}
       ORDER BY total_purchases DESC
       LIMIT $limit
@@ -76,7 +108,6 @@ class ReportQueries {
         COUNT(si.${DatabaseConstants.columnId}) as sales_count
       FROM ${DatabaseConstants.tableQatTypes} qt
       LEFT JOIN ${DatabaseConstants.tableSaleItems} si ON qt.${DatabaseConstants.columnId} = si.qat_type_id
-      WHERE qt.${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY qt.${DatabaseConstants.columnId}
       ORDER BY total_quantity DESC
       LIMIT $limit
@@ -98,7 +129,6 @@ class ReportQueries {
       LEFT JOIN ${DatabaseConstants.tablePurchases} p ON DATE(p.${DatabaseConstants.columnPurchaseDate}) = DATE(s.${DatabaseConstants.columnSaleDate})
       LEFT JOIN ${DatabaseConstants.tableExpenses} e ON DATE(e.${DatabaseConstants.columnExpenseDate}) = DATE(s.${DatabaseConstants.columnSaleDate})
       WHERE DATE(s.${DatabaseConstants.columnSaleDate}) BETWEEN ? AND ?
-      AND s.${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY DATE(s.${DatabaseConstants.columnSaleDate})
       ORDER BY date DESC
     ''';
@@ -119,7 +149,6 @@ class ReportQueries {
       INNER JOIN ${DatabaseConstants.tableCustomers} c ON d.${DatabaseConstants.columnDebtCustomerId} = c.${DatabaseConstants.columnId}
       WHERE d.${DatabaseConstants.columnDebtStatus} = 'pending'
       AND DATE(d.${DatabaseConstants.columnDebtDueDate}) < DATE('now')
-      AND d.${DatabaseConstants.columnIsDeleted} = 0
       ORDER BY days_overdue DESC
     ''';
   }
@@ -135,7 +164,6 @@ class ReportQueries {
         COALESCE(SUM(${DatabaseConstants.columnSaleRemaining}), 0) as remaining
       FROM ${DatabaseConstants.tableSales}
       WHERE DATE(${DatabaseConstants.columnSaleDate}) BETWEEN ? AND ?
-      AND ${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY ${DatabaseConstants.columnSalePaymentMethod}
     ''';
   }
@@ -150,7 +178,6 @@ class ReportQueries {
       FROM ${DatabaseConstants.tableExpenses} e
       INNER JOIN ${DatabaseConstants.tableExpenseCategories} ec ON e.${DatabaseConstants.columnExpenseCategoryId} = ec.${DatabaseConstants.columnId}
       WHERE DATE(e.${DatabaseConstants.columnExpenseDate}) BETWEEN ? AND ?
-      AND e.${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY ec.${DatabaseConstants.columnId}
       ORDER BY total DESC
     ''';
@@ -168,15 +195,12 @@ class ReportQueries {
         SELECT ${DatabaseConstants.columnSaleDate} as date, ${DatabaseConstants.columnSalePaid} as amount, 'in' as type
         FROM ${DatabaseConstants.tableSales}
         WHERE ${DatabaseConstants.columnSalePaymentMethod} = 'cash'
-        AND ${DatabaseConstants.columnIsDeleted} = 0
         UNION ALL
         SELECT ${DatabaseConstants.columnPurchaseDate} as date, ${DatabaseConstants.columnPurchasePaid} as amount, 'out' as type
         FROM ${DatabaseConstants.tablePurchases}
-        WHERE ${DatabaseConstants.columnIsDeleted} = 0
         UNION ALL
         SELECT ${DatabaseConstants.columnExpenseDate} as date, ${DatabaseConstants.columnExpenseAmount} as amount, 'out' as type
         FROM ${DatabaseConstants.tableExpenses}
-        WHERE ${DatabaseConstants.columnIsDeleted} = 0
       )
       WHERE DATE(date) BETWEEN ? AND ?
       GROUP BY DATE(date)
@@ -196,7 +220,6 @@ class ReportQueries {
       FROM ${DatabaseConstants.tableQatTypes} qt
       LEFT JOIN ${DatabaseConstants.tablePurchaseItems} pi ON qt.${DatabaseConstants.columnId} = pi.qat_type_id
       LEFT JOIN ${DatabaseConstants.tableSaleItems} si ON qt.${DatabaseConstants.columnId} = si.qat_type_id
-      WHERE qt.${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY qt.${DatabaseConstants.columnId}
       ORDER BY qt.${DatabaseConstants.columnQatTypeName}
     ''';
@@ -215,8 +238,6 @@ class ReportQueries {
       FROM ${DatabaseConstants.tableSuppliers} s
       LEFT JOIN ${DatabaseConstants.tablePurchases} p ON s.${DatabaseConstants.columnId} = p.${DatabaseConstants.columnPurchaseSupplierId}
       WHERE DATE(p.${DatabaseConstants.columnPurchaseDate}) BETWEEN ? AND ?
-      AND s.${DatabaseConstants.columnIsDeleted} = 0
-      AND p.${DatabaseConstants.columnIsDeleted} = 0
       GROUP BY s.${DatabaseConstants.columnId}
       ORDER BY total_purchases DESC
     ''';

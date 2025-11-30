@@ -2,6 +2,7 @@
 /// ويدجت لعرض المخططات البيانية في التقارير
 library;
 
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -119,14 +120,26 @@ class ChartWidget extends StatelessWidget {
 
   /// بناء مخطط خطي
   Widget _buildLineChart() {
-    // TODO: تكامل مع مكتبة fl_chart
-    return Center(
-      child: Text(
-        'مخطط خطي (قيد التطوير)',
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
-        ),
-      ),
+    if (data.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // تحضير الألوان لكل نقطة كما في المخطط الشريطي ومفتاح المخطط
+    final colors = data.asMap().entries
+        .map((entry) => entry.value.color ?? _getColorForIndex(entry.key))
+        .toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomPaint(
+          size: Size(constraints.maxWidth, constraints.maxHeight),
+          painter: _LineChartPainter(
+            points: data,
+            colors: colors,
+            primaryColor: primaryColor,
+          ),
+        );
+      },
     );
   }
 
@@ -216,14 +229,39 @@ class ChartWidget extends StatelessWidget {
 
   /// بناء مخطط دائري
   Widget _buildPieChart() {
-    // TODO: تكامل مع مكتبة fl_chart
-    return Center(
-      child: Text(
-        'مخطط دائري (قيد التطوير)',
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
+    if (data.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final total = data.fold<double>(0, (sum, d) => sum + d.value);
+    if (total <= 0 || total.isNaN || total.isInfinite) {
+      return Center(
+        child: Text(
+          'بيانات غير صالحة',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
-      ),
+      );
+    }
+
+    final colors = data.asMap().entries
+        .map((entry) => entry.value.color ?? _getColorForIndex(entry.key))
+        .toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = math.min(constraints.maxWidth, constraints.maxHeight);
+        return Center(
+          child: CustomPaint(
+            size: Size(size, size),
+            painter: _PieChartPainter(
+              points: data,
+              colors: colors,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -272,3 +310,140 @@ class ChartWidget extends StatelessWidget {
     return colors[index % colors.length];
   }
 }
+
+/// رسام المخطط الخطي
+class _LineChartPainter extends CustomPainter {
+  _LineChartPainter({
+    required this.points,
+    required this.colors,
+    required this.primaryColor,
+  });
+
+  final List<ChartDataPoint> points;
+  final List<Color> colors;
+  final Color primaryColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+
+    final maxValue = points.map((p) => p.value).reduce((a, b) => a > b ? a : b);
+    final minValue = points.map((p) => p.value).reduce((a, b) => a < b ? a : b);
+
+    final valueRange = (maxValue - minValue).abs() < 1e-6
+        ? (maxValue == 0 ? 1.0 : maxValue)
+        : maxValue - minValue;
+
+    final padding = 16.0;
+    final chartWidth = size.width - padding * 2;
+    final chartHeight = size.height - padding * 2;
+
+    if (chartWidth <= 0 || chartHeight <= 0) return;
+
+    final dx = points.length > 1 ? chartWidth / (points.length - 1) : 0.0;
+
+    final path = Path();
+    final pointsOffset = <Offset>[];
+
+    for (var i = 0; i < points.length; i++) {
+      final normalized = (points[i].value - minValue) / valueRange;
+      final x = padding + dx * i;
+      final y = padding + chartHeight * (1 - normalized);
+      final point = Offset(x, y);
+      pointsOffset.add(point);
+
+      if (i == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+    }
+
+    // تظليل أسفل الخط لزيادة وضوح المخطط
+    final fillPath = Path.from(path)
+      ..lineTo(pointsOffset.last.dx, padding + chartHeight)
+      ..lineTo(pointsOffset.first.dx, padding + chartHeight)
+      ..close();
+
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [primaryColor.withOpacity(0.25), primaryColor.withOpacity(0.02)],
+      ).createShader(Rect.fromLTWH(padding, padding, chartWidth, chartHeight));
+
+    canvas.drawPath(fillPath, fillPaint);
+
+    // رسم الخط
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..color = primaryColor;
+
+    canvas.drawPath(path, linePaint);
+
+    // رسم النقاط
+    for (var i = 0; i < pointsOffset.length; i++) {
+      final point = pointsOffset[i];
+      final color = colors[i % colors.length];
+
+      final outerPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+      final innerPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(point, 4, outerPaint);
+      canvas.drawCircle(point, 3, innerPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
+      oldDelegate.points != points ||
+      oldDelegate.colors != colors ||
+      oldDelegate.primaryColor != primaryColor;
+}
+
+/// رسام المخطط الدائري
+class _PieChartPainter extends CustomPainter {
+  _PieChartPainter({
+    required this.points,
+    required this.colors,
+  });
+
+  final List<ChartDataPoint> points;
+  final List<Color> colors;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+
+    final total = points.fold<double>(0, (sum, p) => sum + p.value);
+    if (total <= 0 || total.isNaN || total.isInfinite) return;
+
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final startAngleBase = -math.pi / 2; // نبدأ من الأعلى
+    var startAngle = startAngleBase;
+
+    for (var i = 0; i < points.length; i++) {
+      final value = points[i].value;
+      if (value <= 0) continue;
+
+      final sweepAngle = (value / total) * 2 * math.pi;
+      final paint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = colors[i % colors.length];
+
+      canvas.drawArc(rect, startAngle, sweepAngle, true, paint);
+      startAngle += sweepAngle;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PieChartPainter oldDelegate) =>
+      oldDelegate.points != points || oldDelegate.colors != colors;
+}
+

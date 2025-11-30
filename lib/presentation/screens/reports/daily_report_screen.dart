@@ -9,7 +9,6 @@ import '../../blocs/statistics/reports_bloc.dart';
 import '../../blocs/statistics/reports_event.dart';
 import '../../blocs/statistics/reports_state.dart';
 import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart' as custom_error;
 import 'widgets/profit_card.dart';
 import 'widgets/chart_widget.dart';
 import 'widgets/export_options.dart';
@@ -104,7 +103,15 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                           if (state is ReportsLoading) {
                             return _buildShimmerLoading();
                           }
+
                           if (state is ReportsLoaded) {
+                            final type = state.reportData['type'] as String?;
+
+                            // نتأكد أن نوع التقرير هو "يومي" قبل محاولة قراءة الحقول الخاصة به
+                            if (type != 'daily') {
+                              return _buildShimmerLoading();
+                            }
+
                             return Column(
                               children: [
                                 _buildDateSelector(),
@@ -118,6 +125,7 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                               ],
                             );
                           }
+
                           return _buildEmptyState();
                         },
                       ),
@@ -252,7 +260,7 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                                 fontSize: 24,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               'تحليل شامل لليوم',
                               style: AppTextStyles.bodySmall.copyWith(
@@ -581,9 +589,10 @@ class _DailyReportScreenState extends State<DailyReportScreen>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: 2,
-                mainAxisSpacing: 12,
+                mainAxisSpacing: 10,
                 crossAxisSpacing: 12,
-                childAspectRatio: 1.7,
+                // تقليل نسبة العرض إلى الارتفاع لزيادة الارتفاع المتاح وتفادي الـ overflow البسيط
+                childAspectRatio: 1.4,
                 children: [
                   _buildStatItem(
                     icon: Icons.trending_up_rounded,
@@ -745,21 +754,31 @@ class _DailyReportScreenState extends State<DailyReportScreen>
   Widget _buildCharts(Map<String, dynamic> data) {
     final stats = data['statistics'] as Map<String, dynamic>? ?? {};
 
+    final totalSales = (stats['totalSales'] as num?)?.toDouble() ?? 0.0;
+    final cashSales = (stats['cashSales'] as num?)?.toDouble() ?? 0.0;
+    final creditSales = (stats['creditSales'] as num?)?.toDouble() ?? 0.0;
+    final netProfit = (stats['netProfit'] as num?)?.toDouble() ?? 0.0;
+
     final chartData = [
       ChartDataPoint(
-        label: 'المبيعات',
-        value: (stats['totalSales'] as num?)?.toDouble() ?? 0.0,
+        label: 'إجمالي المبيعات',
+        value: totalSales,
         color: AppColors.sales,
       ),
       ChartDataPoint(
-        label: 'المشتريات',
-        value: (stats['totalPurchases'] as num?)?.toDouble() ?? 0.0,
-        color: AppColors.purchases,
+        label: 'مبيعات نقدية',
+        value: cashSales,
+        color: AppColors.success,
       ),
       ChartDataPoint(
-        label: 'المصروفات',
-        value: (stats['totalExpenses'] as num?)?.toDouble() ?? 0.0,
-        color: AppColors.expense,
+        label: 'مبيعات آجلة',
+        value: creditSales,
+        color: AppColors.debt,
+      ),
+      ChartDataPoint(
+        label: 'صافي الربح',
+        value: netProfit,
+        color: AppColors.info,
       ),
     ];
 
@@ -773,7 +792,7 @@ class _DailyReportScreenState extends State<DailyReportScreen>
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
         child: ChartWidget(
-          title: 'نظرة عامة على المعاملات',
+          title: 'تفصيل المبيعات اليومية',
           chartType: ChartType.bar,
           data: chartData,
         ),
