@@ -676,7 +676,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen>
   }
 
   Widget _buildPaymentMethodSelector() {
-    final methods = ['نقدي', 'آجل', 'تحويل', 'بطاقة'];
+    final methods = ['نقدي', 'آجل', 'تحويل', 'محفظة إلكترونية'];
 
     return Container(
       key: _paymentMethodKey,

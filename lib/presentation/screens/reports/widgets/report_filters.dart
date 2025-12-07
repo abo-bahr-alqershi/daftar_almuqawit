@@ -1,45 +1,25 @@
-/// فلاتر التقرير
-/// ويدجت لفلترة بيانات التقرير
-
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:flutter/services.dart';
 
-/// نوع الفلتر
 enum FilterType {
-  /// الكل
   all,
-  
-  /// المبيعات
   sales,
-  
-  /// المشتريات
   purchases,
-  
-  /// المصروفات
   expenses,
-  
-  /// الديون
   debts,
 }
 
-/// فلاتر التقرير
 class ReportFilters extends StatefulWidget {
-  /// الفلتر المحدد حالياً
-  final FilterType selectedFilter;
-  
-  /// دالة عند تغيير الفلتر
-  final Function(FilterType filter) onFilterChanged;
-  
-  /// هل يعرض كقائمة أفقية
-  final bool horizontal;
-
   const ReportFilters({
     super.key,
     required this.selectedFilter,
     required this.onFilterChanged,
     this.horizontal = true,
   });
+
+  final FilterType selectedFilter;
+  final Function(FilterType filter) onFilterChanged;
+  final bool horizontal;
 
   @override
   State<ReportFilters> createState() => _ReportFiltersState();
@@ -52,42 +32,47 @@ class _ReportFiltersState extends State<ReportFilters> {
       _FilterOption(
         type: FilterType.all,
         label: 'الكل',
-        icon: Icons.dashboard,
+        icon: Icons.dashboard_rounded,
+        color: const Color(0xFF6366F1),
       ),
       _FilterOption(
         type: FilterType.sales,
         label: 'المبيعات',
-        icon: Icons.trending_up,
+        icon: Icons.trending_up_rounded,
+        color: const Color(0xFF10B981),
       ),
       _FilterOption(
         type: FilterType.purchases,
         label: 'المشتريات',
-        icon: Icons.shopping_cart,
+        icon: Icons.shopping_cart_rounded,
+        color: const Color(0xFFF59E0B),
       ),
       _FilterOption(
         type: FilterType.expenses,
         label: 'المصروفات',
-        icon: Icons.payment,
+        icon: Icons.payment_rounded,
+        color: const Color(0xFFEF4444),
       ),
       _FilterOption(
         type: FilterType.debts,
         label: 'الديون',
-        icon: Icons.account_balance_wallet,
+        icon: Icons.account_balance_wallet_rounded,
+        color: const Color(0xFF3B82F6),
       ),
     ];
 
     if (widget.horizontal) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
-          children: filters.map((filter) {
+          children: filters.asMap().entries.map((entry) {
             return Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: EdgeInsets.only(left: entry.key < filters.length - 1 ? 10 : 0),
               child: _FilterChip(
-                option: filter,
-                isSelected: widget.selectedFilter == filter.type,
-                onTap: () => widget.onFilterChanged(filter.type),
+                option: entry.value,
+                isSelected: widget.selectedFilter == entry.value.type,
+                onTap: () => widget.onFilterChanged(entry.value.type),
               ),
             );
           }).toList(),
@@ -96,8 +81,8 @@ class _ReportFiltersState extends State<ReportFilters> {
     }
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 10,
+      runSpacing: 10,
       children: filters.map((filter) {
         return _FilterChip(
           option: filter,
@@ -109,101 +94,92 @@ class _ReportFiltersState extends State<ReportFilters> {
   }
 }
 
-/// خيار الفلتر
 class _FilterOption {
-  final FilterType type;
-  final String label;
-  final IconData icon;
-
   const _FilterOption({
     required this.type,
     required this.label,
     required this.icon,
+    required this.color,
   });
+
+  final FilterType type;
+  final String label;
+  final IconData icon;
+  final Color color;
 }
 
-/// شريحة الفلتر
 class _FilterChip extends StatelessWidget {
-  final _FilterOption option;
-  final bool isSelected;
-  final VoidCallback onTap;
-
   const _FilterChip({
     required this.option,
     required this.isSelected,
     required this.onTap,
   });
 
+  final _FilterOption option;
+  final bool isSelected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.border,
-            width: 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [option.color, option.color.withOpacity(0.8)],
+                  )
+                : null,
+            color: isSelected ? null : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? option.color : const Color(0xFFE5E7EB),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: option.color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+            ],
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              option.icon,
-              size: 18,
-              color: isSelected
-                  ? AppColors.textOnDark
-                  : AppColors.textSecondary,
-            ),
-            
-            const SizedBox(width: 8),
-            
-            Text(
-              option.label,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: isSelected
-                    ? AppColors.textOnDark
-                    : AppColors.textPrimary,
-                fontWeight: isSelected
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                option.icon,
+                size: 18,
+                color: isSelected ? Colors.white : option.color,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                option.label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : const Color(0xFF1F2937),
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// ترتيب التقرير
 class ReportSorting extends StatelessWidget {
-  /// خيارات الترتيب
-  final List<String> sortOptions;
-  
-  /// الترتيب المحدد
-  final String selectedSort;
-  
-  /// دالة عند تغيير الترتيب
-  final Function(String sort) onSortChanged;
-  
-  /// هل الترتيب تصاعدي
-  final bool isAscending;
-  
-  /// دالة عند تغيير اتجاه الترتيب
-  final Function(bool ascending) onDirectionChanged;
-
   const ReportSorting({
     super.key,
     required this.sortOptions,
@@ -213,56 +189,84 @@ class ReportSorting extends StatelessWidget {
     required this.onDirectionChanged,
   });
 
+  final List<String> sortOptions;
+  final String selectedSort;
+  final Function(String sort) onSortChanged;
+  final bool isAscending;
+  final Function(bool ascending) onDirectionChanged;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.border,
-                width: 1,
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: DropdownButton<String>(
               value: selectedSort,
               isExpanded: true,
               underline: const SizedBox.shrink(),
-              icon: const Icon(Icons.arrow_drop_down),
+              icon: const Icon(
+                Icons.arrow_drop_down_rounded,
+                color: Color(0xFF6B7280),
+              ),
               items: sortOptions.map((option) {
                 return DropdownMenuItem<String>(
                   value: option,
                   child: Text(
                     option,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 );
               }).toList(),
               onChanged: (value) {
                 if (value != null) {
+                  HapticFeedback.selectionClick();
                   onSortChanged(value);
                 }
               },
             ),
           ),
         ),
-        
-        const SizedBox(width: 8),
-        
-        IconButton(
-          icon: Icon(
-            isAscending
-                ? Icons.arrow_upward
-                : Icons.arrow_downward,
+        const SizedBox(width: 12),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onDirectionChanged(!isAscending);
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isAscending
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
+                color: const Color(0xFF6366F1),
+                size: 20,
+              ),
+            ),
           ),
-          color: AppColors.textPrimary,
-          onPressed: () => onDirectionChanged(!isAscending),
         ),
       ],
     );

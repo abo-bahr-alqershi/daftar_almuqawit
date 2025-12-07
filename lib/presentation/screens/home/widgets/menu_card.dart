@@ -14,6 +14,7 @@ class MenuCard extends StatefulWidget {
     this.subtitle,
     this.isNew = false,
     this.isPremium = false,
+    this.isDisabled = false,
   });
   final String title;
   final IconData icon;
@@ -23,6 +24,7 @@ class MenuCard extends StatefulWidget {
   final String? subtitle;
   final bool isNew;
   final bool isPremium;
+  final bool isDisabled;
 
   @override
   State<MenuCard> createState() => _MenuCardState();
@@ -59,6 +61,7 @@ class _MenuCardState extends State<MenuCard>
   }
 
   void _handleTapDown(TapDownDetails details) {
+    if (widget.isDisabled) return;
     HapticFeedback.lightImpact();
     setState(() {
       _isPressed = true;
@@ -67,6 +70,7 @@ class _MenuCardState extends State<MenuCard>
   }
 
   void _handleTapUp(TapUpDetails details) {
+    if (widget.isDisabled) return;
     setState(() {
       _isPressed = false;
     });
@@ -74,6 +78,7 @@ class _MenuCardState extends State<MenuCard>
   }
 
   void _handleTapCancel() {
+    if (widget.isDisabled) return;
     setState(() {
       _isPressed = false;
     });
@@ -81,223 +86,249 @@ class _MenuCardState extends State<MenuCard>
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _animationController,
-    builder: (context, child) => Transform.rotate(
-      angle: _rotationAnimation.value,
-      child: Transform.scale(
-        scale: _scaleAnimation.value,
-        child: GestureDetector(
-          onTapDown: _handleTapDown,
-          onTapUp: _handleTapUp,
-          onTapCancel: _handleTapCancel,
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            Future.delayed(const Duration(milliseconds: 100), () {
-              widget.onTap();
-            });
-          },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Main Card Container
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.surface,
-                        AppColors.surface.withOpacity(0.95),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: _isPressed
-                          ? widget.color.withOpacity(0.3)
-                          : AppColors.border.withOpacity(0.1),
-                      width: _isPressed ? 2 : 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.color.withOpacity(_isPressed ? 0.2 : 0.1),
-                        blurRadius: _isPressed ? 20 : 15,
-                        offset: Offset(0, _isPressed ? 8 : 6),
-                        spreadRadius: _isPressed ? 2 : 0,
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) => Transform.rotate(
+        angle: _rotationAnimation.value,
+        child: Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Opacity(
+            opacity: widget.isDisabled ? 0.5 : 1.0,
+            child: GestureDetector(
+              onTapDown: widget.isDisabled ? null : _handleTapDown,
+              onTapUp: widget.isDisabled ? null : _handleTapUp,
+              onTapCancel: widget.isDisabled ? null : _handleTapCancel,
+              onTap: widget.isDisabled ? null : () {
+                HapticFeedback.mediumImpact();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  widget.onTap();
+                });
+              },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Main Card Container
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.surface,
+                            AppColors.surface.withOpacity(0.95),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: _isPressed
+                              ? widget.color.withOpacity(0.3)
+                              : AppColors.border.withOpacity(0.1),
+                          width: _isPressed ? 2 : 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.color.withOpacity(_isPressed ? 0.2 : 0.1),
+                            blurRadius: _isPressed ? 20 : 15,
+                            offset: Offset(0, _isPressed ? 8 : 6),
+                            spreadRadius: _isPressed ? 2 : 0,
+                          ),
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.5),
+                            blurRadius: 10,
+                            offset: const Offset(-2, -2),
+                          ),
+                        ],
                       ),
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.5),
-                        blurRadius: 10,
-                        offset: const Offset(-2, -2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Gradient Overlay
-                        Positioned(
-                          top: -50,
-                          right: -50,
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              gradient: RadialGradient(
-                                colors: [
-                                  widget.color.withOpacity(0.1),
-                                  Colors.transparent,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Gradient Overlay
+                            Positioned(
+                              top: -50,
+                              right: -50,
+                              child: Container(
+                                width: 150,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      widget.color.withOpacity(0.1),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+
+                            // Content
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Icon Container with Animation
+                                  Hero(
+                                    tag: 'menu-icon-${widget.title}',
+                                    child: Container(
+                                      width: 56,
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            widget.color.withOpacity(0.2),
+                                            widget.color.withOpacity(0.05),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: widget.color.withOpacity(0.2),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Icon(
+                                            widget.icon,
+                                            size: 28,
+                                            color: widget.color,
+                                          ),
+                                          if (widget.isPremium)
+                                            Positioned(
+                                              top: 4,
+                                              right: 4,
+                                              child: Container(
+                                                width: 14,
+                                                height: 14,
+                                                decoration: const BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      Colors.amber,
+                                                      Colors.orange,
+                                                    ],
+                                                  ),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.star_rounded,
+                                                  size: 9,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // Title
+                                  Text(
+                                    widget.title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                      letterSpacing: -0.5,
+                                      height: 1.2,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+
+                                  // Subtitle if exists
+                                  if (widget.subtitle != null) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      widget.subtitle!,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: AppColors.textHint,
+                                        letterSpacing: -0.3,
+                                        height: 1.1,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ],
                               ),
-                              shape: BoxShape.circle,
                             ),
-                          ),
-                        ),
 
-                        // Content
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Icon Container with Animation
-                              Hero(
-                                tag: 'menu-icon-${widget.title}',
+                            // Ripple Effect Indicator
+                            if (_isPressed)
+                              Positioned.fill(
                                 child: Container(
-                                  width: 56,
-                                  height: 56,
                                   decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
+                                    borderRadius: BorderRadius.circular(24),
+                                    gradient: RadialGradient(
                                       colors: [
-                                        widget.color.withOpacity(0.2),
-                                        widget.color.withOpacity(0.05),
+                                        widget.color.withOpacity(0.1),
+                                        Colors.transparent,
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: widget.color.withOpacity(0.2),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Icon(
-                                        widget.icon,
-                                        size: 28,
-                                        color: widget.color,
-                                      ),
-                                      if (widget.isPremium)
-                                        Positioned(
-                                          top: 4,
-                                          right: 4,
-                                          child: Container(
-                                            width: 14,
-                                            height: 14,
-                                            decoration: const BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: [
-                                                  Colors.amber,
-                                                  Colors.orange,
-                                                ],
-                                              ),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.star_rounded,
-                                              size: 9,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-
-                              // Title
-                              Text(
-                                widget.title,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                  letterSpacing: -0.5,
-                                  height: 1.2,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-
-                              // Subtitle if exists
-                              if (widget.subtitle != null) ...[
-                                const SizedBox(height: 3),
-                                Text(
-                                  widget.subtitle!,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.textHint,
-                                    letterSpacing: -0.3,
-                                    height: 1.1,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ],
-                          ),
+                              )
+                            else
+                              const SizedBox.shrink(),
+                          ],
                         ),
-
-                        // Ripple Effect Indicator
-                        if (_isPressed)
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                gradient: RadialGradient(
-                                  colors: [
-                                    widget.color.withOpacity(0.1),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          const SizedBox.shrink(),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  // Badges
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8),
+                      child: widget.badge != null || widget.isNew
+                          ? _buildBadge()
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                  // شارة "قريباً" للعناصر المعطلة
+                  if (widget.isDisabled)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade600,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'قريباً',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              // Badges
-              Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 8),
-                  child: widget.badge != null || widget.isNew
-                      ? _buildBadge()
-                      : const SizedBox.shrink(),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _buildBadge() {
     if (widget.isNew) {

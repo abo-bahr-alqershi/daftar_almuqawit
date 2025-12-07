@@ -91,7 +91,7 @@ class _ProductsReportScreenState extends State<ProductsReportScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'فشل تحميل تقرير المنتجات: ${e.toString()}';
+        _errorMessage = 'فشل تحميل تقرير انواع القات: ${e.toString()}';
       });
     } finally {
       setState(() {
@@ -148,7 +148,7 @@ class _ProductsReportScreenState extends State<ProductsReportScreen> {
             },
           ),
           title: Text(
-            'تقرير المنتجات',
+            'تقرير انواع القات',
             style: AppTextStyles.headlineSmall.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -359,7 +359,10 @@ class _ProductsReportScreenState extends State<ProductsReportScreen> {
     final sortedByAmount = [..._bestSellers]
       ..sort((a, b) => a.totalAmount.compareTo(b.totalAmount));
 
-    final worst = sortedByAmount.take(10).where((p) => p.totalAmount > 0).toList();
+    final worst = sortedByAmount
+        .take(10)
+        .where((p) => p.totalAmount > 0)
+        .toList();
     if (worst.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -379,69 +382,69 @@ class _ProductsReportScreenState extends State<ProductsReportScreen> {
   }
 
   Widget _buildError() => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.danger.withOpacity(0.06),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'حدث خطأ',
+          style: AppTextStyles.bodyLarge.copyWith(
+            color: AppColors.danger,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'حدث خطأ',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.danger,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _errorMessage ?? 'تعذر تحميل بيانات التقرير.',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _loadData,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('إعادة المحاولة'),
-              ),
-            ),
-          ],
+        const SizedBox(height: 4),
+        Text(
+          _errorMessage ?? 'تعذر تحميل بيانات التقرير.',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
-      );
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _loadData,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('إعادة المحاولة'),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildEmptyState() => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border.withOpacity(0.15)),
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: AppColors.border.withOpacity(0.15)),
+    ),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.info_outline_rounded,
+          color: AppColors.textHint,
+          size: 32,
         ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              color: AppColors.textHint,
-              size: 32,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'لا توجد بيانات منتجات في هذه الفترة.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        const SizedBox(height: 8),
+        Text(
+          'لا توجد بيانات منتجات في هذه الفترة.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _ProductItem {

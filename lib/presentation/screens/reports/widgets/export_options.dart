@@ -1,41 +1,23 @@
-/// خيارات التصدير
-/// ويدجت لعرض خيارات تصدير التقرير
-
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:flutter/services.dart';
 
-/// نوع التصدير
 enum ExportType {
-  /// PDF
   pdf,
-  
-  /// Excel
   excel,
-  
-  /// صورة
   image,
-  
-  /// طباعة
   print,
-  
-  /// مشاركة
   share,
 }
 
-/// خيارات التصدير
 class ExportOptions extends StatelessWidget {
-  /// دالة عند اختيار نوع التصدير
-  final Function(ExportType type) onExport;
-  
-  /// هل يعرض كأيقونات فقط
-  final bool iconsOnly;
-
   const ExportOptions({
     super.key,
     required this.onExport,
     this.iconsOnly = false,
   });
+
+  final Function(ExportType type) onExport;
+  final bool iconsOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -44,16 +26,16 @@ class ExportOptions extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _ExportIconButton(
-            icon: Icons.print,
+            icon: Icons.print_rounded,
             tooltip: 'طباعة',
+            color: const Color(0xFF6B7280),
             onTap: () => onExport(ExportType.print),
           ),
-          
           const SizedBox(width: 8),
-          
           _ExportIconButton(
-            icon: Icons.share,
+            icon: Icons.ios_share_rounded,
             tooltip: 'مشاركة',
+            color: const Color(0xFF6366F1),
             onTap: () => onExport(ExportType.share),
           ),
         ],
@@ -63,52 +45,47 @@ class ExportOptions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        const Text(
           'خيارات التصدير',
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
+            color: Color(0xFF1F2937),
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
             _ExportCard(
-              icon: Icons.picture_as_pdf,
+              icon: Icons.picture_as_pdf_rounded,
               label: 'PDF',
-              color: AppColors.danger,
+              color: const Color(0xFFEF4444),
               onTap: () => onExport(ExportType.pdf),
             ),
-            
             _ExportCard(
-              icon: Icons.table_chart,
+              icon: Icons.table_chart_rounded,
               label: 'Excel',
-              color: AppColors.success,
+              color: const Color(0xFF10B981),
               onTap: () => onExport(ExportType.excel),
             ),
-            
             _ExportCard(
-              icon: Icons.image,
+              icon: Icons.image_rounded,
               label: 'صورة',
-              color: AppColors.info,
+              color: const Color(0xFF3B82F6),
               onTap: () => onExport(ExportType.image),
             ),
-            
             _ExportCard(
-              icon: Icons.print,
+              icon: Icons.print_rounded,
               label: 'طباعة',
-              color: AppColors.textSecondary,
+              color: const Color(0xFF6B7280),
               onTap: () => onExport(ExportType.print),
             ),
-            
             _ExportCard(
-              icon: Icons.share,
+              icon: Icons.ios_share_rounded,
               label: 'مشاركة',
-              color: AppColors.primary,
+              color: const Color(0xFF6366F1),
               onTap: () => onExport(ExportType.share),
             ),
           ],
@@ -118,13 +95,7 @@ class ExportOptions extends StatelessWidget {
   }
 }
 
-/// بطاقة التصدير
 class _ExportCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
   const _ExportCard({
     required this.icon,
     required this.label,
@@ -132,74 +103,114 @@ class _ExportCard extends StatelessWidget {
     required this.onTap,
   });
 
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 100,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.border,
-            width: 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 100,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+          child: Column(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color.withOpacity(0.15),
+                      color.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 26,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF1F2937),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            
-            const SizedBox(height: 8),
-            
-            Text(
-              label,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// زر أيقونة التصدير
 class _ExportIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
   const _ExportIconButton({
     required this.icon,
     required this.tooltip,
+    required this.color,
     required this.onTap,
   });
 
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon),
-      color: AppColors.textPrimary,
-      tooltip: tooltip,
-      onPressed: onTap,
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

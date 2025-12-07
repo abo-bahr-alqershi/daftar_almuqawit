@@ -58,8 +58,9 @@ class ExpenseFormState extends State<ExpenseForm> {
 
   final List<Map<String, dynamic>> _paymentMethods = [
     {'name': 'نقد', 'icon': Icons.payments_rounded},
-    {'name': 'محفظة', 'icon': Icons.account_balance_wallet_rounded},
+    {'name': 'اجل', 'icon': Icons.schedule_rounded},
     {'name': 'حوالة', 'icon': Icons.swap_horiz_rounded},
+    {'name': 'محفظة', 'icon': Icons.account_balance_wallet_rounded},
   ];
 
   @override

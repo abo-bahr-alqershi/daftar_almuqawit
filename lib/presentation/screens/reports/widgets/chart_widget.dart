@@ -1,109 +1,143 @@
-/// ويدجت المخطط البياني
-/// ويدجت لعرض المخططات البيانية في التقارير
-library;
-
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// نوع المخطط
 enum ChartType {
-  /// مخطط خطي
   line,
-
-  /// مخطط شريطي
   bar,
-
-  /// مخطط دائري
   pie,
 }
 
-/// بيانات نقطة في المخطط
 class ChartDataPoint {
-  const ChartDataPoint({required this.label, required this.value, this.color});
+  const ChartDataPoint({
+    required this.label,
+    required this.value,
+    this.color,
+  });
 
-  /// التسمية
   final String label;
-
-  /// القيمة
   final double value;
-
-  /// اللون (اختياري)
   final Color? color;
 }
 
-/// ويدجت المخطط البياني
 class ChartWidget extends StatelessWidget {
   const ChartWidget({
     required this.title,
     required this.chartType,
     required this.data,
     super.key,
-    this.height = 250,
-    this.primaryColor = AppColors.primary,
+    this.height = 280,
+    this.primaryColor = const Color(0xFF6366F1),
   });
 
-  /// عنوان المخطط
   final String title;
-
-  /// نوع المخطط
   final ChartType chartType;
-
-  /// بيانات المخطط
   final List<ChartDataPoint> data;
-
-  /// ارتفاع المخطط
   final double height;
-
-  /// لون أساسي للمخطط
   final Color primaryColor;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // عنوان المخطط
-        Text(
-          title,
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.1),
+                      primaryColor.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _getIconForChartType(),
+                  color: primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF1F2937),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: height,
+            child: _buildChart(),
+          ),
+          if (data.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildLegend(),
+          ],
+        ],
+      ),
+    );
+  }
 
-        const SizedBox(height: 20),
+  IconData _getIconForChartType() {
+    switch (chartType) {
+      case ChartType.line:
+        return Icons.show_chart_rounded;
+      case ChartType.bar:
+        return Icons.bar_chart_rounded;
+      case ChartType.pie:
+        return Icons.pie_chart_rounded;
+    }
+  }
 
-        // المخطط
-        SizedBox(height: height, child: _buildChart()),
-
-        const SizedBox(height: 16),
-
-        // مفتاح المخطط
-        _buildLegend(),
-      ],
-    ),
-  );
-
-  /// بناء المخطط حسب النوع
   Widget _buildChart() {
     if (data.isEmpty) {
-      return SizedBox(
-        height: height,
-        child: Center(
-          child: Text(
-            'لا توجد بيانات لعرضها',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.analytics_outlined,
+                color: const Color(0xFF9CA3AF),
+                size: 32,
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+            Text(
+              'لا توجد بيانات لعرضها',
+              style: TextStyle(
+                color: const Color(0xFF6B7280),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -118,14 +152,10 @@ class ChartWidget extends StatelessWidget {
     }
   }
 
-  /// بناء مخطط خطي
   Widget _buildLineChart() {
-    if (data.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    // تحضير الألوان لكل نقطة كما في المخطط الشريطي ومفتاح المخطط
-    final colors = data.asMap().entries
+    final colors = data
+        .asMap()
+        .entries
         .map((entry) => entry.value.color ?? _getColorForIndex(entry.key))
         .toList();
 
@@ -143,25 +173,22 @@ class ChartWidget extends StatelessWidget {
     );
   }
 
-  /// بناء مخطط شريطي
   Widget _buildBarChart() {
-    if (data.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
     final maxValue = data.map((d) => d.value).reduce((a, b) => a > b ? a : b);
-    if (maxValue <= 0 || maxValue.isNaN || maxValue.isInfinite) {
+    if (maxValue <= 0 || !maxValue.isFinite) {
       return Center(
         child: Text(
           'بيانات غير صالحة',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: const Color(0xFF6B7280),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       );
     }
 
-    final availableHeight = height > 100 ? height - 60 : 40;
+    final availableHeight = height - 60;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -172,48 +199,61 @@ class ChartWidget extends StatelessWidget {
         final value = dataPoint.value.isFinite ? dataPoint.value : 0.0;
         final heightRatio = value / maxValue;
         final barColor = dataPoint.color ?? _getColorForIndex(index);
-
-        final barHeight = (availableHeight * heightRatio).clamp(
-          0.0,
-          availableHeight,
-        );
+        final barHeight = (availableHeight * heightRatio).clamp(0.0, availableHeight);
 
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  value.toStringAsFixed(0),
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.bold,
+                if (value > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: barColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      value.toStringAsFixed(0),
+                      style: TextStyle(
+                        color: barColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 4),
-
+                const SizedBox(height: 6),
                 Container(
-                  height: barHeight.toDouble(),
+                  height: barHeight,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [barColor, barColor.withOpacity(0.7)],
+                      colors: [
+                        barColor,
+                        barColor.withOpacity(0.7),
+                      ],
                     ),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(8),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: barColor.withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   dataPoint.label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -227,88 +267,151 @@ class ChartWidget extends StatelessWidget {
     );
   }
 
-  /// بناء مخطط دائري
   Widget _buildPieChart() {
-    if (data.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
     final total = data.fold<double>(0, (sum, d) => sum + d.value);
-    if (total <= 0 || total.isNaN || total.isInfinite) {
+    if (total <= 0 || !total.isFinite) {
       return Center(
         child: Text(
           'بيانات غير صالحة',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: const Color(0xFF6B7280),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       );
     }
 
-    final colors = data.asMap().entries
+    final colors = data
+        .asMap()
+        .entries
         .map((entry) => entry.value.color ?? _getColorForIndex(entry.key))
         .toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = math.min(constraints.maxWidth, constraints.maxHeight);
+        final size = math.min(constraints.maxWidth, constraints.maxHeight) * 0.85;
         return Center(
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: _PieChartPainter(
-              points: data,
-              colors: colors,
-            ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CustomPaint(
+                size: Size(size, size),
+                painter: _PieChartPainter(
+                  points: data,
+                  colors: colors,
+                ),
+              ),
+              Container(
+                width: size * 0.5,
+                height: size * 0.5,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      total.toStringAsFixed(0),
+                      style: const TextStyle(
+                        color: Color(0xFF1F2937),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'إجمالي',
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  /// بناء مفتاح المخطط
-  Widget _buildLegend() => Wrap(
-    spacing: 16,
-    runSpacing: 8,
-    children: data.asMap().entries.map((entry) {
-      final index = entry.key;
-      final dataPoint = entry.value;
-      final color = dataPoint.color ?? _getColorForIndex(index);
+  Widget _buildLegend() {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      children: data.asMap().entries.map((entry) {
+        final index = entry.key;
+        final dataPoint = entry.value;
+        final color = dataPoint.color ?? _getColorForIndex(index);
+        final total = data.fold<double>(0, (sum, d) => sum + d.value);
+        final percentage = total > 0 ? (dataPoint.value / total * 100) : 0.0;
 
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8),
           ),
-
-          const SizedBox(width: 6),
-
-          Text(
-            dataPoint.label,
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textSecondary,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                dataPoint.label,
+                style: const TextStyle(
+                  color: Color(0xFF1F2937),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (chartType == ChartType.pie) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '(${percentage.toStringAsFixed(0)}%)',
+                  style: TextStyle(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
           ),
-        ],
-      );
-    }).toList(),
-  );
- }
+        );
+      }).toList(),
+    );
+  }
 
-/// الحصول على لون افتراضي لمؤشر معين
-Color _getColorForIndex(int index) {
-  final colors = [
-    AppColors.primary,
-    AppColors.sales,
-    AppColors.purchases,
-    AppColors.expense,
-    AppColors.debt,
-    AppColors.accent,
-  ];
-
-  return colors[index % colors.length];
+  Color _getColorForIndex(int index) {
+    final colors = [
+      const Color(0xFF6366F1),
+      const Color(0xFFF59E0B),
+      const Color(0xFFEF4444),
+      const Color(0xFF10B981),
+      const Color(0xFF3B82F6),
+      const Color(0xFF8B5CF6),
+    ];
+    return colors[index % colors.length];
+  }
 }
 
 class SimpleTrendChart extends StatelessWidget {
@@ -316,8 +419,8 @@ class SimpleTrendChart extends StatelessWidget {
     required this.title,
     required this.data,
     super.key,
-    this.height = 200,
-    this.primaryColor = AppColors.primary,
+    this.height = 220,
+    this.primaryColor = const Color(0xFF6366F1),
   });
 
   final String title;
@@ -329,18 +432,43 @@ class SimpleTrendChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (data.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border.withOpacity(0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Center(
-          child: Text(
-            'لا توجد بيانات لعرضها',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.analytics_outlined,
+                  color: const Color(0xFF9CA3AF),
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'لا توجد بيانات لعرضها',
+                style: TextStyle(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -349,16 +477,15 @@ class SimpleTrendChart extends StatelessWidget {
     final total = data.fold<double>(0, (sum, p) => sum + p.value);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border.withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -366,26 +493,53 @@ class SimpleTrendChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: AppTextStyles.headlineSmall.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.1),
+                      primaryColor.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.show_chart_rounded,
+                  color: primaryColor,
+                  size: 20,
                 ),
               ),
-              Text(
-                total.toStringAsFixed(0),
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF1F2937),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  total.toStringAsFixed(0),
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           SizedBox(
             height: height,
             child: LayoutBuilder(
@@ -393,8 +547,7 @@ class SimpleTrendChart extends StatelessWidget {
                 final colors = data
                     .asMap()
                     .entries
-                    .map((entry) =>
-                        entry.value.color ?? AppColors.primary.withOpacity(0.9))
+                    .map((entry) => entry.value.color ?? primaryColor)
                     .toList();
 
                 return CustomPaint(
@@ -414,7 +567,6 @@ class SimpleTrendChart extends StatelessWidget {
   }
 }
 
-/// رسام المخطط الخطي
 class _LineChartPainter extends CustomPainter {
   _LineChartPainter({
     required this.points,
@@ -437,7 +589,7 @@ class _LineChartPainter extends CustomPainter {
         ? (maxValue == 0 ? 1.0 : maxValue)
         : maxValue - minValue;
 
-    final padding = 16.0;
+    final padding = 20.0;
     final chartWidth = size.width - padding * 2;
     final chartHeight = size.height - padding * 2;
 
@@ -462,7 +614,6 @@ class _LineChartPainter extends CustomPainter {
       }
     }
 
-    // تظليل أسفل الخط لزيادة وضوح المخطط
     final fillPath = Path.from(path)
       ..lineTo(pointsOffset.last.dx, padding + chartHeight)
       ..lineTo(pointsOffset.first.dx, padding + chartHeight)
@@ -473,33 +624,66 @@ class _LineChartPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [primaryColor.withOpacity(0.25), primaryColor.withOpacity(0.02)],
+        colors: [
+          primaryColor.withOpacity(0.2),
+          primaryColor.withOpacity(0.02),
+        ],
       ).createShader(Rect.fromLTWH(padding, padding, chartWidth, chartHeight));
 
     canvas.drawPath(fillPath, fillPaint);
 
-    // رسم الخط
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = primaryColor;
+      ..strokeWidth = 3.0
+      ..color = primaryColor
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     canvas.drawPath(path, linePaint);
 
-    // رسم النقاط
     for (var i = 0; i < pointsOffset.length; i++) {
       final point = pointsOffset[i];
-      final color = colors[i % colors.length];
+
+      final shadowPaint = Paint()
+        ..color = primaryColor.withOpacity(0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawCircle(point, 6, shadowPaint);
 
       final outerPaint = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.fill;
-      final innerPaint = Paint()
-        ..color = color
-        ..style = PaintingStyle.fill;
+      canvas.drawCircle(point, 5, outerPaint);
 
-      canvas.drawCircle(point, 4, outerPaint);
-      canvas.drawCircle(point, 3, innerPaint);
+      final innerPaint = Paint()
+        ..color = primaryColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(point, 3.5, innerPaint);
+    }
+
+    for (var i = 0; i < pointsOffset.length; i++) {
+      final point = pointsOffset[i];
+      final value = points[i].value;
+      
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: points[i].label,
+          style: TextStyle(
+            color: const Color(0xFF6B7280),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(
+          point.dx - textPainter.width / 2,
+          size.height - 12,
+        ),
+      );
     }
   }
 
@@ -510,7 +694,6 @@ class _LineChartPainter extends CustomPainter {
       oldDelegate.primaryColor != primaryColor;
 }
 
-/// رسام المخطط الدائري
 class _PieChartPainter extends CustomPainter {
   _PieChartPainter({
     required this.points,
@@ -525,10 +708,12 @@ class _PieChartPainter extends CustomPainter {
     if (points.isEmpty) return;
 
     final total = points.fold<double>(0, (sum, p) => sum + p.value);
-    if (total <= 0 || total.isNaN || total.isInfinite) return;
+    if (total <= 0 || !total.isFinite) return;
 
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final startAngleBase = -math.pi / 2; // نبدأ من الأعلى
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+    
+    final startAngleBase = -math.pi / 2;
     var startAngle = startAngleBase;
 
     for (var i = 0; i < points.length; i++) {
@@ -536,11 +721,28 @@ class _PieChartPainter extends CustomPainter {
       if (value <= 0) continue;
 
       final sweepAngle = (value / total) * 2 * math.pi;
+      
+      final shadowPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = colors[i % colors.length].withOpacity(0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      canvas.drawArc(rect, startAngle, sweepAngle, true, shadowPaint);
+
       final paint = Paint()
         ..style = PaintingStyle.fill
         ..color = colors[i % colors.length];
 
       canvas.drawArc(rect, startAngle, sweepAngle, true, paint);
+
+      final borderPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = Colors.white
+        ..strokeWidth = 3;
+
+      canvas.drawArc(rect, startAngle, sweepAngle, true, borderPaint);
+
       startAngle += sweepAngle;
     }
   }
@@ -549,4 +751,3 @@ class _PieChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _PieChartPainter oldDelegate) =>
       oldDelegate.points != points || oldDelegate.colors != colors;
 }
-

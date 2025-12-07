@@ -30,16 +30,16 @@ class PaymentMethodSelector extends StatelessWidget {
       color: AppColors.success,
     ),
     PaymentMethodOption(
-      value: 'محفظة',
-      label: 'محفظة',
-      icon: Icons.account_balance_wallet,
-      color: AppColors.info,
-    ),
-    PaymentMethodOption(
       value: 'حوالة',
       label: 'حوالة',
       icon: Icons.swap_horiz,
       color: AppColors.warning,
+    ),
+    PaymentMethodOption(
+      value: 'محفظة',
+      label: 'محفظة',
+      icon: Icons.account_balance_wallet,
+      color: AppColors.info,
     ),
   ];
 

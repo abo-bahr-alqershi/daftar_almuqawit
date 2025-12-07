@@ -71,7 +71,7 @@ class PurchaseFormState extends State<PurchaseForm> {
   bool _isLoadingInvoiceNumber = false;
 
   final List<String> _units = ['ربطة', 'علاقية', 'كيلو'];
-  final List<String> _paymentMethods = ['نقد', 'محفظة', 'حوالة'];
+  final List<String> _paymentMethods = ['نقد', 'اجل', 'حوالة', 'محفظة'];
   final List<String> _paymentStatuses = ['مدفوع', 'مدفوع جزئياً', 'غير مدفوع'];
 
   Map<String, GlobalKey> get tutorialKeys => {

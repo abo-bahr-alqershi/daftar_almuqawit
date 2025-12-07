@@ -3,17 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/formatters.dart';
 import '../../blocs/statistics/reports_bloc.dart';
 import '../../blocs/statistics/reports_event.dart';
 import '../../blocs/statistics/reports_state.dart';
-import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart' as custom_error;
-import 'widgets/profit_card.dart';
 import 'widgets/chart_widget.dart';
-import 'widgets/export_options.dart';
 
 class WeeklyReportScreen extends StatefulWidget {
   const WeeklyReportScreen({super.key});
@@ -24,7 +17,9 @@ class WeeklyReportScreen extends StatefulWidget {
 
 class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
   DateTime _selectedWeekStart = DateTime.now();
@@ -35,16 +30,26 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _animationController.forward();
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+    );
+
+    _fadeController.forward();
 
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
+      setState(() => _scrollOffset = _scrollController.offset);
     });
 
     _calculateWeekRange();
@@ -55,14 +60,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _fadeController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _calculateWeekRange() {
     final now = DateTime.now();
-    // نجعل الأسبوع عبارة عن 7 أيام متتالية تنتهي باليوم الحالي
     final endOfWeek = DateTime(now.year, now.month, now.day);
     final startOfWeek = endOfWeek.subtract(const Duration(days: 6));
 
@@ -81,89 +85,78 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     );
   }
 
+  Future<void> _selectWeek() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(
+        start: _selectedWeekStart,
+        end: _selectedWeekEnd,
+      ),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedWeekStart = picked.start;
+        _selectedWeekEnd = picked.end;
+      });
+      _loadReport();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                _buildModernAppBar(topPadding),
-                SliverToBoxAdapter(
-                  child: BlocConsumer<ReportsBloc, ReportsState>(
-                    listener: (context, state) {
-                      if (state is ReportsSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: AppColors.success,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      } else if (state is ReportsError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: AppColors.danger,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      if (state is ReportsLoading) {
-                        return _buildShimmerLoading();
-                      }
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            _buildAppBar(),
+            SliverToBoxAdapter(
+              child: BlocConsumer<ReportsBloc, ReportsState>(
+                listener: (context, state) {
+                  if (state is ReportsSuccess) {
+                    _showSnackBar(state.message, false);
+                  } else if (state is ReportsError) {
+                    _showSnackBar(state.message, true);
+                  }
+                },
+                builder: (context, state) {
+                  if (state is ReportsLoading) {
+                    return _buildLoadingState();
+                  }
 
-                      if (state is ReportsError) {
-                        return Center(
-                          child: custom_error.AppErrorWidget(
-                            message: state.message,
-                            onRetry: _loadReport,
-                          ),
-                        );
-                      }
-
-                      if (state is ReportsLoaded) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  if (state is ReportsLoaded) {
+                    return FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Column(
                           children: [
                             const SizedBox(height: 20),
-                            _buildWeekPicker(),
+                            _buildWeekSelector(),
                             const SizedBox(height: 24),
-                            _buildProfitCard(state.reportData),
-                            const SizedBox(height: 24),
+                            _buildStatsCard(state.reportData),
+                            const SizedBox(height: 20),
                             _buildDetailedStats(state.reportData),
                             const SizedBox(height: 24),
-                            _buildDailyComparison(state.reportData),
-                            const SizedBox(height: 24),
-                            _buildCharts(state.reportData),
-                            const SizedBox(height: 32),
+                            _buildChartSection(state.reportData),
+                            const SizedBox(height: 100),
                           ],
-                        );
-                      }
+                        ),
+                      ),
+                    );
+                  }
 
-                      return _buildShimmerLoading();
-                    },
-                  ),
-                ),
-              ],
+                  return _buildEmptyState();
+                },
+              ),
             ),
           ],
         ),
@@ -171,194 +164,201 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     );
   }
 
-  Widget _buildGradientBackground() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 400,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.info.withOpacity(0.08),
-              AppColors.primary.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModernAppBar(double topPadding) {
-    final opacity = (_scrollOffset / 140).clamp(0.0, 1.0);
+  Widget _buildAppBar() {
+    final opacity = (_scrollOffset / 60).clamp(0.0, 1.0);
 
     return SliverAppBar(
-      expandedHeight: 140,
-      floating: false,
+      expandedHeight: 100,
       pinned: true,
+      backgroundColor: Colors.white.withOpacity(opacity),
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
-      backgroundColor: AppColors.background.withOpacity(opacity),
-      systemOverlayStyle: SystemUiOverlayStyle.dark,
       leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border.withOpacity(0.5)),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textPrimary, size: 20),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              Navigator.pop(context);
-            },
+        padding: const EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
         ),
       ),
       actions: [
-        BlocBuilder<ReportsBloc, ReportsState>(
-          builder: (context, state) {
-            if (state is ReportsLoaded) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.share_rounded,
-                        color: AppColors.info, size: 20),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      _handleExport(ExportType.share, state.reportData);
-                    },
-                  ),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-        const SizedBox(width: 8),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: true,
-        titlePadding: EdgeInsets.only(bottom: 16, top: topPadding),
-        title: AnimatedOpacity(
-          opacity: opacity,
-          duration: const Duration(milliseconds: 200),
-          child: Text(
-            'التقرير الأسبوعي',
-            style: AppTextStyles.headlineSmall.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _loadReport();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: const Icon(
+                Icons.refresh_rounded,
+                size: 18,
+                color: Color(0xFF1A1A2E),
+              ),
             ),
           ),
         ),
+        const SizedBox(width: 12),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          padding: EdgeInsets.only(top: topPadding + 60, right: 20, left: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AnimatedOpacity(
-                opacity: 1 - opacity,
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  'التقرير الأسبوعي',
-                  style: AppTextStyles.displayMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 32,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFF8B5CF6).withOpacity(0.05),
+                const Color(0xFFF8F9FA),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(60, 8, 20, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.date_range_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'التقرير الأسبوعي',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'تحليل شامل للأسبوع',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildWeekPicker() {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: const Interval(0.0, 0.4, curve: Curves.easeOutCubic),
-        ),
-      ),
-      child: InkWell(
+  Widget _buildWeekSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GestureDetector(
         onTap: _selectWeek,
-        borderRadius: BorderRadius.circular(20),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border.withOpacity(0.1)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.info.withOpacity(0.1),
-                      AppColors.primary.withOpacity(0.1),
+                      const Color(0xFF8B5CF6).withOpacity(0.1),
+                      const Color(0xFF8B5CF6).withOpacity(0.05),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.date_range_rounded,
-                  color: AppColors.info,
-                  size: 24,
+                  color: Color(0xFF8B5CF6),
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'الفترة المحددة',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
                         fontSize: 12,
+                        color: Color(0xFF6B7280),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A1A2E),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 16, color: AppColors.textHint),
+              const Icon(
+                Icons.arrow_back_ios_rounded,
+                size: 14,
+                color: Color(0xFF9CA3AF),
+              ),
             ],
           ),
         ),
@@ -366,7 +366,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     );
   }
 
-  Widget _buildProfitCard(Map<String, dynamic> data) {
+  Widget _buildStatsCard(Map<String, dynamic> data) {
     double totalSales = 0.0;
     double totalPurchases = 0.0;
     double totalExpenses = 0.0;
@@ -381,267 +381,151 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
 
     final grossProfit = totalSales - totalPurchases;
     final netProfit = grossProfit - totalExpenses;
-    final profitMargin = totalSales > 0 ? (netProfit / totalSales * 100) : 0.0;
 
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
-        ),
-      ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        child: ProfitCard(
-          totalProfit: netProfit,
-          grossProfit: grossProfit,
-          netProfit: netProfit,
-          profitMargin: profitMargin,
-          period: '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailedStats(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-    double cashBalance = 0.0;
-
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-
-    for (final day in dailyStats) {
-      totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
-      totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
-      totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
-    }
-
-    if (dailyStats.isNotEmpty) {
-      cashBalance = (dailyStats.last['cashBalance'] as num?)?.toDouble() ?? 0.0;
-    }
-
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: const Interval(0.3, 0.7, curve: Curves.easeOutCubic),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'الإحصائيات التفصيلية',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'المبيعات',
-                    value: Formatters.formatCurrency(totalSales),
-                    icon: Icons.trending_up_rounded,
-                    color: AppColors.sales,
-                    delay: 400,
-                    controller: _animationController,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    title: 'المشتريات',
-                    value: Formatters.formatCurrency(totalPurchases),
-                    icon: Icons.shopping_cart_rounded,
-                    color: AppColors.purchases,
-                    delay: 450,
-                    controller: _animationController,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'المصروفات',
-                    value: Formatters.formatCurrency(totalExpenses),
-                    icon: Icons.payment_rounded,
-                    color: AppColors.expense,
-                    delay: 500,
-                    controller: _animationController,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    title: 'الرصيد النقدي',
-                    value: Formatters.formatCurrency(cashBalance),
-                    icon: Icons.account_balance_wallet_rounded,
-                    color: AppColors.info,
-                    delay: 550,
-                    controller: _animationController,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDailyComparison(Map<String, dynamic> data) {
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-
-    if (dailyStats.isEmpty) return const SizedBox.shrink();
-
-    final days = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
-    final chartData = <ChartDataPoint>[];
-
-    for (var i = 0; i < dailyStats.length && i < 7; i++) {
-      final day = dailyStats[i];
-      final sales = (day['totalSales'] as num?)?.toDouble() ?? 0.0;
-      chartData.add(
-        ChartDataPoint(
-          label: days[i],
-          value: sales,
-          color: AppColors.info,
-        ),
-      );
-    }
-
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: const Interval(0.5, 0.9, curve: Curves.easeOutCubic),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'مقارنة المبيعات اليومية',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SimpleTrendChart(
-              title: 'المبيعات حسب اليوم',
-              data: chartData,
-              primaryColor: AppColors.info,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCharts(Map<String, dynamic> data) {
-    double totalSales = 0.0;
-    double totalPurchases = 0.0;
-    double totalExpenses = 0.0;
-
-    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
-
-    for (final day in dailyStats) {
-      totalSales += (day['totalSales'] as num?)?.toDouble() ?? 0.0;
-      totalPurchases += (day['totalPurchases'] as num?)?.toDouble() ?? 0.0;
-      totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
-    }
-
-    final chartData = [
-      ChartDataPoint(label: 'المبيعات', value: totalSales, color: AppColors.sales),
-      ChartDataPoint(label: 'المشتريات', value: totalPurchases, color: AppColors.purchases),
-      ChartDataPoint(label: 'المصروفات', value: totalExpenses, color: AppColors.expense),
-    ];
-
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: const Interval(0.6, 1.0, curve: Curves.easeOutCubic),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'التوزيع الإجمالي',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ChartWidget(
-              title: 'نظرة عامة على المعاملات',
-              chartType: ChartType.bar,
-              data: chartData,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShimmerLoading() {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           Container(
-            height: 100,
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+              ),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'صافي الربح',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_displayFormat.format(_selectedWeekStart)} - ${_displayFormat.format(_selectedWeekEnd)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.5),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'نشط',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 1000),
+                  tween: Tween(begin: 0, end: netProfit),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          value.toStringAsFixed(0),
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -1,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            'ريال',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(28),
-            ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
+                child: _buildStatCard(
+                  'إجمالي المبيعات',
+                  totalSales,
+                  Icons.trending_up_rounded,
+                  const Color(0xFF10B981),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
+                child: _buildStatCard(
+                  'المشتريات',
+                  totalPurchases,
+                  Icons.shopping_cart_rounded,
+                  const Color(0xFF8B5CF6),
                 ),
               ),
             ],
@@ -651,169 +535,241 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     );
   }
 
-  Future<void> _selectWeek() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedWeekStart,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.info,
-            onSurface: AppColors.textPrimary,
+  Widget _buildStatCard(String label, double value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-        ),
-        child: child!,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 6),
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 1000),
+            tween: Tween(begin: 0, end: value),
+            curve: Curves.easeOutCubic,
+            builder: (context, animValue, child) {
+              return Text(
+                '${animValue.toStringAsFixed(0)} ر.ي',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
-
-    if (picked != null) {
-      HapticFeedback.lightImpact();
-      // نحدد الفترة لتكون 7 أيام تنتهي في اليوم المختار
-      final endOfWeek = DateTime(picked.year, picked.month, picked.day);
-      final startOfWeek = endOfWeek.subtract(const Duration(days: 6));
-
-      setState(() {
-        _selectedWeekStart = startOfWeek;
-        _selectedWeekEnd = endOfWeek;
-      });
-      _loadReport();
-    }
   }
 
-  void _handleExport(ExportType type, Map<String, dynamic> data) {
-    final startDateString = _dateFormat.format(_selectedWeekStart);
-    final endDateString = _dateFormat.format(_selectedWeekEnd);
+  Widget _buildDetailedStats(Map<String, dynamic> data) {
+    double totalExpenses = 0.0;
+    double cashBalance = 0.0;
 
-    switch (type) {
-      case ExportType.print:
-        context.read<ReportsBloc>().add(
-          PrintReportEvent(
-            'weekly',
-            data,
-            startDate: startDateString,
-            endDate: endDateString,
-            customData: data,
-          ),
-        );
-        break;
-      case ExportType.share:
-        context.read<ReportsBloc>().add(
-          ShareReportEvent(
-            'weekly',
-            data,
-            startDate: startDateString,
-            endDate: endDateString,
-            customData: data,
-          ),
-        );
-        break;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('هذه الميزة قيد التطوير'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
+
+    for (final day in dailyStats) {
+      totalExpenses += (day['totalExpenses'] as num?)?.toDouble() ?? 0.0;
+      cashBalance += (day['cashBalance'] as num?)?.toDouble() ?? 0.0;
     }
-  }
-}
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final int delay;
-  final AnimationController controller;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.delay,
-    required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Interval(
-            (delay / 1200).clamp(0.0, 1.0),
-            ((delay + 300) / 1200).clamp(0.0, 1.0),
-            curve: Curves.easeOutCubic,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.bar_chart_rounded,
+                size: 20,
+                color: Color(0xFF1A1A2E),
+              ),
+              SizedBox(width: 8),
+              Text(
+                'الإحصائيات التفصيلية',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            'المصروفات',
+            totalExpenses,
+            Icons.payment_rounded,
+            const Color(0xFFEF4444),
+          ),
+          const SizedBox(height: 12),
+          _buildDetailRow(
+            'الرصيد النقدي',
+            cashBalance,
+            Icons.account_balance_wallet_rounded,
+            const Color(0xFF8B5CF6),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, double value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+          ),
+          Text(
+            '${value.toStringAsFixed(0)} ر.ي',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartSection(Map<String, dynamic> data) {
+    final dailyStats = data['dailyStatistics'] as List<dynamic>? ?? [];
+
+    final chartData = dailyStats.map((day) {
+      final date = DateTime.parse(day['date'] as String);
+      final totalSales = (day['totalSales'] as num?)?.toDouble() ?? 0.0;
+      return ChartDataPoint(
+        label: DateFormat('EEE', 'ar').format(date),
+        value: totalSales,
+        color: const Color(0xFF8B5CF6),
+      );
+    }).toList();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ChartWidget(
+        title: 'أداء المبيعات اليومي',
+        chartType: ChartType.bar,
+        data: chartData,
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Padding(
+      padding: EdgeInsets.all(40),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF8B5CF6),
         ),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border.withOpacity(0.1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.date_range_rounded,
+                size: 48,
+                color: Color(0xFF8B5CF6),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'لا توجد بيانات',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'اختر أسبوعاً لعرض التقرير',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+              ),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 18),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'ريال',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w900,
-                fontSize: 17,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, bool isError) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

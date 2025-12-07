@@ -127,13 +127,14 @@ class _ReportsScreenState extends State<ReportsScreen>
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.border.withOpacity(0.5),
-            ),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textPrimary, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
             onPressed: () {
               HapticFeedback.lightImpact();
               Navigator.pop(context);
@@ -148,13 +149,14 @@ class _ReportsScreenState extends State<ReportsScreen>
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.border.withOpacity(0.5),
-              ),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.info_outline_rounded,
-                  color: AppColors.primary, size: 20),
+              icon: const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               onPressed: () {
                 HapticFeedback.lightImpact();
                 _showInfoDialog();
@@ -224,9 +226,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             ],
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.2),
-          ),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -397,8 +397,8 @@ class _ReportsScreenState extends State<ReportsScreen>
         'delay': 650,
       },
       {
-        'title': 'تقرير المنتجات',
-        'description': 'الأكثر مبيعاً والأقل مبيعاً وحركة المخزون',
+        'title': 'تقرير انواع القات',
+        'description': 'الأكثر مبيعاً والأقل مبيعاً والحركة',
         'icon': Icons.inventory_2_rounded,
         'color': AppColors.expense,
         'route': RouteNames.productsReport,
@@ -446,19 +446,17 @@ class _ReportsScreenState extends State<ReportsScreen>
         ),
       ),
       child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.3),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: Interval(
-              (delay / 1200).clamp(0.0, 1.0),
-              ((delay + 400) / 1200).clamp(0.0, 1.0),
-              curve: Curves.easeOutCubic,
+        position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: Interval(
+                  (delay / 1200).clamp(0.0, 1.0),
+                  ((delay + 400) / 1200).clamp(0.0, 1.0),
+                  curve: Curves.easeOutCubic,
+                ),
+              ),
             ),
-          ),
-        ),
         child: GestureDetector(
           onTap: () {
             HapticFeedback.lightImpact();
@@ -469,9 +467,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppColors.border.withOpacity(0.1),
-              ),
+              border: Border.all(color: AppColors.border.withOpacity(0.1)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -499,11 +495,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                       ),
                     ],
                   ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+                  child: Icon(icon, color: Colors.white, size: 26),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

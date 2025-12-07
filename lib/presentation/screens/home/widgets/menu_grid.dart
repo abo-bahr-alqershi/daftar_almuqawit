@@ -67,11 +67,11 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         subtitle: 'عمليات الشراء',
       ),
       _MenuItemData(
-        title: 'المخزون',
+        title: 'المردودات والتوالف',
         icon: Icons.inventory_rounded,
         color: const Color(0xFF00BCD4),
         route: RouteNames.inventory,
-        subtitle: 'إدارة المخزون',
+        subtitle: 'إدارة المردودات والتوالف',
         isNew: true,
       ),
       _MenuItemData(
@@ -98,14 +98,15 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
         route: RouteNames.accounts,
         subtitle: 'الحسابات المالية',
         isPremium: true,
+        isDisabled: true,
       ),
-      _MenuItemData(
-        title: 'الإحصائيات',
-        icon: Icons.analytics_rounded,
-        color: const Color(0xFFFF6584),
-        route: RouteNames.statistics,
-        subtitle: 'تحليلات مفصلة',
-      ),
+      // _MenuItemData(
+      //   title: 'الإحصائيات',
+      //   icon: Icons.analytics_rounded,
+      //   color: const Color(0xFFFF6584),
+      //   route: RouteNames.statistics,
+      //   subtitle: 'تحليلات مفصلة',
+      // ),
       _MenuItemData(
         title: 'التقارير',
         icon: Icons.assessment_rounded,
@@ -227,10 +228,10 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
   }
 
   void _initializeAnimations() {
-    final maxLength = menuItems.length > operationItems.length 
-        ? menuItems.length 
+    final maxLength = menuItems.length > operationItems.length
+        ? menuItems.length
         : operationItems.length;
-    
+
     _controllers = List.generate(
       maxLength,
       (index) => AnimationController(
@@ -277,89 +278,97 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<SettingsBloc, SettingsState>(
-    builder: (context, state) {
-      final isLearningMode = state is SettingsLoaded && state.learningModeEnabled;
-      final currentItems = isLearningMode ? operationItems : menuItems;
-      
-      return Padding(
-        padding: const EdgeInsets.only(left: 20, right: 20),
-        child: Column(
-          children: [
-            // Header with mode indicator
-            if (isLearningMode) _buildLearningModeHeader(),
-            const SizedBox(height: 16),
+  Widget build(BuildContext context) =>
+      BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, state) {
+          final isLearningMode =
+              state is SettingsLoaded && state.learningModeEnabled;
+          final currentItems = isLearningMode ? operationItems : menuItems;
 
-            // Grid View (precise two-column layout using Wrap)
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: List.generate(currentItems.length, (index) {
-                final item = currentItems[index];
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Calculate the width for each card (2 columns)
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    const horizontalPadding = 40.0; // 20 left + 20 right
-                    const spacing = 16.0;
-                    final tileWidth =
-                        (screenWidth - horizontalPadding - spacing) / 2;
+          return Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20),
+            child: Column(
+              children: [
+                // Header with mode indicator
+                if (isLearningMode) _buildLearningModeHeader(),
+                const SizedBox(height: 16),
 
-                    return SizedBox(
-                      width: tileWidth,
-                      height: 140, // Fixed height for consistency
-                      child: index < _controllers.length
-                          ? AnimatedBuilder(
-                              animation: _controllers[index],
-                              builder: (context, child) => FadeTransition(
-                                opacity: _fadeAnimations[index],
-                                child: ScaleTransition(
-                                  scale: _scaleAnimations[index],
-                                  child: MenuCard(
-                                    title: item.title,
-                                    icon: item.icon,
-                                    color: item.color,
-                                    subtitle: item.subtitle,
-                                    badge: item.badge,
-                                    isNew: item.isNew,
-                                    isPremium: item.isPremium,
-                                    onTap: () => _navigateToRoute(
-                                      context, 
-                                      item.route,
-                                      operation: _getOperationFromTitle(item.title),
+                // Grid View (precise two-column layout using Wrap)
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: List.generate(currentItems.length, (index) {
+                    final item = currentItems[index];
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Calculate the width for each card (2 columns)
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        const horizontalPadding = 40.0; // 20 left + 20 right
+                        const spacing = 16.0;
+                        final tileWidth =
+                            (screenWidth - horizontalPadding - spacing) / 2;
+
+                        return SizedBox(
+                          width: tileWidth,
+                          height: 140, // Fixed height for consistency
+                          child: index < _controllers.length
+                              ? AnimatedBuilder(
+                                  animation: _controllers[index],
+                                  builder: (context, child) => FadeTransition(
+                                    opacity: _fadeAnimations[index],
+                                    child: ScaleTransition(
+                                      scale: _scaleAnimations[index],
+                                      child: MenuCard(
+                                        title: item.title,
+                                        icon: item.icon,
+                                        color: item.color,
+                                        subtitle: item.subtitle,
+                                        badge: item.badge,
+                                        isNew: item.isNew,
+                                        isPremium: item.isPremium,
+                                        isDisabled: item.isDisabled,
+                                        onTap: () => _navigateToRoute(
+                                          context,
+                                          item.route,
+                                          operation: _getOperationFromTitle(
+                                            item.title,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : MenuCard(
+                                  title: item.title,
+                                  icon: item.icon,
+                                  color: item.color,
+                                  subtitle: item.subtitle,
+                                  badge: item.badge,
+                                  isNew: item.isNew,
+                                  isPremium: item.isPremium,
+                                  isDisabled: item.isDisabled,
+                                  onTap: () => _navigateToRoute(
+                                    context,
+                                    item.route,
+                                    operation: _getOperationFromTitle(
+                                      item.title,
                                     ),
                                   ),
                                 ),
-                              ),
-                            )
-                          : MenuCard(
-                              title: item.title,
-                              icon: item.icon,
-                              color: item.color,
-                              subtitle: item.subtitle,
-                              badge: item.badge,
-                              isNew: item.isNew,
-                              isPremium: item.isPremium,
-                              onTap: () => _navigateToRoute(
-                                context, 
-                                item.route,
-                                operation: _getOperationFromTitle(item.title),
-                              ),
-                            ),
+                        );
+                      },
                     );
-                  },
-                );
-              }),
-            ),
+                  }),
+                ),
 
-            // Quick Access Section
-            const SizedBox(height: 32),
-            _buildQuickAccessSection(),
-          ],
-        ),
+                // Quick Access Section
+                const SizedBox(height: 32),
+                _buildQuickAccessSection(),
+              ],
+            ),
+          );
+        },
       );
-    },
-  );
 
   Widget _buildLearningModeHeader() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -454,15 +463,6 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
           children: [
             Expanded(
               child: _QuickAccessButton(
-                icon: Icons.qr_code_scanner_rounded,
-                label: 'مسح باركود',
-                color: AppColors.info,
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickAccessButton(
                 icon: Icons.calculate_rounded,
                 label: 'آلة حاسبة',
                 color: AppColors.success,
@@ -484,13 +484,18 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
     ),
   );
 
-  void _navigateToRoute(BuildContext context, String route, {String? operation}) {
+  void _navigateToRoute(
+    BuildContext context,
+    String route, {
+    String? operation,
+  }) {
     HapticFeedback.mediumImpact();
-    
+
     // التحقق من وضع التعلم
     final settingsState = context.read<SettingsBloc>().state;
-    final isLearningMode = settingsState is SettingsLoaded && settingsState.learningModeEnabled;
-    
+    final isLearningMode =
+        settingsState is SettingsLoaded && settingsState.learningModeEnabled;
+
     if (isLearningMode && _isQatTypeRoute(route) && operation != null) {
       // عرض التعليمات قبل التنقل لأنواع القات
       _showQatTypesTutorial(context, operation, route);
@@ -499,7 +504,11 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
     }
   }
 
-  void _showQatTypesTutorial(BuildContext context, String operation, String route) {
+  void _showQatTypesTutorial(
+    BuildContext context,
+    String operation,
+    String route,
+  ) {
     // عرض حوار تأكيد بدء التعليمات
     showDialog(
       context: context,
@@ -587,7 +596,7 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.pushNamed(
-                context, 
+                context,
                 route,
                 arguments: {'showTutorial': true, 'operation': operation},
               );
@@ -607,9 +616,9 @@ class _MenuGridState extends State<MenuGrid> with TickerProviderStateMixin {
   }
 
   bool _isQatTypeRoute(String route) {
-    return route == RouteNames.qatTypes || 
-           route == RouteNames.addQatType || 
-           route == RouteNames.editQatType;
+    return route == RouteNames.qatTypes ||
+        route == RouteNames.addQatType ||
+        route == RouteNames.editQatType;
   }
 
   String? _getOperationFromTitle(String title) {
@@ -644,6 +653,7 @@ class _MenuItemData {
     this.badge,
     this.isNew = false,
     this.isPremium = false,
+    this.isDisabled = false,
   });
   final String title;
   final IconData icon;
@@ -653,6 +663,7 @@ class _MenuItemData {
   final String? badge;
   final bool isNew;
   final bool isPremium;
+  final bool isDisabled;
 }
 
 // زر الوصول السريع

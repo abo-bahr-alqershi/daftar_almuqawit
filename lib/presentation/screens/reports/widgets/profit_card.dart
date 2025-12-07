@@ -1,30 +1,6 @@
-/// بطاقة الربح
-/// ويدجت لعرض معلومات الربح بشكل جذاب
-
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// بطاقة الربح
 class ProfitCard extends StatelessWidget {
-  /// إجمالي الربح
-  final double totalProfit;
-  
-  /// الربح الإجمالي (قبل المصروفات)
-  final double grossProfit;
-  
-  /// الربح الصافي (بعد المصروفات)
-  final double netProfit;
-  
-  /// نسبة هامش الربح
-  final double profitMargin;
-  
-  /// الفترة الزمنية
-  final String period;
-  
-  /// هل يعرض التفاصيل
-  final bool showDetails;
-
   const ProfitCard({
     super.key,
     required this.totalProfit,
@@ -35,160 +11,166 @@ class ProfitCard extends StatelessWidget {
     this.showDetails = true,
   });
 
+  final double totalProfit;
+  final double grossProfit;
+  final double netProfit;
+  final double profitMargin;
+  final String period;
+  final bool showDetails;
+
   @override
   Widget build(BuildContext context) {
     final isPositive = totalProfit >= 0;
-    final profitColor = isPositive ? AppColors.success : AppColors.danger;
-    
+    final color = isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [
-            profitColor,
-            profitColor.withOpacity(0.8),
-          ],
+          colors: isPositive
+              ? [const Color(0xFF10B981), const Color(0xFF059669)]
+              : [const Color(0xFFEF4444), const Color(0xFFDC2626)],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: profitColor.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: color.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // رأس البطاقة
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'الربح',
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.textOnDark,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isPositive
+                      ? Icons.trending_up_rounded
+                      : Icons.trending_down_rounded,
+                  color: Colors.white,
+                  size: 24,
                 ),
               ),
-              
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'صافي الربح',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.textOnDark.withOpacity(0.2),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  period,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textOnDark,
+                  '${profitMargin.toStringAsFixed(1)}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          
-          const SizedBox(height: 20),
-          
-          // إجمالي الربح
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                isPositive 
-                  ? Icons.trending_up 
-                  : Icons.trending_down,
-                color: AppColors.textOnDark,
-                size: 40,
-              ),
-              
-              const SizedBox(width: 12),
-              
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'إجمالي الربح',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textOnDark.withOpacity(0.9),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 4),
-                    
-                    Text(
-                      '${totalProfit.toStringAsFixed(2)} ر.ي',
-                      style: AppTextStyles.h1.copyWith(
-                        color: AppColors.textOnDark,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // نسبة هامش الربح
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.textOnDark.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.percent,
-                      color: AppColors.textOnDark,
-                      size: 20,
-                    ),
-                    
-                    const SizedBox(height: 4),
-                    
-                    Text(
-                      '${profitMargin.toStringAsFixed(1)}%',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textOnDark,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          const SizedBox(height: 16),
+          Text(
+            '${totalProfit.toStringAsFixed(2)} ريال',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+            ),
           ),
-          
-          // التفاصيل
           if (showDetails) ...[
-            const SizedBox(height: 20),
-            
+            const SizedBox(height: 4),
+            Text(
+              period,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.textOnDark.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  _DetailRow(
-                    label: 'الربح الإجمالي',
-                    value: grossProfit,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'إجمالي الربح',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${grossProfit.toStringAsFixed(2)} ريال',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  _DetailRow(
-                    label: 'الربح الصافي',
-                    value: netProfit,
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withOpacity(0.2),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'الربح الصافي',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${netProfit.toStringAsFixed(2)} ريال',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -196,40 +178,6 @@ class ProfitCard extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-/// صف التفاصيل
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final double value;
-
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnDark.withOpacity(0.9),
-          ),
-        ),
-        
-        Text(
-          '${value.toStringAsFixed(2)} ر.ي',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnDark,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 }

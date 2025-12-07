@@ -28,11 +28,11 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
       description: 'دفع نقدي',
     ),
     PaymentMethodOption(
-      value: 'محفظة',
-      label: 'محفظة',
-      icon: Icons.account_balance_wallet_rounded,
-      color: const Color(0xFF3B82F6),
-      description: 'محفظة إلكترونية',
+      value: 'اجل',
+      label: 'اجل',
+      icon: Icons.schedule_rounded,
+      color: const Color(0xFFEC4899),
+      description: 'دفع آجل',
     ),
     PaymentMethodOption(
       value: 'حوالة',
@@ -40,6 +40,13 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
       icon: Icons.swap_horiz_rounded,
       color: const Color(0xFFF59E0B),
       description: 'حوالة بنكية',
+    ),
+    PaymentMethodOption(
+      value: 'محفظة',
+      label: 'محفظة',
+      icon: Icons.account_balance_wallet_rounded,
+      color: const Color(0xFF3B82F6),
+      description: 'محفظة إلكترونية',
     ),
   ];
 
