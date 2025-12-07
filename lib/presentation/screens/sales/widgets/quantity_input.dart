@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// مدخل الكمية - تصميم هادئ وراقي وأنيق
+/// مدخل الكمية - تصميم راقي واحترافي
 class QuantityInput extends StatefulWidget {
   final double value;
   final ValueChanged<double> onChanged;
@@ -74,18 +72,18 @@ class _QuantityInputState extends State<QuantityInput> {
         if (widget.label != null) ...[
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.shopping_bag_outlined,
                 size: 16,
-                color: AppColors.textSecondary.withOpacity(0.8),
+                color: Color(0xFF6B7280),
               ),
               const SizedBox(width: 6),
               Text(
                 widget.label!,
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+                style: const TextStyle(
                   fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
                 ),
               ),
             ],
@@ -94,13 +92,13 @@ class _QuantityInputState extends State<QuantityInput> {
         ],
         Container(
           decoration: BoxDecoration(
-            color: AppColors.background.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: _isEditing
-                  ? AppColors.primary.withOpacity(0.3)
-                  : AppColors.border.withOpacity(0.25),
-              width: 1,
+                  ? const Color(0xFF6366F1).withOpacity(0.3)
+                  : const Color(0xFFE5E7EB),
+              width: _isEditing ? 1.5 : 1,
             ),
           ),
           child: Row(
@@ -112,7 +110,7 @@ class _QuantityInputState extends State<QuantityInput> {
               ),
               Expanded(
                 child: Container(
-                  height: 48,
+                  height: 52,
                   alignment: Alignment.center,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -129,10 +127,10 @@ class _QuantityInputState extends State<QuantityInput> {
                               RegExp(r'^\d*\.?\d*'),
                             ),
                           ],
-                          style: AppTextStyles.h3.copyWith(
+                          style: const TextStyle(
+                            fontSize: 22,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                            fontSize: 20,
+                            color: Color(0xFF6366F1),
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
@@ -154,22 +152,22 @@ class _QuantityInputState extends State<QuantityInput> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          color: const Color(0xFF6366F1).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           widget.unit,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
+                          style: const TextStyle(
                             fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6366F1),
                           ),
                         ),
                       ),
@@ -185,7 +183,7 @@ class _QuantityInputState extends State<QuantityInput> {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _buildQuickSelectionButtons(),
       ],
     );
@@ -199,20 +197,18 @@ class _QuantityInputState extends State<QuantityInput> {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        width: 48,
-        height: 48,
+        width: 52,
+        height: 52,
         decoration: BoxDecoration(
           color: enabled
-              ? AppColors.primary.withOpacity(0.08)
-              : AppColors.background.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(12),
+              ? const Color(0xFF6366F1).withOpacity(0.08)
+              : const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(
           icon,
-          color: enabled
-              ? AppColors.primary.withOpacity(0.9)
-              : AppColors.disabled.withOpacity(0.5),
-          size: 20,
+          color: enabled ? const Color(0xFF6366F1) : const Color(0xFFD1D5DB),
+          size: 22,
         ),
       ),
     );
@@ -222,10 +218,8 @@ class _QuantityInputState extends State<QuantityInput> {
     final quickValues = [1.0, 5.0, 10.0, 20.0];
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: quickValues.map((value) {
         final isSelected = widget.value == value;
-
         return Expanded(
           child: GestureDetector(
             onTap: () {
@@ -235,34 +229,33 @@ class _QuantityInputState extends State<QuantityInput> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              margin: EdgeInsets.only(left: value == quickValues.last ? 0 : 8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
+                color: isSelected ? const Color(0xFF6366F1) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.primary
-                      : AppColors.border.withOpacity(0.2),
-                  width: isSelected ? 1.5 : 1,
+                      ? const Color(0xFF6366F1)
+                      : const Color(0xFFE5E7EB),
                 ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.25),
-                          blurRadius: 6,
+                          color: const Color(0xFF6366F1).withOpacity(0.25),
+                          blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ]
-                    : [],
+                    : null,
               ),
               child: Center(
                 child: Text(
                   value.toStringAsFixed(0),
                   style: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    color: isSelected ? Colors.white : const Color(0xFF374151),
                   ),
                 ),
               ),

@@ -2,19 +2,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
 import '../../blocs/customers/customers_state.dart';
-import '../../widgets/common/app_text_field.dart';
-import '../../widgets/common/empty_widget.dart';
-import '../../widgets/common/error_widget.dart' as custom_error;
-import '../../widgets/common/loading_widget.dart';
 import 'customer_details_screen.dart';
 
-/// شاشة العملاء المحظورين - تصميم متطور
 class BlockedCustomersScreen extends StatefulWidget {
   const BlockedCustomersScreen({super.key});
 
@@ -22,30 +15,18 @@ class BlockedCustomersScreen extends StatefulWidget {
   State<BlockedCustomersScreen> createState() => _BlockedCustomersScreenState();
 }
 
-class _BlockedCustomersScreenState extends State<BlockedCustomersScreen>
-    with SingleTickerProviderStateMixin {
+class _BlockedCustomersScreenState extends State<BlockedCustomersScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  late AnimationController _animationController;
   List<Customer> _filteredCustomers = [];
   double _scrollOffset = 0;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _animationController.forward();
-
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
+      setState(() => _scrollOffset = _scrollController.offset);
     });
-
     context.read<CustomersBloc>().add(LoadCustomers());
   }
 
@@ -53,49 +34,441 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen>
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
   void _filterCustomers(List<Customer> allCustomers, String query) {
     final blocked = allCustomers.where((c) => c.isBlocked).toList();
-
     if (query.isEmpty) {
-      setState(() {
-        _filteredCustomers = blocked;
-      });
+      setState(() => _filteredCustomers = blocked);
     } else {
       setState(() {
         _filteredCustomers = blocked
-            .where((customer) =>
-                customer.name.toLowerCase().contains(query.toLowerCase()) ||
-                (customer.phone?.contains(query) ?? false))
+            .where(
+              (c) =>
+                  c.name.toLowerCase().contains(query.toLowerCase()) ||
+                  (c.phone?.contains(query) ?? false),
+            )
             .toList();
       });
     }
   }
 
-  void _unblockCustomer(Customer customer) {
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const ClampingScrollPhysics(),
+          slivers: [
+            _buildSliverAppBar(),
+            SliverToBoxAdapter(
+              child: BlocConsumer<CustomersBloc, CustomersState>(
+                listener: (context, state) {
+                  if (state is CustomerOperationSuccess) {
+                    _showSnackBar(state.message);
+                    context.read<CustomersBloc>().add(LoadCustomers());
+                  } else if (state is CustomersError) {
+                    _showSnackBar(state.message, isError: true);
+                  }
+                },
+                builder: (context, state) {
+                  if (state is CustomersLoading) {
+                    return _buildLoadingState();
+                  }
+
+                  if (state is CustomersError) {
+                    return _buildErrorState(state.message);
+                  }
+
+                  if (state is CustomersLoaded) {
+                    final blocked = state.customers
+                        .where((c) => c.isBlocked)
+                        .toList();
+
+                    if (_filteredCustomers.isEmpty &&
+                        _searchController.text.isEmpty) {
+                      _filteredCustomers = blocked;
+                    }
+
+                    return Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        _buildSearchBar(state.customers),
+                        const SizedBox(height: 16),
+                        _buildStatsCard(blocked.length),
+                        const SizedBox(height: 16),
+                        _filteredCustomers.isEmpty
+                            ? _buildEmptyState()
+                            : _buildCustomersList(),
+                        const SizedBox(height: 40),
+                      ],
+                    );
+                  }
+
+                  return _buildEmptyState();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    final opacity = (_scrollOffset / 80).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 100,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: const Color(
+        0xFFDC2626,
+      ).withOpacity(opacity > 0.5 ? 1 : opacity),
+      surfaceTintColor: Colors.transparent,
+      leading: _buildBackButton(),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(60, 16, 16, 16),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'العملاء المحظورون',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'إدارة العملاء المحظورين',
+                    style: TextStyle(fontSize: 13, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Material(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(List<Customer> customers) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (query) => _filterCustomers(customers, query),
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'البحث عن عميل محظور...',
+            hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            prefixIcon: Container(
+              margin: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.search_outlined,
+                color: Color(0xFFDC2626),
+                size: 18,
+              ),
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(int count) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFDC2626).withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.block_outlined,
+                color: Color(0xFFDC2626),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'عدد العملاء المحظورين',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomersList() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: _filteredCustomers.map((customer) {
+          return _buildCustomerCard(customer);
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCustomerCard(Customer customer) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDC2626).withOpacity(0.15)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CustomerDetailsScreen(customer: customer),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.block_outlined,
+                        color: Color(0xFFDC2626),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            customer.name,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1A1A2E),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.phone_outlined,
+                                size: 14,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                customer.phone ?? 'غير محدد',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildUnblockButton(customer),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoItem(
+                        'الدين الحالي',
+                        '${customer.currentDebt.toStringAsFixed(0)} ر.ي',
+                        customer.currentDebt > 0
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF16A34A),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildInfoItem(
+                        'المشتريات',
+                        '${customer.totalPurchases.toStringAsFixed(0)} ر.ي',
+                        const Color(0xFF6366F1),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnblockButton(Customer customer) {
+    return Material(
+      color: const Color(0xFF16A34A).withOpacity(0.1),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: () => _showUnblockDialog(customer),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          child: const Icon(
+            Icons.lock_open_outlined,
+            color: Color(0xFF16A34A),
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showUnblockDialog(Customer customer) {
     HapticFeedback.mediumImpact();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: Text(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
           'إلغاء حظر العميل',
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A2E),
           ),
         ),
         content: Text(
           'هل تريد إلغاء حظر ${customer.name}؟',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         ),
         actions: [
           TextButton(
@@ -103,9 +476,9 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen>
               HapticFeedback.lightImpact();
               Navigator.of(context).pop();
             },
-            child: Text(
+            child: const Text(
               'إلغاء',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: Color(0xFF6B7280)),
             ),
           ),
           ElevatedButton(
@@ -113,15 +486,14 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen>
               HapticFeedback.mediumImpact();
               Navigator.of(context).pop();
               context.read<CustomersBloc>().add(
-                    BlockCustomerEvent(customer.id!, false),
-                  );
+                BlockCustomerEvent(customer.id!, false),
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: const Color(0xFF16A34A),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
               ),
               elevation: 0,
             ),
@@ -135,635 +507,54 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            // خلفية متدرجة ديناميكية
-            _buildGradientBackground(),
-
-            // المحتوى الرئيسي
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                // AppBar مخصص مع تأثيرات
-                _buildModernAppBar(topPadding),
-
-                // محتوى الشاشة
-                SliverToBoxAdapter(
-                  child: BlocConsumer<CustomersBloc, CustomersState>(
-                    listener: (context, state) {
-                      if (state is CustomerOperationSuccess) {
-                        HapticFeedback.lightImpact();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: AppColors.success,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            margin: const EdgeInsets.all(16),
-                          ),
-                        );
-                        context.read<CustomersBloc>().add(LoadCustomers());
-                      } else if (state is CustomersError) {
-                        HapticFeedback.heavyImpact();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: AppColors.danger,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            margin: const EdgeInsets.all(16),
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      if (state is CustomersLoading) {
-                        return _buildShimmerLoading();
-                      }
-
-                      if (state is CustomersError) {
-                        return Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: custom_error.AppErrorWidget(
-                            message: state.message,
-                            onRetry: () {
-                              context.read<CustomersBloc>().add(LoadCustomers());
-                            },
-                          ),
-                        );
-                      }
-
-                      if (state is CustomersLoaded) {
-                        final blockedCustomers =
-                            state.customers.where((c) => c.isBlocked).toList();
-
-                        if (_filteredCustomers.isEmpty &&
-                            _searchController.text.isEmpty) {
-                          _filteredCustomers = blockedCustomers;
-                        }
-
-                        return Column(
-                          children: [
-                            const SizedBox(height: 20),
-
-                            // شريط البحث
-                            _buildSearchBar(state.customers),
-
-                            const SizedBox(height: 20),
-
-                            // إحصائيات العملاء المحظورين
-                            _buildStatisticsCard(blockedCustomers.length),
-
-                            const SizedBox(height: 24),
-
-                            // قائمة العملاء المحظورين
-                            _filteredCustomers.isEmpty
-                                ? Padding(
-                                    padding: const EdgeInsets.all(40),
-                                    child: EmptyWidget(
-                                      title: _searchController.text.isEmpty
-                                          ? 'لا يوجد عملاء محظورون'
-                                          : 'لم يتم العثور على عملاء',
-                                      message: _searchController.text.isEmpty
-                                          ? 'لم يتم حظر أي عميل بعد'
-                                          : 'جرب البحث بكلمات مختلفة',
-                                      icon: Icons.block,
-                                    ),
-                                  )
-                                : _buildCustomersList(),
-
-                            const SizedBox(height: 100),
-                          ],
-                        );
-                      }
-
-                      return const Padding(
-                        padding: EdgeInsets.all(40),
-                        child: EmptyWidget(
-                          title: 'لا يوجد بيانات',
-                          message: 'لم يتم تحميل بيانات العملاء',
-                          icon: Icons.block,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+  Widget _buildLoadingState() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(children: List.generate(3, (index) => _buildShimmerCard())),
     );
   }
 
-  Widget _buildGradientBackground() => Container(
-        height: 400,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.danger.withOpacity(0.12),
-              AppColors.danger.withOpacity(0.06),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildModernAppBar(double topPadding) {
-    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
-
-    return SliverAppBar(
-      expandedHeight: 140,
-      pinned: true,
-      backgroundColor: AppColors.danger.withOpacity(0.95),
-      elevation: opacity * 8,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.danger,
-                AppColors.danger.withOpacity(0.85),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      // أيقونة الشاشة
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.block_rounded,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'العملاء المحظورون',
-                              style: AppTextStyles.h2.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 24,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'إدارة العملاء المحظورين',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      leading: Padding(
-        padding: const EdgeInsets.only(right: 12),
-        child: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            Navigator.pop(context);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(List<Customer> customers) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: AppColors.danger.withOpacity(0.1),
-                blurRadius: 30,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: AppTextField.search(
-            controller: _searchController,
-            hint: 'البحث عن عميل محظور...',
-            onChanged: (query) {
-              HapticFeedback.selectionClick();
-              _filterCustomers(customers, query);
-            },
-          ),
-        ),
-      );
-
-  Widget _buildStatisticsCard(int count) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.danger.withOpacity(0.1),
-                AppColors.danger.withOpacity(0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.danger.withOpacity(0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.danger.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.danger.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.block_rounded,
-                  color: AppColors.danger,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'عدد العملاء المحظورين',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$count',
-                    style: AppTextStyles.h1.copyWith(
-                      color: AppColors.danger,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 32,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildCustomersList() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _filteredCustomers.length,
-          itemBuilder: (context, index) {
-            final customer = _filteredCustomers[index];
-            final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-              CurvedAnimation(
-                parent: _animationController,
-                curve: Interval(
-                  (index / _filteredCustomers.length) * 0.5,
-                  ((index + 1) / _filteredCustomers.length) * 0.5 + 0.5,
-                  curve: Curves.easeOutCubic,
-                ),
-              ),
-            );
-            return _buildCustomerCard(customer, animation);
-          },
-        ),
-      );
-
-  Widget _buildCustomerCard(Customer customer, Animation<double> animation) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - animation.value)),
-          child: Opacity(
-            opacity: animation.value,
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppColors.danger.withOpacity(0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: AppColors.danger.withOpacity(0.08),
-              blurRadius: 30,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) =>
-                      CustomerDetailsScreen(customer: customer),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.05, 0),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                        )),
-                        child: child,
-                      ),
-                    );
-                  },
-                  transitionDuration: const Duration(milliseconds: 300),
-                ),
-              );
-            },
-            borderRadius: BorderRadius.circular(24),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // أيقونة العميل
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.danger.withOpacity(0.15),
-                              AppColors.danger.withOpacity(0.08),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Icon(
-                          Icons.block_rounded,
-                          color: AppColors.danger,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              customer.name,
-                              style: AppTextStyles.h3.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.phone_rounded,
-                                  size: 16,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  customer.phone ?? 'غير محدد',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // زر إلغاء الحظر
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.lock_open_rounded),
-                          color: AppColors.success,
-                          iconSize: 24,
-                          onPressed: () => _unblockCustomer(customer),
-                          tooltip: 'إلغاء الحظر',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // معلومات العميل
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoItem(
-                          'الدين الحالي',
-                          '${customer.currentDebt.toStringAsFixed(2)} ريال',
-                          Icons.account_balance_wallet_rounded,
-                          customer.currentDebt > 0
-                              ? AppColors.danger
-                              : AppColors.success,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildInfoItem(
-                          'إجمالي المشتريات',
-                          '${customer.totalPurchases.toStringAsFixed(2)} ريال',
-                          Icons.shopping_cart_rounded,
-                          AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (customer.notes != null && customer.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.warning.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 20,
-                            color: AppColors.warning,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              customer.notes!,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildShimmerCard() {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 14,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 10,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -771,42 +562,112 @@ class _BlockedCustomersScreenState extends State<BlockedCustomersScreen>
     );
   }
 
-  Widget _buildShimmerLoading() => Padding(
-        padding: const EdgeInsets.all(20),
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 20),
-            // شريط البحث Shimmer
             Container(
-              height: 56,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                color: Color(0xFFDC2626),
+                size: 32,
               ),
             ),
             const SizedBox(height: 20),
-            // بطاقة الإحصائيات Shimmer
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(24),
+            const Text(
+              'حدث خطأ',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
               ),
             ),
-            const SizedBox(height: 24),
-            // بطاقات العملاء Shimmer
-            ...List.generate(
-              3,
-              (index) => Container(
-                height: 180,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.block_outlined,
+                color: Color(0xFF9CA3AF),
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _searchController.text.isEmpty
+                  ? 'لا يوجد عملاء محظورون'
+                  : 'لم يتم العثور على عملاء',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _searchController.text.isEmpty
+                  ? 'لم يتم حظر أي عميل بعد'
+                  : 'جرب البحث بكلمات مختلفة',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
 }

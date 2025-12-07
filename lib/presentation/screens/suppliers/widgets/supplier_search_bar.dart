@@ -25,26 +25,14 @@ class SupplierSearchBar extends StatefulWidget {
   State<SupplierSearchBar> createState() => _SupplierSearchBarState();
 }
 
-class _SupplierSearchBarState extends State<SupplierSearchBar>
-    with SingleTickerProviderStateMixin {
+class _SupplierSearchBarState extends State<SupplierSearchBar> {
   late TextEditingController _controller;
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
   bool _isFocused = false;
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? TextEditingController();
-
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 1, end: 1.02).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
   }
 
   @override
@@ -52,119 +40,82 @@ class _SupplierSearchBarState extends State<SupplierSearchBar>
     if (widget.controller == null) {
       _controller.dispose();
     }
-    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) => Transform.scale(
-        scale: _scaleAnimation.value,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: _isFocused
-                  ? AppColors.primary.withOpacity(0.5)
-                  : AppColors.border.withOpacity(0.3),
-              width: _isFocused ? 2 : 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _isFocused
-                    ? AppColors.primary.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.03),
-                blurRadius: _isFocused ? 20 : 10,
-                offset: Offset(0, _isFocused ? 6 : 3),
-              ),
-            ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _isFocused ? const Color(0xFF6366F1) : const Color(0xFFE5E7EB),
+          width: _isFocused ? 1.5 : 1,
+        ),
+      ),
+      child: TextField(
+        controller: _controller,
+        onChanged: (value) {
+          setState(() {});
+          widget.onChanged?.call(value);
+          widget.onSearch?.call(value);
+        },
+        onSubmitted: (value) {
+          widget.onSubmitted?.call(value);
+          widget.onSearch?.call(value);
+        },
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() => _isFocused = true);
+        },
+        onTapOutside: (_) {
+          setState(() => _isFocused = false);
+          FocusScope.of(context).unfocus();
+        },
+        textAlign: TextAlign.right,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF1A1A2E),
+        ),
+        decoration: InputDecoration(
+          hintText: widget.hintText ?? 'البحث عن مورد...',
+          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+          prefixIcon: const Padding(
+            padding: EdgeInsets.all(12),
+            child: Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
           ),
-          child: TextField(
-            controller: _controller,
-            onChanged: (value) {
-              setState(() {});
-              widget.onChanged?.call(value);
-              widget.onSearch?.call(value);
-            },
-            onSubmitted: (value) {
-              widget.onSubmitted?.call(value);
-              widget.onSearch?.call(value);
-            },
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() => _isFocused = true);
-              _animationController.forward();
-            },
-            onTapOutside: (_) {
-              setState(() => _isFocused = false);
-              _animationController.reverse();
-              FocusScope.of(context).unfocus();
-            },
-            textAlign: TextAlign.right,
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.3,
-            ),
-            decoration: InputDecoration(
-              hintText:
-                  widget.hintText ?? 'ابحث عن المورد بالاسم، الهاتف أو المنطقة',
-              hintStyle: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textHint,
-                fontWeight: FontWeight.w400,
-              ),
-              prefixIcon: Container(
-                margin: const EdgeInsets.all(12),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.1),
-                      AppColors.info.withOpacity(0.05),
-                    ],
+          suffixIcon: _controller.text.isNotEmpty
+              ? IconButton(
+                  icon: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE5E7EB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Color(0xFF6B7280),
+                      size: 12,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.search_rounded,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              suffixIcon: _controller.text.isNotEmpty
-                  ? IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.danger.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          color: AppColors.danger,
-                          size: 16,
-                        ),
-                      ),
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        _controller.clear();
-                        setState(() {});
-                        widget.onClear?.call();
-                        widget.onChanged?.call('');
-                        widget.onSearch?.call('');
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    _controller.clear();
+                    setState(() {});
+                    widget.onClear?.call();
+                    widget.onChanged?.call('');
+                    widget.onSearch?.call('');
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
           ),
         ),
       ),

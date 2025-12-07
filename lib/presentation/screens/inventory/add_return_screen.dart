@@ -1,13 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../domain/entities/return_item.dart';
-import '../../blocs/inventory/inventory_bloc.dart';
 
-/// شاشة إضافة مردود - تصميم راقي هادئ
+/// شاشة إضافة مردود - تصميم احترافي راقي
 class AddReturnScreen extends StatefulWidget {
   const AddReturnScreen({super.key});
 
@@ -15,7 +10,15 @@ class AddReturnScreen extends StatefulWidget {
   State<AddReturnScreen> createState() => _AddReturnScreenState();
 }
 
-class _AddReturnScreenState extends State<AddReturnScreen> {
+class _AddReturnScreenState extends State<AddReturnScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
+
   final _formKey = GlobalKey<FormState>();
   final _qatTypeNameController = TextEditingController();
   final _quantityController = TextEditingController();
@@ -30,10 +33,37 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
   double _totalAmount = 0;
 
   final List<String> _units = ['ربطة', 'علاقية', 'كيلو'];
-  final List<String> _returnTypes = ['مردود_مبيعات', 'مردود_مشتريات'];
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+        );
+
+    _fadeController.forward();
+
+    _scrollController.addListener(() {
+      setState(() => _scrollOffset = _scrollController.offset);
+    });
+  }
 
   @override
   void dispose() {
+    _fadeController.dispose();
+    _scrollController.dispose();
     _qatTypeNameController.dispose();
     _quantityController.dispose();
     _unitPriceController.dispose();
@@ -56,7 +86,7 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     HapticFeedback.mediumImpact();
-
+    _showSnackBar('تم إضافة المردود بنجاح', isError: false);
     Navigator.pop(context);
   }
 
@@ -65,56 +95,125 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.close_rounded,
-                color: AppColors.textPrimary,
-                size: 20,
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            _buildAppBar(),
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildContent(),
+                ),
               ),
             ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'إضافة مردود',
-            style: AppTextStyles.titleLarge.copyWith(
-              fontWeight: FontWeight.w700,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    final opacity = (_scrollOffset / 60).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 100,
+      pinned: true,
+      backgroundColor: Colors.white.withOpacity(opacity),
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: Color(0xFF1A1A2E),
             ),
           ),
         ),
-        body: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeaderCard(),
-                const SizedBox(height: 24),
-                _buildReturnTypeSection(),
-                const SizedBox(height: 24),
-                _buildItemInfoSection(),
-                const SizedBox(height: 24),
-                _buildPriceSection(),
-                const SizedBox(height: 24),
-                _buildReasonSection(),
-                const SizedBox(height: 24),
-                _buildNotesSection(),
-                const SizedBox(height: 24),
-                _buildSummaryCard(),
-                const SizedBox(height: 32),
-                _buildSubmitButton(),
-                const SizedBox(height: 40),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFFF59E0B).withOpacity(0.05),
+                const Color(0xFFF8F9FA),
               ],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(60, 8, 20, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF59E0B).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.keyboard_return_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'إضافة مردود جديد',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'أدخل معلومات المردود بدقة',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -122,59 +221,72 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
     );
   }
 
-  Widget _buildHeaderCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.warning, AppColors.warning],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildContent() {
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoCard(),
+            const SizedBox(height: 24),
+            _buildReturnTypeSection(),
+            const SizedBox(height: 24),
+            _buildItemInfoSection(),
+            const SizedBox(height: 24),
+            _buildPriceSection(),
+            const SizedBox(height: 24),
+            _buildReasonSection(),
+            const SizedBox(height: 24),
+            _buildNotesSection(),
+            const SizedBox(height: 24),
+            _buildSummaryCard(),
+            const SizedBox(height: 32),
+            _buildSubmitButton(),
+            const SizedBox(height: 40),
+          ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.warning.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -4,
-          ),
-        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF3B82F6).withOpacity(0.08),
+            const Color(0xFF3B82F6).withOpacity(0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.15)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFF3B82F6).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.keyboard_return_rounded,
-              color: Colors.white,
-              size: 32,
+              Icons.info_outline_rounded,
+              color: Color(0xFF3B82F6),
+              size: 22,
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'تسجيل مردود جديد',
-                  style: AppTextStyles.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'أدخل معلومات المردود بدقة',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Text(
+              'املأ جميع الحقول المطلوبة لتسجيل المردود بنجاح',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -183,175 +295,216 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
   }
 
   Widget _buildReturnTypeSection() {
-    return _SectionCard(
-      title: 'نوع المردود',
-      icon: Icons.category_rounded,
-      color: AppColors.warning,
-      child: Row(
-        children: [
-          Expanded(
-            child: _TypeButton(
-              label: 'مردود مبيعات',
-              icon: Icons.sell_rounded,
-              isSelected: _selectedReturnType == 'مردود_مبيعات',
-              color: AppColors.sales,
-              onTap: () {
-                setState(() => _selectedReturnType = 'مردود_مبيعات');
-              },
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'نوع المردود',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _TypeButton(
-              label: 'مردود مشتريات',
-              icon: Icons.shopping_cart_rounded,
-              isSelected: _selectedReturnType == 'مردود_مشتريات',
-              color: AppColors.purchases,
-              onTap: () {
-                setState(() => _selectedReturnType = 'مردود_مشتريات');
-              },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _TypeButton(
+                label: 'مردود مبيعات',
+                icon: Icons.sell_rounded,
+                isSelected: _selectedReturnType == 'مردود_مبيعات',
+                color: const Color(0xFF10B981),
+                onTap: () {
+                  setState(() => _selectedReturnType = 'مردود_مبيعات');
+                },
+              ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _TypeButton(
+                label: 'مردود مشتريات',
+                icon: Icons.shopping_cart_rounded,
+                isSelected: _selectedReturnType == 'مردود_مشتريات',
+                color: const Color(0xFF8B5CF6),
+                onTap: () {
+                  setState(() => _selectedReturnType = 'مردود_مشتريات');
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildItemInfoSection() {
-    return _SectionCard(
-      title: 'معلومات الصنف',
-      icon: Icons.inventory_2_rounded,
-      color: AppColors.info,
-      child: Column(
-        children: [
-          _buildTextField(
-            controller: _qatTypeNameController,
-            label: 'اسم الصنف',
-            hint: 'مثال: قات بلدي',
-            icon: Icons.grass_rounded,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال اسم الصنف';
-              }
-              return null;
-            },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'معلومات الصنف',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildTextField(
-                  controller: _quantityController,
-                  label: 'الكمية',
-                  hint: '0',
-                  icon: Icons.inventory_rounded,
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotal(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'مطلوب';
-                    }
-                    if (double.tryParse(value) == null ||
-                        double.parse(value) <= 0) {
-                      return 'قيمة غير صحيحة';
-                    }
-                    return null;
-                  },
-                ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _qatTypeNameController,
+          label: 'اسم الصنف',
+          hint: 'مثال: قات بلدي',
+          prefixIcon: Icons.grass_rounded,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال اسم الصنف';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildTextField(
+                controller: _quantityController,
+                label: 'الكمية',
+                hint: '0',
+                prefixIcon: Icons.inventory_rounded,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotal(),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'مطلوب';
+                  }
+                  if (double.tryParse(value) == null ||
+                      double.parse(value) <= 0) {
+                    return 'قيمة غير صحيحة';
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildDropdown(
-                  value: _selectedUnit,
-                  items: _units,
-                  label: 'الوحدة',
-                  onChanged: (value) {
-                    setState(() => _selectedUnit = value!);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (_selectedReturnType == 'مردود_مبيعات')
-            _buildTextField(
-              controller: _customerNameController,
-              label: 'اسم العميل',
-              hint: 'اسم العميل (اختياري)',
-              icon: Icons.person_outline_rounded,
-            )
-          else
-            _buildTextField(
-              controller: _supplierNameController,
-              label: 'اسم المورد',
-              hint: 'اسم المورد (اختياري)',
-              icon: Icons.business_rounded,
             ),
-        ],
-      ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDropdown(
+                value: _selectedUnit,
+                items: _units,
+                label: 'الوحدة',
+                onChanged: (value) {
+                  setState(() => _selectedUnit = value!);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_selectedReturnType == 'مردود_مبيعات')
+          _buildTextField(
+            controller: _customerNameController,
+            label: 'اسم العميل (اختياري)',
+            hint: 'اسم العميل',
+            prefixIcon: Icons.person_outline_rounded,
+          )
+        else
+          _buildTextField(
+            controller: _supplierNameController,
+            label: 'اسم المورد (اختياري)',
+            hint: 'اسم المورد',
+            prefixIcon: Icons.business_rounded,
+          ),
+      ],
     );
   }
 
   Widget _buildPriceSection() {
-    return _SectionCard(
-      title: 'السعر والمبلغ',
-      icon: Icons.attach_money_rounded,
-      color: AppColors.primary,
-      child: _buildTextField(
-        controller: _unitPriceController,
-        label: 'سعر الوحدة',
-        hint: '0.00',
-        icon: Icons.price_change_rounded,
-        keyboardType: TextInputType.number,
-        suffixText: 'ريال',
-        onChanged: (_) => _calculateTotal(),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال السعر';
-          }
-          if (double.tryParse(value) == null || double.parse(value) < 0) {
-            return 'قيمة غير صحيحة';
-          }
-          return null;
-        },
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'السعر والمبلغ',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _unitPriceController,
+          label: 'سعر الوحدة',
+          hint: '0.00',
+          prefixIcon: Icons.attach_money_rounded,
+          keyboardType: TextInputType.number,
+          suffixText: 'ريال',
+          onChanged: (_) => _calculateTotal(),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال السعر';
+            }
+            if (double.tryParse(value) == null || double.parse(value) < 0) {
+              return 'قيمة غير صحيحة';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildReasonSection() {
-    return _SectionCard(
-      title: 'سبب المردود',
-      icon: Icons.comment_rounded,
-      color: AppColors.danger,
-      child: _buildTextField(
-        controller: _returnReasonController,
-        label: 'السبب',
-        hint: 'مثال: منتج تالف، عيب في الجودة...',
-        icon: Icons.notes_rounded,
-        maxLines: 3,
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال سبب المردود';
-          }
-          return null;
-        },
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'سبب المردود',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _returnReasonController,
+          label: 'السبب',
+          hint: 'مثال: منتج تالف، عيب في الجودة...',
+          prefixIcon: Icons.comment_rounded,
+          maxLines: 3,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال سبب المردود';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildNotesSection() {
-    return _SectionCard(
-      title: 'ملاحظات إضافية',
-      icon: Icons.note_add_rounded,
-      color: AppColors.textSecondary,
-      child: _buildTextField(
-        controller: _notesController,
-        label: 'ملاحظات',
-        hint: 'أي ملاحظات إضافية (اختياري)',
-        icon: Icons.edit_note_rounded,
-        maxLines: 3,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'ملاحظات إضافية (اختياري)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _notesController,
+          label: 'ملاحظات',
+          hint: 'أي ملاحظات إضافية',
+          prefixIcon: Icons.note_add_rounded,
+          maxLines: 3,
+        ),
+      ],
     );
   }
 
@@ -359,36 +512,41 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.warning.withOpacity(0.12),
-            AppColors.warning.withOpacity(0.06),
-          ],
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.warning.withOpacity(0.2)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.15),
+                  color: const Color(0xFFF59E0B).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.calculate_rounded,
-                  color: AppColors.warning,
+                  color: Color(0xFFF59E0B),
                   size: 20,
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
+              const Text(
                 'ملخص المردود',
-                style: AppTextStyles.titleMedium.copyWith(
+                style: TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1A2E),
                 ),
               ),
             ],
@@ -399,39 +557,33 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
             value: _selectedReturnType == 'مردود_مبيعات'
                 ? 'مردود مبيعات'
                 : 'مردود مشتريات',
-            color: _selectedReturnType == 'مردود_مبيعات'
-                ? AppColors.sales
-                : AppColors.purchases,
           ),
-          const SizedBox(height: 12),
+          const Divider(height: 24),
+          _SummaryRow(
+            label: 'الصنف',
+            value: _qatTypeNameController.text.isEmpty
+                ? '-'
+                : _qatTypeNameController.text,
+          ),
+          const Divider(height: 24),
           _SummaryRow(
             label: 'الكمية',
             value: _quantityController.text.isEmpty
-                ? '0'
+                ? '-'
                 : '${_quantityController.text} $_selectedUnit',
-            color: AppColors.info,
           ),
-          const SizedBox(height: 12),
+          const Divider(height: 24),
           _SummaryRow(
             label: 'سعر الوحدة',
             value: _unitPriceController.text.isEmpty
-                ? '0.00'
+                ? '-'
                 : '${_unitPriceController.text} ريال',
-            color: AppColors.primary,
           ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            height: 1,
-            color: AppColors.border.withOpacity(0.3),
-          ),
-          const SizedBox(height: 12),
+          const Divider(height: 24),
           _SummaryRow(
-            label: 'المبلغ الإجمالي',
+            label: 'الإجمالي',
             value: '${_totalAmount.toStringAsFixed(2)} ريال',
-            color: AppColors.warning,
-            isBold: true,
-            isLarge: true,
+            isTotal: true,
           ),
         ],
       ),
@@ -439,43 +591,32 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.warning, AppColors.warning],
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _submitReturn,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFF59E0B),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.warning.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _submitReturn,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'تسجيل المردود',
-                  style: AppTextStyles.button.copyWith(fontSize: 17),
-                ),
-              ],
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_rounded, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'حفظ المردود',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -485,42 +626,49 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
     required TextEditingController controller,
     required String label,
     required String hint,
-    required IconData icon,
+    required IconData prefixIcon,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    void Function(String)? onChanged,
     int maxLines = 1,
     String? suffixText,
-    Function(String)? onChanged,
-    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: AppTextStyles.labelMedium.copyWith(
-            color: AppColors.textPrimary,
+          style: const TextStyle(
+            fontSize: 14,
             fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            validator: validator,
+            onChanged: onChanged,
             maxLines: maxLines,
-            style: AppTextStyles.bodyMedium,
+            style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: AppTextStyles.inputHint.copyWith(fontSize: 14),
-              prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
+              hintStyle: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(prefixIcon, size: 20, color: const Color(0xFF6B7280)),
               suffixText: suffixText,
-              suffixStyle: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              suffixStyle: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 14,
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
@@ -528,8 +676,6 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
                 vertical: 14,
               ),
             ),
-            onChanged: onChanged,
-            validator: validator,
           ),
         ),
       ],
@@ -540,106 +686,75 @@ class _AddReturnScreenState extends State<AddReturnScreen> {
     required String value,
     required List<String> items,
     required String label,
-    required Function(String?) onChanged,
+    required void Function(String?) onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: AppTextStyles.labelMedium.copyWith(
-            color: AppColors.textPrimary,
+          style: const TextStyle(
+            fontSize: 14,
             fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: DropdownButtonFormField<String>(
             value: value,
-            items: items.map((item) {
-              return DropdownMenuItem(value: item, child: Text(item));
-            }).toList(),
-            onChanged: onChanged,
             decoration: const InputDecoration(
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            style: AppTextStyles.bodyMedium,
+            items: items
+                .map((item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(item, style: const TextStyle(fontSize: 14)),
+                    ))
+                .toList(),
+            onChanged: onChanged,
           ),
         ),
       ],
     );
   }
-}
 
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final Widget child;
-
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12, right: 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 16),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: AppTextStyles.titleSmall.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w700,
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border.withOpacity(0.1)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: child,
-        ),
-      ],
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: Duration(seconds: isError ? 4 : 2),
+      ),
     );
   }
 }
@@ -661,53 +776,47 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: isSelected
-            ? LinearGradient(colors: [color, color.withOpacity(0.8)])
-            : null,
-        color: isSelected ? null : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isSelected ? color : AppColors.border.withOpacity(0.3),
-          width: isSelected ? 0 : 1,
-        ),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: color.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              children: [
-                Icon(icon, color: isSelected ? Colors.white : color, size: 28),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+          border: Border.all(
+            color: isSelected ? color : const Color(0xFFE5E7EB),
+            width: isSelected ? 2 : 1,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? Colors.white : color,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : const Color(0xFF374151),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -717,16 +826,12 @@ class _TypeButton extends StatelessWidget {
 class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
-  final Color color;
-  final bool isBold;
-  final bool isLarge;
+  final bool isTotal;
 
   const _SummaryRow({
     required this.label,
     required this.value,
-    required this.color,
-    this.isBold = false,
-    this.isLarge = false,
+    this.isTotal = false,
   });
 
   @override
@@ -736,18 +841,18 @@ class _SummaryRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
-            fontSize: isLarge ? 16 : 14,
+          style: TextStyle(
+            fontSize: isTotal ? 15 : 14,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
+            color: const Color(0xFF6B7280),
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w700,
-            fontSize: isLarge ? 20 : 16,
+            fontSize: isTotal ? 18 : 14,
+            fontWeight: isTotal ? FontWeight.w800 : FontWeight.w600,
+            color: isTotal ? const Color(0xFFF59E0B) : const Color(0xFF1A1A2E),
           ),
         ),
       ],

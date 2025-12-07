@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import 'dart:math' as math;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -23,80 +21,28 @@ class SupplierRatingWidget extends StatefulWidget {
   State<SupplierRatingWidget> createState() => _SupplierRatingWidgetState();
 }
 
-class _SupplierRatingWidgetState extends State<SupplierRatingWidget>
-    with TickerProviderStateMixin {
+class _SupplierRatingWidgetState extends State<SupplierRatingWidget> {
   late double _rating;
-  late AnimationController _scaleController;
-  late AnimationController _rotationController;
-  late List<AnimationController> _starControllers;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _rating = widget.initialRating;
-
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-
-    _rotationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 1, end: 1.1).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
-    );
-
-    _starControllers = List.generate(
-      5,
-      (index) => AnimationController(
-        duration: Duration(milliseconds: 400 + (index * 50)),
-        vsync: this,
-      ),
-    );
-
-    _animateStars();
-  }
-
-  Future<void> _animateStars() async {
-    for (var controller in _starControllers) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      if (mounted) {
-        controller.forward();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _scaleController.dispose();
-    _rotationController.dispose();
-    for (var controller in _starControllers) {
-      controller.dispose();
-    }
-    super.dispose();
   }
 
   void _updateRating(double newRating) {
     if (!widget.readOnly) {
       HapticFeedback.selectionClick();
-      setState(() {
-        _rating = newRating;
-      });
-      _scaleController.forward().then((_) => _scaleController.reverse());
-      _rotationController.forward().then((_) => _rotationController.reset());
+      setState(() => _rating = newRating);
       widget.onRatingChanged?.call(newRating);
     }
   }
 
   Color _getRatingColor() {
-    if (_rating >= 4) return AppColors.success;
-    if (_rating >= 3) return const Color(0xFFFFD700);
-    if (_rating >= 2) return AppColors.warning;
-    return AppColors.danger;
+    if (_rating >= 4) return const Color(0xFF16A34A);
+    if (_rating >= 3) return const Color(0xFFF59E0B);
+    if (_rating >= 2) return const Color(0xFFEA580C);
+    return const Color(0xFFDC2626);
   }
 
   String _getRatingLabel() {
@@ -108,323 +54,153 @@ class _SupplierRatingWidgetState extends State<SupplierRatingWidget>
     return 'بدون تقييم';
   }
 
-  IconData _getRatingIcon() {
-    if (_rating >= 4) return Icons.sentiment_very_satisfied_rounded;
-    if (_rating >= 3) return Icons.sentiment_satisfied_rounded;
-    if (_rating >= 2) return Icons.sentiment_neutral_rounded;
-    return Icons.sentiment_dissatisfied_rounded;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final ratingColor = _getRatingColor();
+    final color = _getRatingColor();
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surface.withOpacity(0.98)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: ratingColor.withOpacity(0.2),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: ratingColor.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 2,
-              child: Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      ratingColor,
-                      ratingColor.withOpacity(0.5),
-                    ],
-                  ),
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.star_rounded, color: color, size: 18),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'تقييم المورد',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
                 ),
               ),
-            ),
+            ],
+          ),
 
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              ratingColor.withOpacity(0.2),
-                              ratingColor.withOpacity(0.1),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.star_rounded,
-                          color: ratingColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'تقييم المورد',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
+          const SizedBox(height: 20),
+
+          // Rating display
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                _rating.toStringAsFixed(1),
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Text(
+                '/ 5',
+                style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+              ),
+              const Spacer(),
+              if (widget.showLabel)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      AnimatedBuilder(
-                        animation: Listenable.merge([
-                          _scaleAnimation,
-                          _rotationController,
-                        ]),
-                        builder: (context, child) => Transform.scale(
-                          scale: _scaleAnimation.value,
-                          child: Transform.rotate(
-                            angle: _rotationController.value * 0.1,
-                            child: Container(
-                              width: 90,
-                              height: 90,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    ratingColor.withOpacity(0.15),
-                                    ratingColor.withOpacity(0.05),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: ratingColor.withOpacity(0.2),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                _getRatingIcon(),
-                                color: ratingColor,
-                                size: 50,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0, end: _rating),
-                              duration: const Duration(milliseconds: 800),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, value, child) => Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    value.toStringAsFixed(1),
-                                    style: TextStyle(
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.w900,
-                                      color: ratingColor,
-                                      height: 1,
-                                      letterSpacing: -1,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 8, right: 4),
-                                    child: Text(
-                                      '/ 5',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: ratingColor.withOpacity(0.6),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (widget.showLabel) ...[
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      ratingColor.withOpacity(0.2),
-                                      ratingColor.withOpacity(0.1),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  _getRatingLabel(),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: ratingColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-
-                  const SizedBox(height: 28),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      final starValue = index + 1;
-                      return GestureDetector(
-                        onTap: widget.readOnly
-                            ? null
-                            : () => _updateRating(starValue.toDouble()),
-                        child: AnimatedBuilder(
-                          animation: _starControllers[index],
-                          builder: (context, child) {
-                            final scale = Tween<double>(begin: 0, end: 1)
-                                .animate(CurvedAnimation(
-                                  parent: _starControllers[index],
-                                  curve: Curves.elasticOut,
-                                ))
-                                .value;
-
-                            return Transform.scale(
-                              scale: scale,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: Icon(
-                                  _rating >= starValue
-                                      ? Icons.star_rounded
-                                      : _rating >= starValue - 0.5
-                                          ? Icons.star_half_rounded
-                                          : Icons.star_outline_rounded,
-                                  color: _rating >= starValue - 0.5
-                                      ? ratingColor
-                                      : AppColors.border.withOpacity(0.5),
-                                  size: 36,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }),
-                  ),
-
-                  if (!widget.readOnly) ...[
-                    const SizedBox(height: 24),
-                    SliderTheme(
-                      data: SliderThemeData(
-                        activeTrackColor: ratingColor,
-                        inactiveTrackColor: AppColors.border.withOpacity(0.3),
-                        thumbColor: ratingColor,
-                        overlayColor: ratingColor.withOpacity(0.2),
-                        trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 10,
-                        ),
-                      ),
-                      child: Slider(
-                        value: _rating,
-                        min: 0,
-                        max: 5,
-                        divisions: 10,
-                        onChanged: _updateRating,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.info.withOpacity(0.03),
-                          AppColors.info.withOpacity(0.02),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppColors.border.withOpacity(0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.info.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.info_outline_rounded,
-                            size: 18,
-                            color: AppColors.info,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            widget.readOnly
-                                ? 'التقييم بناءً على جودة المنتجات والالتزام بالمواعيد'
-                                : 'انقر على النجوم أو اسحب الشريط لتغيير التقييم',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: Text(
+                    _getRatingLabel(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: color,
                     ),
                   ),
-                ],
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Stars
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (index) {
+              final starValue = index + 1;
+              final isFilled = _rating >= starValue;
+              final isHalf = _rating >= starValue - 0.5 && _rating < starValue;
+
+              return GestureDetector(
+                onTap: widget.readOnly
+                    ? null
+                    : () => _updateRating(starValue.toDouble()),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(
+                    isFilled
+                        ? Icons.star_rounded
+                        : isHalf
+                        ? Icons.star_half_rounded
+                        : Icons.star_outline_rounded,
+                    color: (isFilled || isHalf)
+                        ? color
+                        : const Color(0xFFE5E7EB),
+                    size: 32,
+                  ),
+                ),
+              );
+            }),
+          ),
+
+          // Slider (if not read only)
+          if (!widget.readOnly) ...[
+            const SizedBox(height: 16),
+            SliderTheme(
+              data: SliderThemeData(
+                activeTrackColor: color,
+                inactiveTrackColor: const Color(0xFFE5E7EB),
+                thumbColor: color,
+                overlayColor: color.withOpacity(0.1),
+                trackHeight: 4,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+              ),
+              child: Slider(
+                value: _rating,
+                min: 0,
+                max: 5,
+                divisions: 10,
+                onChanged: _updateRating,
               ),
             ),
           ],
-        ),
+
+          const SizedBox(height: 12),
+
+          // Helper text
+          Text(
+            widget.readOnly
+                ? 'التقييم يعبر عن جودة المنتجات والالتزام بالمواعيد.'
+                : 'اضغط على النجوم أو استخدم الشريط لتعديل التقييم.',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          ),
+        ],
       ),
     );
   }
@@ -441,10 +217,10 @@ class SupplierRatingBadge extends StatelessWidget {
   });
 
   Color _getRatingColor() {
-    if (rating >= 4) return AppColors.success;
-    if (rating >= 3) return const Color(0xFFFFD700);
-    if (rating >= 2) return AppColors.warning;
-    return AppColors.danger;
+    if (rating >= 4) return const Color(0xFF16A34A);
+    if (rating >= 3) return const Color(0xFFF59E0B);
+    if (rating >= 2) return const Color(0xFFEA580C);
+    return const Color(0xFFDC2626);
   }
 
   @override
@@ -452,25 +228,15 @@ class SupplierRatingBadge extends StatelessWidget {
     final color = _getRatingColor();
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.star_rounded,
-            color: color,
-            size: 16,
-          ),
+          Icon(Icons.star_rounded, color: color, size: 14),
           if (showValue) ...[
             const SizedBox(width: 4),
             Text(
@@ -478,8 +244,7 @@ class SupplierRatingBadge extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: color,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -498,16 +263,16 @@ class SupplierRatingStars extends StatelessWidget {
   const SupplierRatingStars({
     super.key,
     required this.rating,
-    this.size = 16,
+    this.size = 14,
     this.color,
     this.showHalfStars = true,
   });
 
   Color _getRatingColor() {
-    if (rating >= 4) return AppColors.success;
-    if (rating >= 3) return const Color(0xFFFFD700);
-    if (rating >= 2) return AppColors.warning;
-    return AppColors.danger;
+    if (rating >= 4) return const Color(0xFF16A34A);
+    if (rating >= 3) return const Color(0xFFF59E0B);
+    if (rating >= 2) return const Color(0xFFEA580C);
+    return const Color(0xFFDC2626);
   }
 
   @override
@@ -522,11 +287,11 @@ class SupplierRatingStars extends StatelessWidget {
           rating >= starValue
               ? Icons.star_rounded
               : (showHalfStars && rating >= starValue - 0.5)
-                  ? Icons.star_half_rounded
-                  : Icons.star_outline_rounded,
+              ? Icons.star_half_rounded
+              : Icons.star_outline_rounded,
           color: rating >= starValue - (showHalfStars ? 0.5 : 0)
               ? effectiveColor
-              : AppColors.border.withOpacity(0.4),
+              : const Color(0xFFE5E7EB),
           size: size,
         );
       }),

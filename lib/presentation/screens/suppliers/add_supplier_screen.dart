@@ -18,14 +18,14 @@ class AddSupplierScreen extends StatefulWidget {
   State<AddSupplierScreen> createState() => _AddSupplierScreenState();
 }
 
-class _AddSupplierScreenState extends State<AddSupplierScreen>
-    with TickerProviderStateMixin {
+class _AddSupplierScreenState extends State<AddSupplierScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _areaController = TextEditingController();
   final _notesController = TextEditingController();
-  
+  final _scrollController = ScrollController();
+
   final GlobalKey _nameFieldKey = GlobalKey();
   final GlobalKey _phoneFieldKey = GlobalKey();
   final GlobalKey _areaFieldKey = GlobalKey();
@@ -33,66 +33,9 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
   final GlobalKey _ratingSectionKey = GlobalKey();
   final GlobalKey _trustLevelKey = GlobalKey();
   final GlobalKey _saveButtonKey = GlobalKey();
-  
+
   int _qualityRating = 3;
   String _trustLevel = 'جديد';
-  
-  late AnimationController _animationController;
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _scaleAnimation;
-  
-  final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-    
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.9,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-    
-    _animationController.forward();
-    _fadeController.forward();
-    
-    _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
-    });
-  }
 
   @override
   void dispose() {
@@ -100,8 +43,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     _phoneController.dispose();
     _areaController.dispose();
     _notesController.dispose();
-    _animationController.dispose();
-    _fadeController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -117,334 +58,121 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
   }
 
   String? _validatePhone(String? value) {
-    if (value != null && value.isNotEmpty) {
-      if (value.length < 9) {
-        return 'رقم الهاتف غير صحيح';
-      }
+    if (value != null && value.isNotEmpty && value.length < 9) {
+      return 'رقم الهاتف غير صحيح';
     }
     return null;
   }
 
   void _saveSupplier() {
     HapticFeedback.mediumImpact();
-    
+
     if (_formKey.currentState!.validate()) {
       final supplier = Supplier(
         name: _nameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        area: _areaController.text.trim().isEmpty ? null : _areaController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        area: _areaController.text.trim().isEmpty
+            ? null
+            : _areaController.text.trim(),
         qualityRating: _qualityRating,
         trustLevel: _trustLevel,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
 
       context.read<SuppliersBloc>().add(AddSupplierEvent(supplier));
-    } else {
-      HapticFeedback.lightImpact();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-    
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
-            
-            BlocListener<SuppliersBloc, SuppliersState>(
-              listener: (context, state) {
-                if (state is SupplierOperationSuccess) {
-                  HapticFeedback.heavyImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              state.message,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: AppColors.success,
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 6,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                } else if (state is SuppliersError) {
-                  HapticFeedback.heavyImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.error, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              state.message,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: AppColors.danger,
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 6,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                }
-              },
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                slivers: [
-                  _buildModernAppBar(topPadding),
-                  
-                  SliverToBoxAdapter(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: ScaleTransition(
-                          scale: _scaleAnimation,
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  const SizedBox(height: 20),
-                                  
-                                  _buildInfoCard(),
-                                  
-                                  const SizedBox(height: 20),
-                                  
-                                  _buildRatingCard(),
-                                  
-                                  const SizedBox(height: 24),
-                                  
-                                  _buildSaveButton(),
-                                  
-                                  const SizedBox(height: 40),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: _buildAppBar(),
+        body: BlocListener<SuppliersBloc, SuppliersState>(
+          listener: (context, state) {
+            if (state is SupplierOperationSuccess) {
+              _showSuccessSnackBar(state.message);
+              Navigator.of(context).pop();
+            } else if (state is SuppliersError) {
+              _showErrorSnackBar(state.message);
+            }
+          },
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildInfoSection(),
+                  const SizedBox(height: 20),
+                  _buildRatingSection(),
+                  const SizedBox(height: 24),
+                  _buildSaveButton(),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildGradientBackground() => Container(
-    height: 500,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.info.withOpacity(0.08),
-          AppColors.primary.withOpacity(0.05),
-          Colors.transparent,
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildModernAppBar(double topPadding) {
-    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
-    
-    return SliverAppBar(
-      expandedHeight: 140,
-      pinned: true,
-      backgroundColor: AppColors.surface.withOpacity(opacity),
-      elevation: opacity * 2,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: opacity < 0.5 
-                ? AppColors.surface.withOpacity(0.9)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
-            ),
-          ),
-          child: const Icon(
-            Icons.arrow_back_ios_new,
-            color: AppColors.textPrimary,
-            size: 20,
-          ),
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      leading: _buildBackButton(),
+      title: const Text(
+        'إضافة مورد جديد',
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1A1A2E),
         ),
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          Navigator.pop(context);
-        },
       ),
+      centerTitle: true,
       actions: [
         IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-              ),
-            ),
-            child: const Icon(
-              Icons.help_outline,
-              color: AppColors.primary,
-              size: 20,
-            ),
+          icon: const Icon(
+            Icons.help_outline,
+            color: Color(0xFF6B7280),
+            size: 22,
           ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            SuppliersTutorialService.showFormTutorial(
-              context: context,
-              nameFieldKey: _nameFieldKey,
-              phoneFieldKey: _phoneFieldKey,
-              areaFieldKey: _areaFieldKey,
-              ratingSectionKey: _ratingSectionKey,
-              trustLevelKey: _trustLevelKey,
-              notesFieldKey: _notesFieldKey,
-              saveButtonKey: _saveButtonKey,
-              scrollController: _scrollController,
-              onFinish: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('تمت التعليمات بنجاح'),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 6,
-                  ),
-                );
-              },
-            );
-          },
+          onPressed: _showTutorial,
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.info.withOpacity(0.05),
-                AppColors.primary.withOpacity(0.03),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.info, AppColors.primary],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.info.withOpacity(0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                            BoxShadow(
-                              color: AppColors.info.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.store_rounded,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'إضافة مورد جديد',
-                              style: AppTextStyles.h2.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 24,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'أدخل معلومات المورد بدقة',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Material(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Color(0xFF374151),
+              size: 16,
             ),
           ),
         ),
@@ -452,238 +180,183 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     );
   }
 
-  Widget _buildInfoCard() => Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.surface,
-          AppColors.surface.withOpacity(0.95),
-        ],
+  Widget _buildInfoSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.info.withOpacity(0.08),
-          blurRadius: 24,
-          offset: const Offset(0, 8),
-        ),
-        BoxShadow(
-          color: AppColors.info.withOpacity(0.05),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-      border: Border.all(
-        color: AppColors.border.withOpacity(0.2),
-        width: 1,
-      ),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.info.withOpacity(0.15),
-                      AppColors.info.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.info_outline_rounded,
-                  size: 22,
-                  color: AppColors.info,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'معلومات المورد الأساسية',
-                style: AppTextStyles.h3.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-          
-          _buildAnimatedField(
-            delay: 100,
-            child: Container(
-              key: _nameFieldKey,
-              child: AppTextField(
-                controller: _nameController,
-                label: 'اسم المورد *',
-                hint: 'أدخل اسم المورد',
-                prefixIcon: Icons.person_outline_rounded,
-                validator: _validateName,
-                onChanged: (value) {
-                  HapticFeedback.selectionClick();
-                },
-              ),
-            ),
-          ),
-          
+          _buildSectionHeader('المعلومات الأساسية', Icons.info_outline),
           const SizedBox(height: 20),
-          
-          _buildAnimatedField(
-            delay: 200,
-            child: Container(
-              key: _phoneFieldKey,
-              child: AppTextField.phone(
-                controller: _phoneController,
-                label: 'رقم الهاتف',
-                hint: 'أدخل رقم الهاتف (اختياري)',
-                validator: _validatePhone,
-                onChanged: (value) {
-                  HapticFeedback.selectionClick();
-                },
-              ),
-            ),
+          _buildTextField(
+            key: _nameFieldKey,
+            controller: _nameController,
+            label: 'اسم المورد',
+            hint: 'أدخل اسم المورد',
+            icon: Icons.person_outline,
+            validator: _validateName,
+            isRequired: true,
           ),
-          
-          const SizedBox(height: 20),
-          
-          _buildAnimatedField(
-            delay: 300,
-            child: Container(
-              key: _areaFieldKey,
-              child: AppTextField(
-                controller: _areaController,
-                label: 'المنطقة',
-                hint: 'أدخل المنطقة (اختياري)',
-                prefixIcon: Icons.location_on_outlined,
-                onChanged: (value) {
-                  HapticFeedback.selectionClick();
-                },
-              ),
-            ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            key: _phoneFieldKey,
+            controller: _phoneController,
+            label: 'رقم الهاتف',
+            hint: 'أدخل رقم الهاتف (اختياري)',
+            icon: Icons.phone_outlined,
+            validator: _validatePhone,
+            keyboardType: TextInputType.phone,
           ),
-          
-          const SizedBox(height: 20),
-          
-          _buildAnimatedField(
-            delay: 400,
-            child: Container(
-              key: _notesFieldKey,
-              child: AppTextField.multiline(
-                controller: _notesController,
-                label: 'ملاحظات',
-                hint: 'أدخل ملاحظات إضافية (اختياري)',
-                maxLines: 3,
-              ),
-            ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            key: _areaFieldKey,
+            controller: _areaController,
+            label: 'المنطقة',
+            hint: 'أدخل المنطقة (اختياري)',
+            icon: Icons.location_on_outlined,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            key: _notesFieldKey,
+            controller: _notesController,
+            label: 'ملاحظات',
+            hint: 'أدخل ملاحظات إضافية (اختياري)',
+            icon: Icons.notes_outlined,
+            maxLines: 3,
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _buildRatingCard() => Container(
-    key: _ratingSectionKey,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.surface,
-          AppColors.surface.withOpacity(0.95),
-        ],
-      ),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.warning.withOpacity(0.08),
-          blurRadius: 24,
-          offset: const Offset(0, 8),
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFF6366F1).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: const Color(0xFF6366F1)),
         ),
-        BoxShadow(
-          color: AppColors.warning.withOpacity(0.05),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A2E),
+          ),
         ),
       ],
-      border: Border.all(
-        color: AppColors.border.withOpacity(0.2),
-        width: 1,
+    );
+  }
+
+  Widget _buildTextField({
+    GlobalKey? key,
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    bool isRequired = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isRequired ? '$label *' : label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          key: key,
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Icon(icon, size: 20, color: const Color(0xFF6B7280)),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF6366F1),
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFDC2626)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRatingSection() {
+    return Container(
+      key: _ratingSectionKey,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.warning.withOpacity(0.15),
-                      AppColors.warning.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.star_rounded,
-                  size: 22,
-                  color: AppColors.warning,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'التقييم والثقة',
-                style: AppTextStyles.h3.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-          
-          Text(
+          _buildSectionHeader('التقييم والثقة', Icons.star_outline),
+          const SizedBox(height: 20),
+
+          // Rating
+          const Text(
             'تقييم الجودة',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF374151),
             ),
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: AppColors.warning.withOpacity(0.15),
-                width: 1.5,
-              ),
+              color: const Color(0xFFFEF3C7).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -691,17 +364,17 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                 return GestureDetector(
                   onTap: () {
                     HapticFeedback.selectionClick();
-                    setState(() {
-                      _qualityRating = index + 1;
-                    });
+                    setState(() => _qualityRating = index + 1);
                   },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Icon(
-                      index < _qualityRating ? Icons.star_rounded : Icons.star_border_rounded,
-                      color: index < _qualityRating 
-                          ? AppColors.warning 
-                          : AppColors.textHint,
+                      index < _qualityRating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: index < _qualityRating
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFFD1D5DB),
                       size: 32,
                     ),
                   ),
@@ -709,52 +382,39 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
               }),
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
-          Text(
+
+          // Trust level
+          const Text(
             'مستوى الثقة',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF374151),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Container(
             key: _trustLevelKey,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.surface,
-                  AppColors.surface.withOpacity(0.95),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: AppColors.border.withOpacity(0.3),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _trustLevel,
                 isExpanded: true,
-                icon: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: AppColors.textSecondary,
-                  size: 28,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Color(0xFF6B7280),
                 ),
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1A1A2E),
                 ),
                 items: const [
                   DropdownMenuItem(value: 'جديد', child: Text('جديد')),
@@ -765,9 +425,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                 onChanged: (value) {
                   if (value != null) {
                     HapticFeedback.selectionClick();
-                    setState(() {
-                      _trustLevel = value;
-                    });
+                    setState(() => _trustLevel = value);
                   }
                 },
               ),
@@ -775,124 +433,96 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
           ),
         ],
       ),
-    ),
-  );
-
-  Widget _buildAnimatedField({
-    required int delay,
-    required Widget child,
-  }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 600 + delay),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 20 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: child,
     );
   }
 
-  Widget _buildSaveButton() => BlocBuilder<SuppliersBloc, SuppliersState>(
-    builder: (context, state) {
-      final isLoading = state is SuppliersLoading;
-      
-      return TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 1000),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          return Opacity(
-            opacity: value,
-            child: Transform.scale(
-              scale: 0.9 + (0.1 * value),
-              child: child,
-            ),
-          );
-        },
-        child: Container(
+  Widget _buildSaveButton() {
+    return BlocBuilder<SuppliersBloc, SuppliersState>(
+      builder: (context, state) {
+        final isLoading = state is SuppliersLoading;
+
+        return Material(
           key: _saveButtonKey,
-          height: 60,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isLoading 
-                  ? [
-                      AppColors.textHint.withOpacity(0.5),
-                      AppColors.textHint.withOpacity(0.3),
-                    ]
-                  : [
-                      AppColors.info,
-                      AppColors.primary,
-                    ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: isLoading
-                    ? Colors.transparent
-                    : AppColors.info.withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: isLoading
-                    ? Colors.transparent
-                    : AppColors.info.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: isLoading ? null : _saveSupplier,
-              borderRadius: BorderRadius.circular(20),
-              child: Center(
-                child: isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+          color: isLoading ? const Color(0xFFD1D5DB) : const Color(0xFF6366F1),
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            onTap: isLoading ? null : _saveSupplier,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              height: 52,
+              alignment: Alignment.center,
+              child: isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.save_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'حفظ المورد',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.save_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'حفظ المورد',
-                            style: AppTextStyles.button.copyWith(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
+                      ],
+                    ),
             ),
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
+  }
+
+  void _showTutorial() {
+    HapticFeedback.lightImpact();
+    SuppliersTutorialService.showFormTutorial(
+      context: context,
+      nameFieldKey: _nameFieldKey,
+      phoneFieldKey: _phoneFieldKey,
+      areaFieldKey: _areaFieldKey,
+      ratingSectionKey: _ratingSectionKey,
+      trustLevelKey: _trustLevelKey,
+      notesFieldKey: _notesFieldKey,
+      saveButtonKey: _saveButtonKey,
+      scrollController: _scrollController,
+      onFinish: () => _showSuccessSnackBar('تمت التعليمات بنجاح'),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    HapticFeedback.heavyImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFDC2626),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 }

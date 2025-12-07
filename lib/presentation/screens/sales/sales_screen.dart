@@ -13,7 +13,7 @@ import '../../widgets/common/confirm_dialog.dart';
 import '../../navigation/route_names.dart';
 import 'widgets/sale_item_card.dart';
 
-/// الشاشة الرئيسية لإدارة المبيعات - تصميم راقي هادئ
+/// الشاشة الرئيسية لإدارة المبيعات - تصميم راقي احترافي
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
 
@@ -39,15 +39,13 @@ class _SalesScreenState extends State<SalesScreen>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _animationController.forward();
 
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
+      setState(() => _scrollOffset = _scrollController.offset);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -64,310 +62,224 @@ class _SalesScreenState extends State<SalesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
-
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            _buildSliverAppBar(),
+            SliverToBoxAdapter(
+              child: BlocConsumer<SalesBloc, SalesState>(
+                listener: (context, state) {
+                  if (state is SaleOperationSuccess) {
+                    _showSuccessMessage(state.message);
+                  } else if (state is SalesError) {
+                    _showErrorMessage(state.message);
+                  }
+                },
+                builder: (context, state) {
+                  if (state is SalesLoading) {
+                    return _buildLoadingState();
+                  }
+                  if (state is SalesLoaded) {
+                    final filteredSales = _filterSales(state.sales);
+                    return Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildStatsSection(filteredSales),
+                        const SizedBox(height: 24),
+                        _buildFilterSection(),
+                        const SizedBox(height: 20),
+                        if (filteredSales.isEmpty)
+                          _buildEmptyState()
+                        else
+                          _buildSalesList(filteredSales),
+                        const SizedBox(height: 100),
+                      ],
+                    );
+                  }
+                  return _buildEmptyState();
+                },
               ),
-              slivers: [
-                _buildModernAppBar(topPadding),
-
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-
-                      BlocConsumer<SalesBloc, SalesState>(
-                        listener: (context, state) {
-                          if (state is SaleOperationSuccess) {
-                            _showSuccessMessage(state.message);
-                          } else if (state is SalesError) {
-                            _showErrorMessage(state.message);
-                          }
-                        },
-                        builder: (context, state) {
-                          if (state is SalesLoading) {
-                            return _buildShimmerStats();
-                          }
-                          if (state is SalesLoaded) {
-                            final filteredSales = _filterSales(state.sales);
-                            return Column(
-                              children: [
-                                _buildStatsCard(filteredSales),
-                                const SizedBox(height: 32),
-                                _buildSectionTitle(
-                                  'المبيعات',
-                                  Icons.receipt_long_rounded,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildFilterChips(),
-                                const SizedBox(height: 16),
-                                if (filteredSales.isEmpty)
-                                  _buildEmptyState()
-                                else
-                                  _buildSalesList(filteredSales),
-                                const SizedBox(height: 100),
-                              ],
-                            );
-                          }
-                          return _buildEmptyState();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
-
-            _buildFloatingActionButton(context),
           ],
         ),
+        floatingActionButton: _buildFloatingActionButton(),
       ),
     );
   }
 
-  Widget _buildGradientBackground() => Container(
-    height: 400,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.sales.withOpacity(0.08),
-          AppColors.success.withOpacity(0.05),
-          Colors.transparent,
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildModernAppBar(double topPadding) {
+  Widget _buildSliverAppBar() {
     final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
 
     return SliverAppBar(
-      expandedHeight: 140,
+      expandedHeight: 120,
       pinned: true,
-      backgroundColor: AppColors.surface.withOpacity(opacity),
-      elevation: opacity * 2,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.sales, AppColors.success],
-                          ),
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.sales.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.point_of_sale_rounded,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'المبيعات',
-                              style: AppTextStyles.h2.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 24,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'إدارة عمليات البيع',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      elevation: 0,
+      backgroundColor: Colors.white.withOpacity(opacity),
+      surfaceTintColor: Colors.transparent,
+      leading: _buildBackButton(),
       actions: [
         Container(
           key: _quickSaleButtonKey,
-          child: _buildIconButton(
+          child: _buildAppBarAction(
             Icons.flash_on_rounded,
-            onPressed: () =>
-                _navigateWithAnimation(context, RouteNames.quickSale),
-            badge: null,
+            () => _navigateWithAnimation(context, RouteNames.quickSale),
           ),
         ),
         Container(
           key: _refreshButtonKey,
-          child: _buildIconButton(
-            Icons.refresh_rounded,
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              context.read<SalesBloc>().add(LoadSales());
-            },
-          ),
-        ),
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border.withOpacity(0.5)),
-            ),
-            child: const Icon(
-              Icons.help_outline,
-              color: AppColors.textPrimary,
-              size: 20,
-            ),
-          ),
-          onPressed: () {
+          child: _buildAppBarAction(Icons.refresh_rounded, () {
             HapticFeedback.lightImpact();
-
-            SalesManagementTutorialService.showScreenTutorial(
-              context: context,
-              statsCardKey: _statsCardKey,
-              filterChipsKey: _filterChipsKey,
-              salesListKey: _salesListKey,
-              fabKey: _fabKey,
-              quickSaleButtonKey: _quickSaleButtonKey,
-              refreshButtonKey: _refreshButtonKey,
-              scrollController: _scrollController,
-              onFinish: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('تمت جولة التعليمات لشاشة المبيعات'),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-              },
-            );
-          },
+            context.read<SalesBloc>().add(LoadSales());
+          }),
         ),
+        _buildAppBarAction(Icons.help_outline_rounded, _showTutorial),
         const SizedBox(width: 12),
       ],
+      flexibleSpace: FlexibleSpaceBar(background: _buildHeaderContent()),
     );
   }
 
-  Widget _buildIconButton(
-    IconData icon, {
-    required VoidCallback onPressed,
-    String? badge,
-  }) => Stack(
-    children: [
-      IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border.withOpacity(0.5)),
-          ),
-          child: Icon(icon, color: AppColors.textPrimary, size: 20),
-        ),
-        onPressed: onPressed,
-      ),
-      if (badge != null)
-        Positioned(
-          right: 8,
-          top: 8,
+  Widget _buildBackButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 0,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).pop();
+          },
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              color: AppColors.danger,
-              shape: BoxShape.circle,
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: Text(
-              badge,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Color(0xFF1A1A2E),
+              size: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBarAction(IconData icon, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Icon(icon, color: const Color(0xFF1A1A2E), size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderContent() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF8F9FA), Color(0xFFF8F9FA)],
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF10B981).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.point_of_sale_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'المبيعات',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'إدارة عمليات البيع والفواتير',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: const Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
+            ],
           ),
         ),
-    ],
-  );
+      ),
+    );
+  }
 
-  Widget _buildSectionTitle(String title, IconData icon) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.sales.withOpacity(0.1),
-                AppColors.success.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 20, color: AppColors.sales),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildStatsCard(List<Sale> sales) {
+  Widget _buildStatsSection(List<Sale> sales) {
     final totalAmount = sales.fold(0.0, (sum, sale) => sum + sale.totalAmount);
     final totalProfit = sales.fold(0.0, (sum, sale) => sum + sale.profit);
     final paidAmount = sales.fold(0.0, (sum, sale) => sum + sale.paidAmount);
@@ -376,206 +288,179 @@ class _SalesScreenState extends State<SalesScreen>
       (sum, sale) => sum + sale.remainingAmount,
     );
 
-    return Container(
-      key: _statsCardKey,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
+          // البطاقة الرئيسية
           Container(
-            height: 200,
+            key: _statsCardKey,
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.sales, AppColors.success],
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
               ),
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.sales.withOpacity(0.4),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                  spreadRadius: -4,
+                  color: const Color(0xFF10B981).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Stack(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Positioned.fill(
-                  child: CustomPaint(painter: _StatsBackgroundPainter()),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'إجمالي المبيعات',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${sales.length} عملية',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
-                            ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'إجمالي المبيعات',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.9),
                           ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${sales.length} عملية',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
+                            width: 8,
+                            height: 8,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.success,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.success,
-                                        blurRadius: 8,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'نشط',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.5),
+                                  blurRadius: 4,
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'نشط',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
-                      const Spacer(),
-                      TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 1200),
-                        tween: Tween(begin: 0, end: totalAmount),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                value.toStringAsFixed(0),
-                                style: const TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: -1,
-                                  height: 1,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8),
-                                child: Text(
-                                  'ريال',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 1000),
+                  tween: Tween(begin: 0, end: totalAmount),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          value.toStringAsFixed(0),
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -1,
+                            height: 1,
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(width: 8),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            'ريال',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.trending_up_rounded,
-                              size: 16,
-                              color: AppColors.success,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              '+18.2%',
-                              style: TextStyle(
-                                color: AppColors.success,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'عن الشهر الماضي',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.7,
+          // البطاقات الفرعية
+          Row(
             children: [
-              _buildStatItem(
-                icon: Icons.trending_up_rounded,
-                label: 'الربح',
-                value: totalProfit,
-                color: AppColors.success,
+              Expanded(
+                child: _buildStatCard(
+                  'الربح',
+                  totalProfit,
+                  Icons.trending_up_rounded,
+                  const Color(0xFF10B981),
+                ),
               ),
-              _buildStatItem(
-                icon: Icons.check_circle_rounded,
-                label: 'المدفوع',
-                value: paidAmount,
-                color: AppColors.info,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'المدفوع',
+                  paidAmount,
+                  Icons.check_circle_rounded,
+                  const Color(0xFF3B82F6),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'المتبقي',
+                  remainingAmount,
+                  Icons.schedule_rounded,
+                  remainingAmount > 0
+                      ? const Color(0xFFF59E0B)
+                      : const Color(0xFF10B981),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'العمليات',
+                  sales.length.toDouble(),
+                  Icons.receipt_long_rounded,
+                  const Color(0xFF6366F1),
+                  isCount: true,
+                ),
               ),
             ],
           ),
@@ -584,68 +469,67 @@ class _SalesScreenState extends State<SalesScreen>
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required double value,
-    required Color color,
+  Widget _buildStatCard(
+    String label,
+    double value,
+    IconData icon,
+    Color color, {
+    bool isCount = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withOpacity(0.1)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 18),
+                child: Icon(icon, size: 16, color: color),
               ),
-              const SizedBox(width: 8),
-              Flexible(
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
                   label,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: Color(0xFF6B7280),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
           TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 1200),
+            duration: const Duration(milliseconds: 1000),
             tween: Tween(begin: 0, end: value),
             curve: Curves.easeOutCubic,
             builder: (context, animValue, child) {
               return Text(
-                '${animValue.toStringAsFixed(0)} ر.ي',
+                isCount
+                    ? animValue.toInt().toString()
+                    : '${animValue.toStringAsFixed(0)} ر.ي',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
                   color: color,
-                  fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
-                  height: 1.3, // تقليل line height
                 ),
               );
             },
@@ -655,78 +539,112 @@ class _SalesScreenState extends State<SalesScreen>
     );
   }
 
-  Widget _buildFilterChips() {
+  Widget _buildFilterSection() {
     final filters = ['الكل', 'اليوم', 'مدفوع', 'غير مدفوع', 'بيع سريع'];
 
-    return Container(
-      key: _filterChipsKey,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      height: 45,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: filters.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final filter = filters[index];
-          final isSelected = _selectedFilter == filter;
-
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedFilter = filter);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [AppColors.sales, AppColors.success],
-                      )
-                    : null,
-                color: isSelected ? null : AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.sales
-                      : AppColors.border.withOpacity(0.3),
-                  width: isSelected ? 2 : 1,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.sales.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : null,
+                child: const Icon(
+                  Icons.filter_list_rounded,
+                  size: 18,
+                  color: Color(0xFF10B981),
+                ),
               ),
-              child: Text(
-                filter,
+              const SizedBox(width: 10),
+              const Text(
+                'تصفية النتائج',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                  letterSpacing: -0.3,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            key: _filterChipsKey,
+            height: 42,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: filters.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final filter = filters[index];
+                final isSelected = _selectedFilter == filter;
+
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedFilter = filter);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF10B981)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFE5E7EB),
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      filter,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF374151),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSalesList(List<Sale> sales) {
     return ListView.separated(
+      key: _salesListKey,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: sales.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final card = SaleItemCard(
+        return SaleItemCard(
           sale: sales[index],
           onTap: () => _showSaleDetails(sales[index]),
           onDelete: () => _deleteSale(sales[index]),
@@ -734,46 +652,59 @@ class _SalesScreenState extends State<SalesScreen>
               ? () => _cancelSale(sales[index])
               : null,
         );
-
-        if (index == 0) {
-          return Container(
-            key: _salesListKey,
-            child: card,
-          );
-        }
-
-        return card;
       },
     );
   }
 
-  Widget _buildShimmerStats() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    height: 200,
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: const Center(child: CircularProgressIndicator()),
-  );
+  Widget _buildLoadingState() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: List.generate(
+          3,
+          (index) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF10B981),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-  Widget _buildEmptyState() => Container(
-    padding: const EdgeInsets.all(40),
-    child: Center(
+  Widget _buildEmptyState() {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-              color: AppColors.background,
-              shape: BoxShape.circle,
+              color: const Color(0xFF10B981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
               Icons.point_of_sale_rounded,
-              size: 60,
-              color: AppColors.textHint,
+              size: 40,
+              color: Color(0xFF10B981),
             ),
           ),
           const SizedBox(height: 20),
@@ -782,34 +713,48 @@ class _SalesScreenState extends State<SalesScreen>
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: Color(0xFF1A1A2E),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'ابدأ بإضافة أول عملية بيع',
-            style: TextStyle(fontSize: 14, color: AppColors.textHint),
+            style: TextStyle(fontSize: 14, color: const Color(0xFF6B7280)),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _buildFloatingActionButton(BuildContext context) => Positioned(
-    bottom: 20,
-    left: 20,
-    child: FloatingActionButton.extended(
+  Widget _buildFloatingActionButton() {
+    return Container(
       key: _fabKey,
-      onPressed: () => _navigateWithAnimation(context, RouteNames.addSale),
-      backgroundColor: AppColors.sales,
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text(
-        'بيع جديد',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withOpacity(0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      elevation: 8,
-    ),
-  );
+      child: FloatingActionButton.extended(
+        onPressed: () => _navigateWithAnimation(context, RouteNames.addSale),
+        backgroundColor: const Color(0xFF10B981),
+        elevation: 0,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'بيع جديد',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
 
   List<Sale> _filterSales(List<Sale> sales) {
     switch (_selectedFilter) {
@@ -841,11 +786,11 @@ class _SalesScreenState extends State<SalesScreen>
 
   void _showSaleDetails(Sale sale) {
     HapticFeedback.lightImpact();
-    Navigator.pushNamed(context, RouteNames.saleDetails, arguments: sale).then((
-      _,
-    ) {
-      context.read<SalesBloc>().add(LoadSales());
-    });
+    Navigator.pushNamed(
+      context,
+      RouteNames.saleDetails,
+      arguments: sale,
+    ).then((_) => context.read<SalesBloc>().add(LoadSales()));
   }
 
   Future<void> _deleteSale(Sale sale) async {
@@ -878,19 +823,46 @@ class _SalesScreenState extends State<SalesScreen>
     }
   }
 
+  void _showTutorial() {
+    HapticFeedback.lightImpact();
+    SalesManagementTutorialService.showScreenTutorial(
+      context: context,
+      statsCardKey: _statsCardKey,
+      filterChipsKey: _filterChipsKey,
+      salesListKey: _salesListKey,
+      fabKey: _fabKey,
+      quickSaleButtonKey: _quickSaleButtonKey,
+      refreshButtonKey: _refreshButtonKey,
+      scrollController: _scrollController,
+      onFinish: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('تمت جولة التعليمات'),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
             const SizedBox(width: 12),
-            Text(message),
+            Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppColors.success,
+        backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -900,41 +872,16 @@ class _SalesScreenState extends State<SalesScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error, color: Colors.white),
+            const Icon(Icons.error_rounded, color: Colors.white),
             const SizedBox(width: 12),
-            Text(message),
+            Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppColors.danger,
+        backgroundColor: const Color(0xFFDC2626),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
-}
-
-class _StatsBackgroundPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    paint.color = Colors.white.withOpacity(0.05);
-    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 60, paint);
-
-    paint.color = Colors.white.withOpacity(0.03);
-    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.7), 80, paint);
-
-    final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..strokeWidth = 0.5
-      ..style = PaintingStyle.stroke;
-
-    for (var i = 0; i < 5; i++) {
-      final y = size.height * (i + 1) / 6;
-      canvas.drawLine(Offset(0, y), Offset(size.width * 0.3, y), linePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

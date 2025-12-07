@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// بطاقة ملخص المشتريات - تصميم راقي متطور
-class PurchaseSummary extends StatefulWidget {
+/// بطاقة ملخص المشتريات - تصميم راقي ونظيف
+class PurchaseSummary extends StatelessWidget {
   final double totalAmount;
   final double paidAmount;
   final double remainingAmount;
@@ -22,279 +19,213 @@ class PurchaseSummary extends StatefulWidget {
   });
 
   @override
-  State<PurchaseSummary> createState() => _PurchaseSummaryState();
-}
-
-class _PurchaseSummaryState extends State<PurchaseSummary>
-    with TickerProviderStateMixin {
-  late AnimationController _mainController;
-  late AnimationController _numberController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  bool _isPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _mainController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _numberController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1).animate(
-      CurvedAnimation(parent: _mainController, curve: Curves.elasticOut),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _mainController, curve: Curves.easeIn),
-    );
-
-    _mainController.forward();
-    _numberController.forward();
-  }
-
-  @override
-  void dispose() {
-    _mainController.dispose();
-    _numberController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _mainController,
-      builder: (context, child) => Transform.scale(
-        scale: _scaleAnimation.value,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: GestureDetector(
-            onTapDown: (_) => setState(() => _isPressed = true),
-            onTapUp: (_) {
-              setState(() => _isPressed = false);
-              if (widget.onTap != null) {
-                HapticFeedback.lightImpact();
-                widget.onTap!();
-              }
-            },
-            onTapCancel: () => setState(() => _isPressed = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.purchases, AppColors.info],
+    return GestureDetector(
+      onTap: () {
+        if (onTap != null) {
+          HapticFeedback.lightImpact();
+          onTap!();
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF8B5CF6).withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background decoration
+            Positioned(
+              top: -20,
+              right: -20,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.05),
                 ),
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.purchases.withOpacity(0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                    spreadRadius: -4,
-                  ),
-                ],
               ),
-              child: Stack(
+            ),
+            Positioned(
+              bottom: -30,
+              left: -30,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.05),
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    top: -30,
-                    right: -30,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.05),
-                      ),
-                    ),
-                  ),
-                  
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(color: Colors.white.withOpacity(0.05)),
-                      ),
-                    ),
-                  ),
-                  
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'ملخص المشتريات',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${widget.purchaseCount} عملية شراء',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.shopping_cart_rounded,
+                          const Text(
+                            'ملخص المشتريات',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
-                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$purchaseCount عملية شراء',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withOpacity(0.7),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
-                      
-                      TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 1200),
-                        tween: Tween(begin: 0, end: widget.totalAmount),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                value.toStringAsFixed(0),
-                                style: const TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: -1,
-                                  height: 1,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8),
-                                child: Text(
-                                  'ر.ي',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      
-                      const SizedBox(height: 8),
-                      const Text(
-                        'الإجمالي',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white70,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.shopping_cart,
+                          color: Colors.white,
+                          size: 24,
                         ),
                       ),
-                      
-                      const SizedBox(height: 24),
-                      Row(
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Total amount
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 1000),
+                    tween: Tween(begin: 0, end: totalAmount),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              icon: Icons.check_circle_rounded,
-                              label: 'مدفوع',
-                              value: widget.paidAmount,
-                              color: AppColors.success,
+                          Text(
+                            value.toStringAsFixed(0),
+                            style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              height: 1,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatCard(
-                              icon: Icons.schedule_rounded,
-                              label: 'متبقي',
-                              value: widget.remainingAmount,
-                              color: AppColors.warning,
+                          const SizedBox(width: 8),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              'ر.ي',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
                         ],
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Stats row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatItem(
+                          icon: Icons.check_circle,
+                          label: 'مدفوع',
+                          amount: paidAmount,
+                          color: const Color(0xFF4ADE80),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatItem(
+                          icon: Icons.schedule,
+                          label: 'متبقي',
+                          amount: remainingAmount,
+                          color: remainingAmount > 0
+                              ? const Color(0xFFFBBF24)
+                              : const Color(0xFF4ADE80),
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildStatItem({
     required IconData icon,
     required String label,
-    required double value,
+    required double amount,
     required Color color,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: color),
+              Icon(icon, size: 14, color: color),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 1200),
-            tween: Tween(begin: 0, end: value),
+            duration: const Duration(milliseconds: 1000),
+            tween: Tween(begin: 0, end: amount),
             curve: Curves.easeOutCubic,
-            builder: (context, animValue, child) {
+            builder: (context, value, child) {
               return Text(
-                '${animValue.toStringAsFixed(0)} ر.ي',
+                '${value.toStringAsFixed(0)} ر.ي',
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
-                  letterSpacing: -0.5,
                 ),
               );
             },
@@ -304,4 +235,3 @@ class _PurchaseSummaryState extends State<PurchaseSummary>
     );
   }
 }
-

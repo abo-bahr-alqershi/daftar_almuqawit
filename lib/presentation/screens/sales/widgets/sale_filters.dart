@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// فلاتر المبيعات - تصميم راقي هادئ
+/// فلاتر المبيعات - تصميم راقي واحترافي
 class SaleFilters extends StatefulWidget {
   final String selectedFilter;
   final ValueChanged<String> onFilterChanged;
@@ -33,35 +31,48 @@ class SaleFilters extends StatefulWidget {
 
 class _SaleFiltersState extends State<SaleFilters> {
   final FocusNode _searchFocusNode = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
   bool _isSearchFocused = false;
 
   @override
   void initState() {
     super.initState();
+    _searchController.text = widget.searchQuery;
     _searchFocusNode.addListener(() {
-      setState(() {
-        _isSearchFocused = _searchFocusNode.hasFocus;
-      });
+      setState(() => _isSearchFocused = _searchFocusNode.hasFocus);
     });
   }
 
   @override
   void dispose() {
     _searchFocusNode.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           _buildSearchBar(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           _buildFilterChips(),
         ],
       ),
@@ -72,27 +83,36 @@ class _SaleFiltersState extends State<SaleFilters> {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.15),
-                AppColors.primary.withOpacity(0.08),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFF10B981).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
             Icons.filter_list_rounded,
-            color: AppColors.primary,
+            color: Color(0xFF10B981),
             size: 20,
           ),
         ),
         const SizedBox(width: 12),
-        Text(
-          'البحث والتصفية',
-          style: AppTextStyles.bodyLarge.copyWith(
-            fontWeight: FontWeight.w600,
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'البحث والتصفية',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'ابحث عن فواتير أو قم بتصفية النتائج',
+                style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              ),
+            ],
           ),
         ),
       ],
@@ -103,60 +123,57 @@ class _SaleFiltersState extends State<SaleFilters> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: _isSearchFocused
-              ? AppColors.primary.withOpacity(0.3)
-              : AppColors.border.withOpacity(0.1),
+              ? const Color(0xFF10B981).withOpacity(0.3)
+              : const Color(0xFFE5E7EB),
           width: _isSearchFocused ? 1.5 : 1,
         ),
         boxShadow: _isSearchFocused
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: const Color(0xFF10B981).withOpacity(0.1),
                   blurRadius: 12,
-                  offset: const Offset(0, 3),
+                  offset: const Offset(0, 4),
                 ),
               ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+            : null,
       ),
       child: TextField(
+        controller: _searchController,
         focusNode: _searchFocusNode,
-        onChanged: (value) {
-          widget.onSearchChanged(value);
-          if (value.isNotEmpty) {
-            HapticFeedback.lightImpact();
-          }
-        },
-        style: AppTextStyles.bodyMedium,
+        style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
         decoration: InputDecoration(
           hintText: 'ابحث عن فاتورة، عميل، أو منتج...',
-          hintStyle: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textHint,
-          ),
+          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: _isSearchFocused ? AppColors.primary : AppColors.textSecondary,
-            size: 22,
+            color: _isSearchFocused
+                ? const Color(0xFF10B981)
+                : const Color(0xFF9CA3AF),
+            size: 20,
           ),
-          suffixIcon: widget.searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  onPressed: () {
+          suffixIcon: _searchController.text.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
                     widget.onSearchChanged('');
                     HapticFeedback.lightImpact();
                   },
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
                 )
               : null,
           border: InputBorder.none,
@@ -165,6 +182,10 @@ class _SaleFiltersState extends State<SaleFilters> {
             vertical: 14,
           ),
         ),
+        onChanged: (value) {
+          widget.onSearchChanged(value);
+          setState(() {});
+        },
       ),
     );
   }
@@ -173,34 +194,81 @@ class _SaleFiltersState extends State<SaleFilters> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'تصفية حسب',
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
+        const Row(
+          children: [
+            Icon(Icons.tune_rounded, size: 14, color: Color(0xFF9CA3AF)),
+            SizedBox(width: 6),
+            Text(
+              'تصفية حسب',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF9CA3AF),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: widget.filterOptions.map((filter) {
-              final isSelected = widget.selectedFilter == filter;
-              return Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: _FilterChip(
-                  label: filter,
-                  isSelected: isSelected,
-                  onSelected: () {
-                    widget.onFilterChanged(filter);
-                    HapticFeedback.lightImpact();
-                  },
-                  icon: _getFilterIcon(filter),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: widget.filterOptions.map((filter) {
+            final isSelected = widget.selectedFilter == filter;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onFilterChanged(filter);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
-              );
-            }).toList(),
-          ),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF10B981) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF10B981).withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _getFilterIcon(filter),
+                      size: 16,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF6B7280),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      filter,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF374151),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -223,66 +291,5 @@ class _SaleFiltersState extends State<SaleFilters> {
       default:
         return Icons.filter_alt_rounded;
     }
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onSelected;
-  final IconData icon;
-
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onSelected,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onSelected,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    AppColors.primary.withOpacity(0.15),
-                    AppColors.primary.withOpacity(0.08),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary.withOpacity(0.3)
-                : AppColors.border.withOpacity(0.15),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

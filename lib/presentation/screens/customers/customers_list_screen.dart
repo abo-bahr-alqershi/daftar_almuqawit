@@ -2,8 +2,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/customer.dart';
 import '../../blocs/customers/customers_bloc.dart';
 import '../../blocs/customers/customers_event.dart';
@@ -21,37 +19,20 @@ class CustomersListScreen extends StatefulWidget {
   State<CustomersListScreen> createState() => _CustomersListScreenState();
 }
 
-class _CustomersListScreenState extends State<CustomersListScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+class _CustomersListScreenState extends State<CustomersListScreen> {
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
 
   String _searchQuery = '';
   String _filterType = 'الكل';
 
-  final List<String> _filterTypes = [
-    'الكل',
-    'نشط',
-    'محظور',
-    'VIP',
-    'عليه دين',
-  ];
+  final List<String> _filterTypes = ['الكل', 'نشط', 'محظور', 'VIP', 'عليه دين'];
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _animationController.forward();
-
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
+      setState(() => _scrollOffset = _scrollController.offset);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,214 +42,121 @@ class _CustomersListScreenState extends State<CustomersListScreen>
 
   @override
   void dispose() {
-    _animationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
-
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                _buildModernAppBar(topPadding),
-
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: CustomerSearch(
-                          onSearch: (query) {
-                            setState(() => _searchQuery = query);
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      _buildFilterChips(),
-
-                      const SizedBox(height: 20),
-
-                      BlocConsumer<CustomersBloc, CustomersState>(
-                        listener: (context, state) {
-                          if (state is CustomersError) {
-                            _showErrorSnackBar(state.message);
-                          } else if (state is CustomerOperationSuccess) {
-                            _showSuccessSnackBar(state.message);
-                          }
-                        },
-                        builder: (context, state) {
-                          if (state is CustomersLoading) {
-                            return _buildLoadingState();
-                          }
-
-                          if (state is CustomersError) {
-                            return _buildErrorState(state);
-                          }
-
-                          if (state is CustomersLoaded) {
-                            final filteredCustomers =
-                                _filterCustomers(state.customers);
-                            return _buildCustomersList(filteredCustomers);
-                          }
-
-                          return _buildEmptyState();
-                        },
-                      ),
-
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            _buildFloatingActionButton(context),
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: NestedScrollView(
+          controller: _scrollController,
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            _buildSliverAppBar(),
           ],
+          body: Column(
+            children: [
+              const SizedBox(height: 16),
+
+              // Search
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: CustomerSearch(
+                  onSearch: (query) => setState(() => _searchQuery = query),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Filter chips
+              _buildFilterChips(),
+
+              const SizedBox(height: 16),
+
+              // Customer list
+              Expanded(
+                child: BlocConsumer<CustomersBloc, CustomersState>(
+                  listener: (context, state) {
+                    if (state is CustomersError) {
+                      _showSnackBar(state.message, isError: true);
+                    } else if (state is CustomerOperationSuccess) {
+                      _showSnackBar(state.message);
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is CustomersLoading) {
+                      return _buildLoadingState();
+                    }
+                    if (state is CustomersError) {
+                      return _buildErrorState(state.message);
+                    }
+                    if (state is CustomersLoaded) {
+                      final filtered = _filterCustomers(state.customers);
+                      return _buildCustomersList(filtered);
+                    }
+                    return _buildEmptyState();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
+        floatingActionButton: _buildFAB(),
       ),
     );
   }
 
-  Widget _buildGradientBackground() => Container(
-        height: 400,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.accent.withOpacity(0.08),
-              AppColors.primary.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildModernAppBar(double topPadding) {
-    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+  Widget _buildSliverAppBar() {
+    final opacity = (_scrollOffset / 80).clamp(0.0, 1.0);
 
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 100,
       pinned: true,
-      backgroundColor: AppColors.surface.withOpacity(opacity),
-      elevation: opacity * 2,
+      elevation: 0,
+      backgroundColor: Colors.white.withOpacity(opacity),
+      surfaceTintColor: Colors.transparent,
+      leading: _buildBackButton(),
+      actions: [
+        _buildIconButton(Icons.refresh_outlined, () {
+          context.read<CustomersBloc>().add(LoadCustomers());
+        }),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
-            ),
-          ),
+          color: const Color(0xFFF8F9FA),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.fromLTRB(60, 16, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios_rounded,
-                            color: AppColors.textPrimary,
-                            size: 20,
+                  const Text(
+                    'قائمة العملاء',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  BlocBuilder<CustomersBloc, CustomersState>(
+                    builder: (context, state) {
+                      if (state is CustomersLoaded) {
+                        return Text(
+                          '${_filterCustomers(state.customers).length} عميل',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
                           ),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'قائمة العملاء',
-                              style: AppTextStyles.h2.copyWith(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 26,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            BlocBuilder<CustomersBloc, CustomersState>(
-                              builder: (context, state) {
-                                if (state is CustomersLoaded) {
-                                  final filtered =
-                                      _filterCustomers(state.customers);
-                                  return Text(
-                                    '${filtered.length} عميل',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  );
-                                }
-                                return const SizedBox();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.refresh_rounded,
-                            color: AppColors.primary,
-                          ),
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            context.read<CustomersBloc>().add(LoadCustomers());
-                          },
-                        ),
-                      ),
-                    ],
+                        );
+                      }
+                      return const SizedBox();
+                    },
                   ),
                 ],
               ),
@@ -279,340 +167,355 @@ class _CustomersListScreenState extends State<CustomersListScreen>
     );
   }
 
-  Widget _buildFilterChips() => SizedBox(
-        height: 50,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: _filterTypes.length,
-          itemBuilder: (context, index) {
-            final type = _filterTypes[index];
-            final isSelected = _filterType == type;
+  Widget _buildBackButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Color(0xFF1A1A2E),
+              size: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _filterType = type);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(left: 12),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                          colors: [AppColors.accent, Color(0xFF7C3AED)],
-                        )
-                      : null,
-                  color: isSelected ? null : AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: isSelected
-                      ? null
-                      : Border.all(color: AppColors.border.withOpacity(0.3)),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.accent.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Text(
-                  type,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 14,
-                  ),
+  Widget _buildIconButton(IconData icon, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            child: Icon(icon, color: const Color(0xFF6366F1), size: 20),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filterTypes.length,
+        itemBuilder: (context, index) {
+          final type = _filterTypes[index];
+          final isSelected = _filterType == type;
+
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _filterType = type);
+            },
+            child: Container(
+              margin: const EdgeInsets.only(left: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF6366F1) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFF6366F1)
+                      : const Color(0xFFE5E7EB),
                 ),
               ),
-            );
-          },
-        ),
-      );
+              child: Text(
+                type,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildCustomersList(List<Customer> customers) {
     if (customers.isEmpty) {
       return _buildEmptyState();
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: customers.asMap().entries.map((entry) {
-          final index = entry.key;
-          final customer = entry.value;
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: customers.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: CustomerCard(
+            customer: customers[index],
+            onTap: () => _showCustomerDetails(customers[index]),
+            onDelete: () => _deleteCustomer(customers[index]),
+            onToggleBlock: () => _toggleBlockCustomer(customers[index]),
+          ),
+        );
+      },
+    );
+  }
 
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: Duration(milliseconds: 300 + (index * 50)),
-            curve: Curves.easeOutBack,
-            builder: (context, value, child) => Transform.scale(
-              scale: value.clamp(0.0, 1.0),
-              child: Opacity(
-                opacity: value.clamp(0.0, 1.0),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: CustomerCard(
-                    customer: customer,
-                    onTap: () => _showCustomerDetails(customer),
-                    onDelete: () => _deleteCustomer(customer),
-                    onToggleBlock: () => _toggleBlockCustomer(customer),
+  Widget _buildLoadingState() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: 5,
+      itemBuilder: (context, index) => _buildShimmerCard(),
+    );
+  }
+
+  Widget _buildShimmerCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 14,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 10,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
             ),
-          );
-        }).toList(),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildLoadingState() => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (index) => _buildShimmerCard()),
-        ),
-      );
-
-  Widget _buildShimmerCard() => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        padding: const EdgeInsets.all(20),
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 50,
-              height: 50,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.border.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                color: Color(0xFFDC2626),
+                size: 32,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 14,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: AppColors.border.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 10,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.border.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 20),
+            const Text(
+              'حدث خطأ',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
               ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            _buildRetryButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.people_outline,
+                color: Color(0xFF9CA3AF),
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _searchQuery.isEmpty ? 'لا يوجد عملاء' : 'لا توجد نتائج',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'ابدأ بإضافة عملاء جدد'
+                  : 'جرب البحث بكلمات مختلفة',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
 
-  Widget _buildErrorState(CustomersError state) => Center(
+  Widget _buildRetryButton() {
+    return Material(
+      color: const Color(0xFF6366F1),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          context.read<CustomersBloc>().add(LoadCustomers());
+        },
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.bounceOut,
-                builder: (context, value, child) => Transform.scale(
-                  scale: value,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.danger.withOpacity(0.1),
-                          AppColors.danger.withOpacity(0.05),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.error_outline_rounded,
-                      size: 60,
-                      color: AppColors.danger,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+              Icon(Icons.refresh_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 8),
               Text(
-                'حدث خطأ',
-                style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                state.message,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  context.read<CustomersBloc>().add(LoadCustomers());
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text(
-                  'إعادة المحاولة',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                'إعادة المحاولة',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ),
-      );
+      ),
+    );
+  }
 
-  Widget _buildEmptyState() => Center(
-        child: Container(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) => Transform.scale(
-                  scale: value,
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.accent.withOpacity(0.05),
-                          AppColors.primary.withOpacity(0.03),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.people_outline,
-                      size: 70,
-                      color: AppColors.textHint,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _searchQuery.isEmpty
-                    ? 'لا يوجد عملاء'
-                    : 'لا توجد نتائج للبحث',
-                style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _searchQuery.isEmpty
-                    ? 'ابدأ بإضافة عملاء جدد'
-                    : 'جرب البحث بكلمات مختلفة',
-                style: const TextStyle(color: AppColors.textHint, fontSize: 14),
-              ),
-              const SizedBox(height: 32),
-              if (_searchQuery.isEmpty)
-                ElevatedButton.icon(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    _showAddCustomerScreen();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text(
-                    'إضافة عميل',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                  ),
-                ),
-            ],
-          ),
+  Widget _buildFAB() {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        HapticFeedback.mediumImpact();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AddCustomerScreen()),
+        ).then((_) => context.read<CustomersBloc>().add(LoadCustomers()));
+      },
+      backgroundColor: const Color(0xFF6366F1),
+      elevation: 4,
+      icon: const Icon(
+        Icons.person_add_outlined,
+        color: Colors.white,
+        size: 20,
+      ),
+      label: const Text(
+        'إضافة عميل',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
         ),
-      );
-
-  Widget _buildFloatingActionButton(BuildContext context) => Positioned(
-        bottom: 20,
-        left: 20,
-        child: FloatingActionButton.extended(
-          onPressed: _showAddCustomerScreen,
-          backgroundColor: AppColors.accent,
-          icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-          label: const Text(
-            'إضافة عميل',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          elevation: 8,
-        ),
-      );
+      ),
+    );
+  }
 
   List<Customer> _filterCustomers(List<Customer> customers) {
     var filtered = customers;
 
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((customer) {
+      filtered = filtered.where((c) {
         final query = _searchQuery.toLowerCase();
-        return customer.name.toLowerCase().contains(query) ||
-            (customer.phone?.contains(query) ?? false) ||
-            (customer.nickname?.toLowerCase().contains(query) ?? false);
+        return c.name.toLowerCase().contains(query) ||
+            (c.phone?.contains(query) ?? false) ||
+            (c.nickname?.toLowerCase().contains(query) ?? false);
       }).toList();
     }
 
     if (_filterType != 'الكل') {
-      filtered = filtered.where((customer) {
+      filtered = filtered.where((c) {
         switch (_filterType) {
           case 'نشط':
-            return !customer.isBlocked && customer.currentDebt == 0;
+            return !c.isBlocked && c.currentDebt == 0;
           case 'محظور':
-            return customer.isBlocked;
+            return c.isBlocked;
           case 'VIP':
-            return customer.customerType == 'VIP';
+            return c.customerType == 'VIP';
           case 'عليه دين':
-            return customer.currentDebt > 0;
+            return c.currentDebt > 0;
           default:
             return true;
         }
@@ -620,13 +523,6 @@ class _CustomersListScreenState extends State<CustomersListScreen>
     }
 
     return filtered;
-  }
-
-  void _showAddCustomerScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddCustomerScreen()),
-    ).then((_) => context.read<CustomersBloc>().add(LoadCustomers()));
   }
 
   void _showCustomerDetails(Customer customer) {
@@ -642,7 +538,7 @@ class _CustomersListScreenState extends State<CustomersListScreen>
     final confirmed = await ConfirmDialog.show(
       context,
       title: 'حذف العميل',
-      message: 'هل أنت متأكد من حذف العميل "${customer.name}"؟',
+      message: 'هل أنت متأكد من حذف "${customer.name}"؟',
       confirmText: 'حذف',
       cancelText: 'إلغاء',
       isDangerous: true,
@@ -658,34 +554,28 @@ class _CustomersListScreenState extends State<CustomersListScreen>
     final confirmed = await ConfirmDialog.show(
       context,
       title: '$action العميل',
-      message: 'هل أنت متأكد من $action العميل "${customer.name}"؟',
+      message: 'هل أنت متأكد من $action "${customer.name}"؟',
       confirmText: action,
       cancelText: 'إلغاء',
     );
 
     if (confirmed == true && customer.id != null) {
       context.read<CustomersBloc>().add(
-            BlockCustomerEvent(customer.id!, !customer.isBlocked),
-          );
+        BlockCustomerEvent(customer.id!, !customer.isBlocked),
+      );
     }
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.danger,
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF16A34A),
         behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }

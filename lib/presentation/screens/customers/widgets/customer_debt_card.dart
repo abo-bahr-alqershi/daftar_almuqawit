@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/debt.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
@@ -23,37 +20,8 @@ class CustomerDebtCard extends StatefulWidget {
   State<CustomerDebtCard> createState() => _CustomerDebtCardState();
 }
 
-class _CustomerDebtCardState extends State<CustomerDebtCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _progressAnimation;
+class _CustomerDebtCardState extends State<CustomerDebtCard> {
   bool _isPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1,
-      end: 0.98,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _progressAnimation = Tween<double>(
-      begin: 0,
-      end: _calculateProgressPercentage() / 100,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,581 +30,406 @@ class _CustomerDebtCardState extends State<CustomerDebtCard>
     final isOverdue = _isOverdue();
 
     return GestureDetector(
-      onTapDown: (_) {
-        setState(() => _isPressed = true);
-        _controller.forward();
-      },
+      onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        _controller.reverse();
         if (widget.onTap != null) {
           HapticFeedback.lightImpact();
           widget.onTap!();
         }
       },
-      onTapCancel: () {
-        setState(() => _isPressed = false);
-        _controller.reverse();
-      },
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: _isPressed
-                    ? statusColor.withOpacity(0.4)
-                    : statusColor.withOpacity(0.2),
-                width: _isPressed ? 2 : 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: statusColor.withOpacity(_isPressed ? 0.2 : 0.1),
-                  blurRadius: _isPressed ? 24 : 16,
-                  offset: Offset(0, _isPressed ? 8 : 4),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(_isPressed ? 0.02 : 0.04),
+              blurRadius: _isPressed ? 4 : 8,
+              offset: Offset(0, _isPressed ? 2 : 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            children: [
+              // Overdue indicator
+              if (isOverdue)
+                Container(height: 3, color: const Color(0xFFDC2626)),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    _buildHeader(statusColor),
+
+                    const SizedBox(height: 16),
+
+                    // Progress section
+                    _buildProgressSection(statusColor, progressPercentage),
+
+                    const SizedBox(height: 16),
+
+                    // Details section
+                    _buildDetailsSection(isOverdue),
+
+                    // Notes
+                    if (widget.debt.notes != null &&
+                        widget.debt.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _buildNotesSection(),
+                    ],
+
+                    // Pay button
+                    if (widget.onPay != null &&
+                        widget.debt.remainingAmount > 0) ...[
+                      const SizedBox(height: 16),
+                      _buildPayButton(),
+                    ],
+                  ],
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Stack(
-                children: [
-                  if (isOverdue)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.danger,
-                              AppColors.danger.withOpacity(0.5),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Hero(
-                              tag: 'debt-icon-${widget.debt.id}',
-                              child: Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      statusColor.withOpacity(0.2),
-                                      statusColor.withOpacity(0.05),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: statusColor.withOpacity(0.2),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  Icons.account_balance_wallet_rounded,
-                                  color: statusColor,
-                                  size: 30,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'المبلغ المتبقي',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    CurrencyUtils.format(widget.debt.remainingAmount),
-                                    style: TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w900,
-                                      color: statusColor,
-                                      letterSpacing: -0.5,
-                                      height: 1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: statusColor.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    _getStatusIcon(),
-                                    size: 20,
-                                    color: statusColor,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.debt.status,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: statusColor,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: progressPercentage / 100),
-                          duration: const Duration(milliseconds: 1200),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, value, child) => Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.success.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.check_circle_rounded,
-                                          size: 14,
-                                          color: AppColors.success,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'تم السداد: ${CurrencyUtils.format(widget.debt.paidAmount)}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          statusColor.withOpacity(0.2),
-                                          statusColor.withOpacity(0.1),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '${(value * 100).toStringAsFixed(0)}%',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: statusColor,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: AppColors.border.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Stack(
-                                    children: [
-                                      FractionallySizedBox(
-                                        widthFactor: value,
-                                        alignment: Alignment.centerRight,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                statusColor,
-                                                statusColor.withOpacity(0.7),
-                                              ],
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: statusColor.withOpacity(0.4),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned.fill(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: BackdropFilter(
-                                            filter: ui.ImageFilter.blur(
-                                              sigmaX: 2,
-                                              sigmaY: 2,
-                                            ),
-                                            child: Container(
-                                              color: Colors.white.withOpacity(0.05),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primary.withOpacity(0.03),
-                                AppColors.info.withOpacity(0.02),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppColors.border.withOpacity(0.1),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildDetailRow(
-                                icon: Icons.payments_rounded,
-                                label: 'المبلغ الأصلي',
-                                value: CurrencyUtils.format(widget.debt.originalAmount),
-                                color: AppColors.textPrimary,
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                height: 1,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.transparent,
-                                      AppColors.border.withOpacity(0.3),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildDetailRow(
-                                icon: Icons.calendar_today_rounded,
-                                label: 'تاريخ الدين',
-                                value: app_date.DateUtils.formatDate(widget.debt.date),
-                                color: AppColors.textSecondary,
-                              ),
-                              if (widget.debt.dueDate != null) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  height: 1,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        AppColors.border.withOpacity(0.3),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                _buildDetailRow(
-                                  icon: Icons.event_rounded,
-                                  label: 'تاريخ الاستحقاق',
-                                  value: app_date.DateUtils.formatDate(
-                                    widget.debt.dueDate!,
-                                  ),
-                                  color: isOverdue
-                                      ? AppColors.danger
-                                      : AppColors.textSecondary,
-                                  showWarning: isOverdue,
-                                ),
-                              ],
-                              if (widget.debt.lastPaymentDate != null) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  height: 1,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        AppColors.border.withOpacity(0.3),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                _buildDetailRow(
-                                  icon: Icons.payment_rounded,
-                                  label: 'آخر دفعة',
-                                  value: app_date.DateUtils.formatDate(
-                                    widget.debt.lastPaymentDate!,
-                                  ),
-                                  color: AppColors.success,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-
-                        if (widget.debt.notes != null &&
-                            widget.debt.notes!.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.info.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.info.withOpacity(0.2),
-                              ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(
-                                  Icons.note_rounded,
-                                  size: 16,
-                                  color: AppColors.info,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    widget.debt.notes!,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textSecondary,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-
-                        if (widget.onPay != null &&
-                            widget.debt.remainingAmount > 0) ...[
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                HapticFeedback.mediumImpact();
-                                widget.onPay!();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 0,
-                                shadowColor: AppColors.primary.withOpacity(0.3),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.payment_rounded,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Text(
-                                    'تسديد دفعة',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  if (_isPressed)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          color: statusColor.withOpacity(0.05),
-                        ),
-                      ),
-                    ),
-                ],
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    bool showWarning = false,
-  }) {
+  Widget _buildHeader(Color statusColor) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, size: 16, color: color),
+          child: Icon(
+            Icons.account_balance_wallet_outlined,
+            color: statusColor,
+            size: 22,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'المبلغ المتبقي',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                CurrencyUtils.format(widget.debt.remainingAmount),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: statusColor,
+                ),
+              ),
+            ],
           ),
         ),
-        if (showWarning)
-          Container(
-            margin: const EdgeInsets.only(left: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.danger.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.warning_rounded,
-                  size: 12,
-                  color: AppColors.danger,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'متأخر',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.danger,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            color: color,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getStatusIcon(), size: 14, color: statusColor),
+              const SizedBox(width: 4),
+              Text(
+                widget.debt.status,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
+  Widget _buildProgressSection(Color statusColor, double progressPercentage) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outlined,
+                    size: 14,
+                    color: Color(0xFF16A34A),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'تم السداد: ${CurrencyUtils.format(widget.debt.paidAmount)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${progressPercentage.toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Stack(
+              children: [
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: (progressPercentage / 100).clamp(0.0, 1.0),
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsSection(bool isOverdue) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildDetailRow(
+            Icons.payments_outlined,
+            'المبلغ الأصلي',
+            CurrencyUtils.format(widget.debt.originalAmount),
+          ),
+          const SizedBox(height: 10),
+          Container(height: 1, color: const Color(0xFFE5E7EB)),
+          const SizedBox(height: 10),
+          _buildDetailRow(
+            Icons.calendar_today_outlined,
+            'تاريخ الدين',
+            app_date.DateUtils.formatDate(widget.debt.date),
+          ),
+          if (widget.debt.dueDate != null) ...[
+            const SizedBox(height: 10),
+            Container(height: 1, color: const Color(0xFFE5E7EB)),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              Icons.event_outlined,
+              'تاريخ الاستحقاق',
+              app_date.DateUtils.formatDate(widget.debt.dueDate!),
+              isWarning: isOverdue,
+            ),
+          ],
+          if (widget.debt.lastPaymentDate != null) ...[
+            const SizedBox(height: 10),
+            Container(height: 1, color: const Color(0xFFE5E7EB)),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              Icons.payment_outlined,
+              'آخر دفعة',
+              app_date.DateUtils.formatDate(widget.debt.lastPaymentDate!),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool isWarning = false,
+  }) {
+    final color = isWarning ? const Color(0xFFDC2626) : const Color(0xFF6B7280);
+
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(label, style: TextStyle(fontSize: 12, color: color)),
+        ),
+        if (isWarning)
+          Container(
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDC2626).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'متأخر',
+              style: TextStyle(
+                fontSize: 10,
+                color: Color(0xFFDC2626),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: isWarning
+                ? const Color(0xFFDC2626)
+                : const Color(0xFF374151),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotesSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0EA5E9).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF0EA5E9).withOpacity(0.1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.notes_outlined, size: 16, color: Color(0xFF0EA5E9)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.debt.notes!,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF6B7280),
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayButton() {
+    return Material(
+      color: const Color(0xFF6366F1),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          widget.onPay!();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          height: 48,
+          alignment: Alignment.center,
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.payment_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'تسديد دفعة',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Color _getStatusColor() {
     switch (widget.debt.status) {
       case 'مسدد':
-        return AppColors.success;
+        return const Color(0xFF16A34A);
       case 'مسدد جزئي':
-        return AppColors.warning;
+        return const Color(0xFFF59E0B);
       case 'غير مسدد':
-        return AppColors.debt;
+        return const Color(0xFFDC2626);
       default:
-        return AppColors.textSecondary;
+        return const Color(0xFF6B7280);
     }
   }
 
   IconData _getStatusIcon() {
     switch (widget.debt.status) {
       case 'مسدد':
-        return Icons.check_circle_rounded;
+        return Icons.check_circle_outlined;
       case 'مسدد جزئي':
-        return Icons.timelapse_rounded;
+        return Icons.timelapse_outlined;
       case 'غير مسدد':
-        return Icons.pending_rounded;
+        return Icons.pending_outlined;
       default:
-        return Icons.help_rounded;
+        return Icons.help_outline;
     }
   }
 
@@ -645,7 +438,7 @@ class _CustomerDebtCardState extends State<CustomerDebtCard>
     return (widget.debt.paidAmount / widget.debt.originalAmount) * 100;
   }
 
-  bool get isOverdue {
+  bool _isOverdue() {
     if (widget.debt.dueDate == null) return false;
     try {
       final dueDate = DateTime.parse(widget.debt.dueDate!);
@@ -655,6 +448,4 @@ class _CustomerDebtCardState extends State<CustomerDebtCard>
       return false;
     }
   }
-
-  bool _isOverdue() => isOverdue;
 }

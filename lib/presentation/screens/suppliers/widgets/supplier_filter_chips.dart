@@ -23,79 +23,35 @@ class SupplierFilterChips extends StatefulWidget {
   State<SupplierFilterChips> createState() => _SupplierFilterChipsState();
 }
 
-class _SupplierFilterChipsState extends State<SupplierFilterChips>
-    with TickerProviderStateMixin {
-  late List<AnimationController> _chipControllers;
-
-  @override
-  void initState() {
-    super.initState();
-    _chipControllers = List.generate(
-      9,
-      (index) => AnimationController(
-        duration: Duration(milliseconds: 300 + (index * 50)),
-        vsync: this,
-      ),
-    );
-
-    _animateChips();
-  }
-
-  Future<void> _animateChips() async {
-    for (var controller in _chipControllers) {
-      await Future.delayed(const Duration(milliseconds: 30));
-      if (mounted) {
-        controller.forward();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _chipControllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
+class _SupplierFilterChipsState extends State<SupplierFilterChips> {
   @override
   Widget build(BuildContext context) {
     final hasActiveFilters =
-        widget.selectedTrustLevel != null || widget.selectedQualityRating != null;
+        widget.selectedTrustLevel != null ||
+        widget.selectedQualityRating != null;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.1),
-                        AppColors.info.withOpacity(0.05),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.tune_rounded,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
+                const Icon(
+                  Icons.tune_outlined,
+                  size: 16,
+                  color: Color(0xFF6B7280),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 const Text(
                   'تصفية حسب:',
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
                   ),
                 ),
                 const Spacer(),
@@ -109,31 +65,24 @@ class _SupplierFilterChipsState extends State<SupplierFilterChips>
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.danger.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.danger.withOpacity(0.3),
-                        ),
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.clear_all_rounded,
-                            size: 16,
-                            color: AppColors.danger,
-                          ),
+                          Icon(Icons.close, size: 12, color: Color(0xFFDC2626)),
                           SizedBox(width: 4),
                           Text(
                             'مسح',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.danger,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                              color: Color(0xFFDC2626),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -144,97 +93,39 @@ class _SupplierFilterChipsState extends State<SupplierFilterChips>
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
+          // Trust level chips
           SizedBox(
-            height: 48,
+            height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              physics: const BouncingScrollPhysics(),
               children: [
-                _buildAnimatedChip(
-                  0,
-                  label: 'ممتاز',
-                  icon: Icons.verified_rounded,
-                  color: AppColors.success,
-                  isSelected: widget.selectedTrustLevel == 'ممتاز',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    widget.onTrustLevelChanged(
-                      widget.selectedTrustLevel == 'ممتاز' ? null : 'ممتاز',
-                    );
-                  },
-                ),
-                const SizedBox(width: 10),
-                _buildAnimatedChip(
-                  1,
-                  label: 'جيد',
-                  icon: Icons.check_circle_rounded,
-                  color: const Color(0xFF10B981),
-                  isSelected: widget.selectedTrustLevel == 'جيد',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    widget.onTrustLevelChanged(
-                      widget.selectedTrustLevel == 'جيد' ? null : 'جيد',
-                    );
-                  },
-                ),
-                const SizedBox(width: 10),
-                _buildAnimatedChip(
-                  2,
-                  label: 'متوسط',
-                  icon: Icons.warning_rounded,
-                  color: AppColors.warning,
-                  isSelected: widget.selectedTrustLevel == 'متوسط',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    widget.onTrustLevelChanged(
-                      widget.selectedTrustLevel == 'متوسط' ? null : 'متوسط',
-                    );
-                  },
-                ),
-                const SizedBox(width: 10),
-                _buildAnimatedChip(
-                  3,
-                  label: 'ضعيف',
-                  icon: Icons.error_rounded,
-                  color: AppColors.danger,
-                  isSelected: widget.selectedTrustLevel == 'ضعيف',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    widget.onTrustLevelChanged(
-                      widget.selectedTrustLevel == 'ضعيف' ? null : 'ضعيف',
-                    );
-                  },
-                ),
+                _buildTrustChip('ممتاز', const Color(0xFF16A34A)),
+                const SizedBox(width: 8),
+                _buildTrustChip('جيد', const Color(0xFF0EA5E9)),
+                const SizedBox(width: 8),
+                _buildTrustChip('متوسط', const Color(0xFFF59E0B)),
+                const SizedBox(width: 8),
+                _buildTrustChip('ضعيف', const Color(0xFFDC2626)),
               ],
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
+          // Rating chips
           SizedBox(
-            height: 48,
+            height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              physics: const BouncingScrollPhysics(),
               children: List.generate(5, (index) {
                 final rating = 5 - index;
                 return Padding(
-                  padding: EdgeInsets.only(left: index < 4 ? 10 : 0),
-                  child: _buildAnimatedChip(
-                    4 + index,
-                    rating: rating,
-                    isSelected: widget.selectedQualityRating == rating,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      widget.onQualityRatingChanged(
-                        widget.selectedQualityRating == rating ? null : rating,
-                      );
-                    },
-                  ),
+                  padding: EdgeInsets.only(left: index < 4 ? 8 : 0),
+                  child: _buildRatingChip(rating),
                 );
               }),
             ),
@@ -244,96 +135,83 @@ class _SupplierFilterChipsState extends State<SupplierFilterChips>
     );
   }
 
-  Widget _buildAnimatedChip(
-    int index, {
-    String? label,
-    IconData? icon,
-    Color? color,
-    int? rating,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final effectiveColor = color ?? _getRatingColor(rating ?? 0);
+  Widget _buildTrustChip(String label, Color color) {
+    final isSelected = widget.selectedTrustLevel == label;
 
-    return AnimatedBuilder(
-      animation: _chipControllers[index],
-      builder: (context, child) {
-        final scale = Tween<double>(begin: 0, end: 1)
-            .animate(CurvedAnimation(
-              parent: _chipControllers[index],
-              curve: Curves.elasticOut,
-            ))
-            .value;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onTrustLevelChanged(isSelected ? null : label);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? color : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : color,
+          ),
+        ),
+      ),
+    );
+  }
 
-        return Transform.scale(
-          scale: scale,
-          child: GestureDetector(
-            onTap: onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? LinearGradient(
-                        colors: [effectiveColor, effectiveColor.withOpacity(0.8)],
-                      )
-                    : null,
-                color: isSelected ? null : AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.transparent
-                      : effectiveColor.withOpacity(0.3),
-                  width: isSelected ? 0 : 1.5,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: effectiveColor.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null)
-                    Icon(
-                      icon,
-                      size: 18,
-                      color: isSelected ? Colors.white : effectiveColor,
-                    )
-                  else
-                    Icon(
-                      Icons.star_rounded,
-                      size: 18,
-                      color: isSelected ? Colors.white : effectiveColor,
-                    ),
-                  const SizedBox(width: 6),
-                  Text(
-                    label ?? rating.toString(),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isSelected ? Colors.white : effectiveColor,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ],
+  Widget _buildRatingChip(int rating) {
+    final isSelected = widget.selectedQualityRating == rating;
+    final color = _getRatingColor(rating);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onQualityRatingChanged(isSelected ? null : rating);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? color : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.star_rounded,
+              size: 14,
+              color: isSelected ? Colors.white : color,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              rating.toString(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : color,
               ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
   Color _getRatingColor(int rating) {
-    if (rating >= 4) return AppColors.success;
-    if (rating >= 3) return const Color(0xFFFFD700);
-    if (rating >= 2) return AppColors.warning;
-    return AppColors.danger;
+    if (rating >= 4) return const Color(0xFF16A34A);
+    if (rating >= 3) return const Color(0xFFF59E0B);
+    return const Color(0xFFDC2626);
   }
 }

@@ -18,8 +18,6 @@ import 'widgets/supplier_filter_chips.dart';
 import 'add_supplier_screen.dart';
 import 'supplier_details_screen.dart';
 
-/// شاشة قائمة الموردين
-/// تعرض جميع الموردين مع إمكانيات البحث والفلترة
 class SuppliersListScreen extends StatefulWidget {
   const SuppliersListScreen({super.key});
 
@@ -38,22 +36,17 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
     _loadSuppliers();
   }
 
-  /// تحميل قائمة الموردين من BLoC
   void _loadSuppliers() {
     context.read<SuppliersBloc>().add(LoadSuppliers());
   }
 
-  /// عرض شاشة إضافة مورد جديد
   void _showAddSupplierScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddSupplierScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddSupplierScreen()),
     ).then((_) => _loadSuppliers());
   }
 
-  /// عرض تفاصيل المورد
   void _showSupplierDetails(Supplier supplier) {
     Navigator.push(
       context,
@@ -63,12 +56,11 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
     ).then((_) => _loadSuppliers());
   }
 
-  /// حذف مورد بعد تأكيد المستخدم
   Future<void> _deleteSupplier(Supplier supplier) async {
     final confirmed = await ConfirmDialog.show(
       context,
       title: 'حذف المورد',
-      message: 'هل أنت متأكد من حذف المورد "${supplier.name}"؟\nسيتم حذف جميع البيانات المرتبطة به.',
+      message: 'هل أنت متأكد من حذف المورد "${supplier.name}"؟',
       confirmText: 'حذف',
       cancelText: 'إلغاء',
       isDangerous: true,
@@ -79,11 +71,9 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
     }
   }
 
-  /// فلترة الموردين حسب البحث ومستوى الثقة والتقييم
   List<Supplier> _filterSuppliers(List<Supplier> suppliers) {
     var filtered = suppliers;
 
-    // تطبيق البحث
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((supplier) {
         final query = _searchQuery.toLowerCase();
@@ -93,18 +83,16 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
       }).toList();
     }
 
-    // تطبيق فلتر مستوى الثقة
     if (_selectedTrustLevel != 'الكل') {
-      filtered = filtered.where((supplier) {
-        return supplier.trustLevel == _selectedTrustLevel;
-      }).toList();
+      filtered = filtered
+          .where((s) => s.trustLevel == _selectedTrustLevel)
+          .toList();
     }
 
-    // تطبيق فلتر التقييم
     if (_selectedQualityRating > 0) {
-      filtered = filtered.where((supplier) {
-        return supplier.qualityRating == _selectedQualityRating;
-      }).toList();
+      filtered = filtered
+          .where((s) => s.qualityRating == _selectedQualityRating)
+          .toList();
     }
 
     return filtered;
@@ -115,143 +103,252 @@ class _SuppliersListScreenState extends State<SuppliersListScreen> {
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text('الموردون', style: AppTextStyles.headlineMedium),
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textOnDark,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadSuppliers,
-              tooltip: 'تحديث',
-            ),
-          ],
-        ),
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: _buildAppBar(),
         body: Column(
           children: [
-            // شريط البحث
-            Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.all(AppDimensions.paddingM),
-              child: SupplierSearchBar(
-                onChanged: (query) {
-                  setState(() => _searchQuery = query);
-                },
-              ),
-            ),
-
-            // فلاتر مستوى الثقة والتقييم
-            Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingM,
-                vertical: AppDimensions.paddingS,
-              ),
-              child: SupplierFilterChips(
-                selectedTrustLevel: _selectedTrustLevel,
-                selectedQualityRating: _selectedQualityRating,
-                onTrustLevelChanged: (trustLevel) {
-                  setState(() => _selectedTrustLevel = trustLevel ?? '');
-                },
-                onQualityRatingChanged: (rating) {
-                  setState(() => _selectedQualityRating = rating ?? 0);
-                },
-              ),
-            ),
-
-            const Divider(height: 1),
-
-            // قائمة الموردين
-            Expanded(
-              child: BlocConsumer<SuppliersBloc, SuppliersState>(
-                listener: (context, state) {
-                  if (state is SuppliersError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: AppColors.danger,
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  } else if (state is SupplierOperationSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: AppColors.success,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                builder: (context, state) {
-                  if (state is SuppliersLoading) {
-                    return const LoadingWidget(message: 'جاري تحميل الموردين...');
-                  }
-
-                  if (state is SuppliersError) {
-                    return app_error.ErrorWidget(
-                      message: state.message,
-                      onRetry: _loadSuppliers,
-                    );
-                  }
-
-                  if (state is SuppliersLoaded) {
-                    final filteredSuppliers = _filterSuppliers(state.suppliers);
-
-                    if (filteredSuppliers.isEmpty) {
-                      return EmptyWidget(
-                        title: _searchQuery.isEmpty
-                            ? 'لا يوجد موردين مسجلين'
-                            : 'لا توجد نتائج للبحث',
-                        message: _searchQuery.isEmpty
-                            ? 'ابدأ بإضافة موردين جدد'
-                            : 'جرب البحث بكلمات مختلفة أو قم بتغيير الفلاتر',
-                        icon: Icons.store_outlined,
-                        actionLabel: _searchQuery.isEmpty ? 'إضافة مورد' : null,
-                        onAction: _searchQuery.isEmpty ? _showAddSupplierScreen : null,
-                      );
-                    }
-
-                    return RefreshIndicator(
-                      onRefresh: () async => _loadSuppliers(),
-                      color: AppColors.primary,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(AppDimensions.paddingM),
-                        itemCount: filteredSuppliers.length,
-                        separatorBuilder: (context, index) => 
-                            const SizedBox(height: AppDimensions.spaceM),
-                        itemBuilder: (context, index) {
-                          final supplier = filteredSuppliers[index];
-                          return SupplierCard(
-                            supplier: supplier,
-                            onTap: () => _showSupplierDetails(supplier),
-                            onDelete: () => _deleteSupplier(supplier),
-                          );
-                        },
-                      ),
-                    );
-                  }
-
-                  return const EmptyWidget(
-                    title: 'لا يوجد بيانات',
-                    message: 'لم يتم تحميل بيانات الموردين',
-                    icon: Icons.store_outlined,
-                  );
-                },
-              ),
-            ),
+            _buildSearchSection(),
+            _buildFilterSection(),
+            Expanded(child: _buildSuppliersList()),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _showAddSupplierScreen,
-          icon: const Icon(Icons.add),
-          label: const Text('إضافة مورد'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textOnDark,
+        floatingActionButton: _buildFAB(),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      title: const Text(
+        'الموردون',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1A1A2E),
         ),
       ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh_outlined, size: 22),
+          color: const Color(0xFF6B7280),
+          onPressed: _loadSuppliers,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchSection() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: TextField(
+          onChanged: (query) => setState(() => _searchQuery = query),
+          decoration: const InputDecoration(
+            hintText: 'البحث عن مورد...',
+            hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            prefixIcon: Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterSection() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildFilterChip('الكل', _selectedTrustLevel == 'الكل', () {
+              setState(() => _selectedTrustLevel = 'الكل');
+            }),
+            const SizedBox(width: 8),
+            _buildFilterChip('ممتاز', _selectedTrustLevel == 'ممتاز', () {
+              setState(() => _selectedTrustLevel = 'ممتاز');
+            }),
+            const SizedBox(width: 8),
+            _buildFilterChip('جيد', _selectedTrustLevel == 'جيد', () {
+              setState(() => _selectedTrustLevel = 'جيد');
+            }),
+            const SizedBox(width: 8),
+            _buildFilterChip('متوسط', _selectedTrustLevel == 'متوسط', () {
+              setState(() => _selectedTrustLevel = 'متوسط');
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuppliersList() {
+    return BlocConsumer<SuppliersBloc, SuppliersState>(
+      listener: (context, state) {
+        if (state is SuppliersError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        } else if (state is SupplierOperationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: const Color(0xFF16A34A),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is SuppliersLoading) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF6366F1),
+              strokeWidth: 2,
+            ),
+          );
+        }
+
+        if (state is SuppliersError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: const Color(0xFFDC2626).withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  state.message,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _loadSuppliers,
+                  child: const Text('إعادة المحاولة'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (state is SuppliersLoaded) {
+          final filteredSuppliers = _filterSuppliers(state.suppliers);
+
+          if (filteredSuppliers.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.store_outlined,
+                    size: 56,
+                    color: const Color(0xFF9CA3AF).withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchQuery.isEmpty ? 'لا يوجد موردين' : 'لا توجد نتائج',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _searchQuery.isEmpty
+                        ? 'ابدأ بإضافة موردين جدد'
+                        : 'جرب البحث بكلمات أخرى',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async => _loadSuppliers(),
+            color: const Color(0xFF6366F1),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: filteredSuppliers.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final supplier = filteredSuppliers[index];
+                return SupplierCard(
+                  supplier: supplier,
+                  onTap: () => _showSupplierDetails(supplier),
+                  onDelete: () => _deleteSupplier(supplier),
+                );
+              },
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildFAB() {
+    return FloatingActionButton(
+      onPressed: _showAddSupplierScreen,
+      backgroundColor: const Color(0xFF6366F1),
+      elevation: 2,
+      child: const Icon(Icons.add, color: Colors.white),
     );
   }
 }

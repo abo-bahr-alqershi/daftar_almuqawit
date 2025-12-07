@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/sale.dart';
 
-/// معاينة الفاتورة - تصميم راقي هادئ
+/// معاينة الفاتورة - تصميم راقي واحترافي
 class ReceiptPreview extends StatefulWidget {
   final Sale sale;
   final String? storeName;
@@ -31,17 +29,21 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOut,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
     _animationController.forward();
   }
@@ -56,101 +58,116 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 400),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border.withOpacity(0.1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildReceiptHeader(),
-            _buildDivider(),
-            _buildReceiptDetails(),
-            _buildItemsList(),
-            _buildTotalsSection(),
-            _buildReceiptFooter(),
-            _buildActionButtons(),
-          ],
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 400),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(),
+              _buildDottedDivider(),
+              _buildDetails(),
+              _buildDottedDivider(),
+              _buildItems(),
+              _buildDottedDivider(),
+              _buildTotals(),
+              _buildDottedDivider(),
+              _buildFooter(),
+              _buildActions(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildReceiptHeader() {
+  Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.08),
-            AppColors.primary.withOpacity(0.03),
-          ],
-        ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
+          // Logo/Icon
           Container(
-            width: 60,
-            height: 60,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withOpacity(0.2),
-                  AppColors.primary.withOpacity(0.1),
-                ],
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
               ),
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.receipt_long_rounded,
-              color: AppColors.primary,
+              color: Colors.white,
               size: 32,
             ),
           ),
           const SizedBox(height: 16),
+
+          // Store Name
           Text(
-            widget.storeName ?? 'دفتر المقاولات',
-            style: AppTextStyles.h3.copyWith(
-              fontWeight: FontWeight.w700,
+            widget.storeName ?? 'المتجر',
+            style: const TextStyle(
               fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A2E),
             ),
           ),
+
+          // Address
           if (widget.storeAddress != null) ...[
             const SizedBox(height: 6),
             Text(
               widget.storeAddress!,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),
           ],
+
+          // Phone
           if (widget.storePhone != null) ...[
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.phone_rounded,
                   size: 14,
-                  color: AppColors.textSecondary,
+                  color: Color(0xFF9CA3AF),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   widget.storePhone!,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
                   ),
                 ),
               ],
@@ -161,266 +178,322 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDottedDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: List.generate(
+          40,
+          (index) => Expanded(
+            child: Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              color: index.isEven
+                  ? const Color(0xFFE5E7EB)
+                  : Colors.transparent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetails() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          _buildDetailItem(
+            Icons.tag_rounded,
+            'رقم الفاتورة',
+            '#${widget.sale.invoiceNumber ?? widget.sale.id ?? 'N/A'}',
+          ),
+          const SizedBox(height: 12),
+          _buildDetailItem(
+            Icons.calendar_today_rounded,
+            'التاريخ',
+            widget.sale.date,
+          ),
+          const SizedBox(height: 12),
+          _buildDetailItem(
+            Icons.access_time_rounded,
+            'الوقت',
+            widget.sale.time,
+          ),
+          if (widget.sale.customerName != null) ...[
+            const SizedBox(height: 12),
+            _buildDetailItem(
+              Icons.person_rounded,
+              'العميل',
+              widget.sale.customerName!,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(IconData icon, String label, String value) {
     return Container(
-      height: 1,
-      margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.transparent,
-            AppColors.border.withOpacity(0.3),
-            Colors.transparent,
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: const Color(0xFF6366F1)),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItems() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2_rounded,
+                    size: 16,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'تفاصيل المنتج',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${widget.sale.quantity} ${widget.sale.unit}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+                Text(
+                  'x ${widget.sale.unitPrice.toStringAsFixed(0)} ر.ي',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                Text(
+                  '${(widget.sale.quantity * widget.sale.unitPrice).toStringAsFixed(0)} ر.ي',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                ),
+              ],
+            ),
+            if (widget.sale.discount > 0) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'الخصم',
+                      style: TextStyle(fontSize: 13, color: Color(0xFFDC2626)),
+                    ),
+                    Text(
+                      '- ${widget.sale.discount.toStringAsFixed(0)} ر.ي',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildReceiptDetails() {
+  Widget _buildTotals() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          _buildDetailRow(
-            'رقم الفاتورة',
-            '#${widget.sale.invoiceNumber ?? widget.sale.id ?? 'N/A'}',
-            Icons.tag_rounded,
-          ),
-          const SizedBox(height: 12),
-          _buildDetailRow(
-            'التاريخ',
-            widget.sale.date,
-            Icons.calendar_today_rounded,
-          ),
-          const SizedBox(height: 12),
-          _buildDetailRow(
-            'الوقت',
-            widget.sale.time,
-            Icons.access_time_rounded,
-          ),
-          if (widget.sale.customerName != null) ...[
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              'العميل',
-              widget.sale.customerName!,
-              Icons.person_outline_rounded,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemsList() {
-    return Container(
-      margin: const EdgeInsets.all(24),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.inventory_2_rounded, color: AppColors.primary, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'تفاصيل المنتج',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF6366F1).withOpacity(0.08),
+              const Color(0xFF6366F1).withOpacity(0.03),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${widget.sale.quantity} ${widget.sale.unit}',
-                style: AppTextStyles.bodyMedium,
-              ),
-              Text(
-                'x ${widget.sale.unitPrice} ريال',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.15)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'المجموع الكلي',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A2E),
+                  ),
                 ),
-              ),
-              Text(
-                '${(widget.sale.quantity * widget.sale.unitPrice).toStringAsFixed(2)} ريال',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
+                Text(
+                  '${widget.sale.totalAmount.toStringAsFixed(0)} ر.ي',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF6366F1),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          if (widget.sale.discount > 0) ...[
-            const SizedBox(height: 8),
+              ],
+            ),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.danger.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
+                color: _getPaymentStatusColor().withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'الخصم',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.danger,
-                    ),
+                  Icon(
+                    _getPaymentIcon(),
+                    size: 16,
+                    color: _getPaymentStatusColor(),
                   ),
+                  const SizedBox(width: 6),
                   Text(
-                    '- ${widget.sale.discount} ريال',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.danger,
+                    widget.sale.paymentMethod,
+                    style: TextStyle(
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      color: _getPaymentStatusColor(),
                     ),
                   ),
                 ],
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTotalsSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.08),
-            AppColors.primary.withOpacity(0.03),
-          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'المجموع الكلي',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '${widget.sale.totalAmount.toStringAsFixed(2)} ريال',
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 22,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: _getPaymentStatusColor().withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _getPaymentIcon(),
-                  size: 16,
-                  color: _getPaymentStatusColor(),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  widget.sale.paymentMethod,
-                  style: TextStyle(
-                    color: _getPaymentStatusColor(),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildReceiptFooter() {
+  Widget _buildFooter() {
     return Container(
-      margin: const EdgeInsets.all(24),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           Icon(
             Icons.favorite_rounded,
-            color: AppColors.danger.withOpacity(0.4),
+            color: const Color(0xFFDC2626).withOpacity(0.4),
             size: 20,
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'شكراً لتعاملكم معنا',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF6B7280),
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          const Text(
             'نتطلع لخدمتكم مجدداً',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textHint,
+            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              'طباعة',
+              Icons.print_rounded,
+              const Color(0xFF6366F1),
+              widget.onPrint,
+              isPrimary: true,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildActionButton(
+              'مشاركة',
+              Icons.share_rounded,
+              const Color(0xFF6366F1),
+              widget.onShare,
+              isPrimary: false,
             ),
           ),
         ],
@@ -428,90 +501,49 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
     );
   }
 
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                widget.onPrint?.call();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.primaryDark],
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback? onTap, {
+    bool isPrimary = false,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: isPrimary ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: isPrimary ? null : Border.all(color: color.withOpacity(0.3)),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.print_rounded, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'طباعة',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isPrimary ? Colors.white : color, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isPrimary ? Colors.white : color,
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                widget.onShare?.call();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.share_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'مشاركة',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -519,13 +551,13 @@ class _ReceiptPreviewState extends State<ReceiptPreview>
   Color _getPaymentStatusColor() {
     switch (widget.sale.paymentStatus) {
       case 'مدفوع':
-        return AppColors.success;
+        return const Color(0xFF10B981);
       case 'غير مدفوع':
-        return AppColors.danger;
+        return const Color(0xFFDC2626);
       case 'مدفوع جزئياً':
-        return AppColors.warning;
+        return const Color(0xFFF59E0B);
       default:
-        return AppColors.textSecondary;
+        return const Color(0xFF6B7280);
     }
   }
 

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/qat_type.dart';
 
-/// نموذج إضافة أو تعديل نوع قات - تصميم راقي هادئ
+/// نموذج إضافة أو تعديل نوع قات - تصميم احترافي راقي
 class QatTypeForm extends StatefulWidget {
   const QatTypeForm({
     super.key,
@@ -16,6 +14,7 @@ class QatTypeForm extends StatefulWidget {
     this.qualityFieldKey,
     this.saveButtonKey,
   });
+
   final dynamic qatType;
   final VoidCallback? onSubmit;
   final VoidCallback? onCancel;
@@ -31,26 +30,20 @@ class QatTypeForm extends StatefulWidget {
 class QatTypeFormState extends State<QatTypeForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-
-  // FocusNode للحقل الوحيد المتبقي
-  final FocusNode _nameFocusNode = FocusNode();
+  final _nameFocusNode = FocusNode();
 
   String _selectedQuality = 'ممتاز';
-  String _selectedIcon = '🌿';
 
   final Set<String> _selectedUnits = {};
   final Map<String, TextEditingController> _unitBuyPriceControllers = {};
   final Map<String, TextEditingController> _unitSellPriceControllers = {};
 
   final List<String> _qualities = ['ممتاز', 'جيد جداً', 'جيد', 'متوسط', 'عادي'];
-  final List<String> _icons = ['🌿', '🍃', '🌱', '🌾', '🎋', '🌳', '🪴', '☘️'];
   final List<String> _availableUnits = ['ربطة', 'علاقية', 'كيلو'];
 
   @override
   void initState() {
     super.initState();
-
-    // تحديد كامل الوحدات تلقائياً
     _selectedUnits.addAll(_availableUnits);
 
     for (var unit in _availableUnits) {
@@ -61,9 +54,7 @@ class QatTypeFormState extends State<QatTypeForm> {
     if (widget.qatType != null) {
       _nameController.text = widget.qatType.name;
       _selectedQuality = widget.qatType.qualityGrade ?? 'ممتاز';
-      _selectedIcon = widget.qatType.icon ?? '🌿';
 
-      // تحميل أسعار الوحدات إذا كانت موجودة
       if (widget.qatType.unitPrices != null) {
         widget.qatType.unitPrices.forEach((unit, prices) {
           if (_unitBuyPriceControllers.containsKey(unit)) {
@@ -81,7 +72,6 @@ class QatTypeFormState extends State<QatTypeForm> {
   void dispose() {
     _nameController.dispose();
     _nameFocusNode.dispose();
-
     for (var controller in _unitBuyPriceControllers.values) {
       controller.dispose();
     }
@@ -96,7 +86,6 @@ class QatTypeFormState extends State<QatTypeForm> {
   Map<String, dynamic> getFormData() {
     final Map<String, UnitPrice> unitPrices = {};
 
-    // تحديد كامل الوحدات مع أسعار افتراضية فارغة
     for (var unit in _selectedUnits) {
       final buyPrice = _unitBuyPriceControllers[unit]?.text;
       final sellPrice = _unitSellPriceControllers[unit]?.text;
@@ -114,77 +103,177 @@ class QatTypeFormState extends State<QatTypeForm> {
     return {
       'name': _nameController.text,
       'qualityGrade': _selectedQuality,
-      'defaultBuyPrice': null, // إزالة الأسعار الافتراضية
-      'defaultSellPrice': null, // إزالة الأسعار الافتراضية
-      'icon': _selectedIcon,
+      'defaultBuyPrice': null,
+      'defaultSellPrice': null,
+      'icon': '🌿',
       'availableUnits': _selectedUnits.toList(),
       'unitPrices': unitPrices,
     };
   }
 
+  Color _getQualityColor(String quality) {
+    switch (quality) {
+      case 'ممتاز':
+        return const Color(0xFF16A34A);
+      case 'جيد جداً':
+        return const Color(0xFF0EA5E9);
+      case 'جيد':
+        return const Color(0xFF6366F1);
+      case 'متوسط':
+      case 'عادي':
+        return const Color(0xFFF59E0B);
+      default:
+        return const Color(0xFF6366F1);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => Form(
-    key: _formKey,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFormCard(
-          title: 'معلومات أساسية',
-          icon: Icons.grass_rounded,
-          color: AppColors.primary,
-          child: Column(
-            children: [
-              _buildTextField(
-                key: widget.nameFieldKey,
-                controller: _nameController,
-                focusNode: _nameFocusNode,
-                label: 'اسم النوع',
-                hint: 'مثال: قيفي رووس، عنسي عوارض',
-                icon: Icons.label_rounded,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return 'يرجى إدخال اسم النوع';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildQualitySelector(),
-            ],
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildBasicInfoSection(),
+          const SizedBox(height: 20),
+          _buildQualitySection(),
+          const SizedBox(height: 28),
+          if (widget.onSubmit != null && widget.onCancel != null)
+            _buildActionButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoSection() {
+    return _buildSection(
+      title: 'المعلومات الأساسية',
+      icon: Icons.grass_outlined,
+      color: const Color(0xFF6366F1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'اسم النوع *',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF374151),
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          TextFormField(
+            key: widget.nameFieldKey,
+            controller: _nameController,
+            focusNode: _nameFocusNode,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
+            decoration: InputDecoration(
+              hintText: 'مثال: قيفي رووس، عنسي عوارض',
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF9CA3AF),
+              ),
+              prefixIcon: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Icon(
+                  Icons.label_outline,
+                  size: 20,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF6366F1),
+                  width: 1.5,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFDC2626)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            validator: (value) {
+              if (value?.isEmpty ?? true) return 'يرجى إدخال اسم النوع';
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
-        const SizedBox(height: 20),
+  Widget _buildQualitySection() {
+    return _buildSection(
+      key: widget.qualityFieldKey,
+      title: 'درجة الجودة',
+      icon: Icons.grade_outlined,
+      color: const Color(0xFFF59E0B),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: _qualities.map((quality) {
+          final isSelected = _selectedQuality == quality;
+          final color = _getQualityColor(quality);
 
-        // تم إخفاء حاوية اختيار الرمز حسب الطلب
-        // تم إخفاء حقول الأسعار الافتراضية والوحدات
-        const SizedBox(height: 24),
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _selectedQuality = quality);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? color : color.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? color : color.withOpacity(0.3),
+                ),
+              ),
+              child: Text(
+                quality,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : color,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 
-        if (widget.onSubmit != null && widget.onCancel != null)
-          _buildActionButtons(),
-      ],
-    ),
-  );
-
-  Widget _buildFormCard({
+  Widget _buildSection({
+    Key? key,
     required String title,
     required IconData icon,
     required Color color,
     required Widget child,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      key: key,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,19 +283,18 @@ class QatTypeFormState extends State<QatTypeForm> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
-                  ),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 20, color: color),
+                child: Icon(icon, size: 18, color: color),
               ),
               const SizedBox(width: 12),
               Text(
                 title,
-                style: AppTextStyles.titleMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
                 ),
               ),
             ],
@@ -218,471 +306,25 @@ class QatTypeFormState extends State<QatTypeForm> {
     );
   }
 
-  Widget _buildTextField({
-    Key? key,
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    void Function(String)? onChanged,
-    FocusNode? focusNode,
-  }) {
-    return Container(
-      key: key,
-      decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border.withOpacity(0.3)),
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: keyboardType,
-        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
-          hintStyle: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textHint,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
-        ),
-        validator: validator,
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _buildQualitySelector() {
-    return Container(
-      key: widget.qualityFieldKey,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.grade_rounded,
-                color: AppColors.warning,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'درجة الجودة',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _qualities.map((quality) {
-              final isSelected = _selectedQuality == quality;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedQuality = quality);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(
-                            colors: [
-                              _getQualityColor(quality),
-                              _getQualityColor(quality).withOpacity(0.8),
-                            ],
-                          )
-                        : null,
-                    color: isSelected ? null : AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? _getQualityColor(quality)
-                          : AppColors.border.withOpacity(0.3),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: _getQualityColor(quality).withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Text(
-                    quality,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w600,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconSelector() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _icons.map((icon) {
-        final isSelected = _selectedIcon == icon;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _selectedIcon = icon);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? const LinearGradient(
-                      colors: [AppColors.primary, AppColors.success],
-                    )
-                  : null,
-              color: isSelected ? null : AppColors.background.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.border.withOpacity(0.3),
-                width: isSelected ? 2 : 1,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Center(
-              child: Text(icon, style: const TextStyle(fontSize: 28)),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildUnitsSelector() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _availableUnits.map((unit) {
-        final isSelected = _selectedUnits.contains(unit);
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() {
-              if (isSelected) {
-                _selectedUnits.remove(unit);
-              } else {
-                _selectedUnits.add(unit);
-              }
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? const LinearGradient(
-                      colors: [AppColors.info, AppColors.primary],
-                    )
-                  : null,
-              color: isSelected ? null : AppColors.background.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? AppColors.info
-                    : AppColors.border.withOpacity(0.3),
-                width: isSelected ? 2 : 1,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.info.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _getUnitIcon(unit),
-                  size: 18,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  unit,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildUnitPriceSection(String unit) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.08),
-            AppColors.primary.withOpacity(0.03),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.15),
-                      AppColors.primary.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  _getUnitIcon(unit),
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'أسعار $unit',
-                style: AppTextStyles.titleSmall.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  controller: _unitBuyPriceControllers[unit]!,
-                  label: 'سعر الشراء',
-                  hint: '0',
-                  icon: Icons.arrow_downward_rounded,
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => setState(() {}),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTextField(
-                  controller: _unitSellPriceControllers[unit]!,
-                  label: 'سعر البيع',
-                  hint: '0',
-                  icon: Icons.arrow_upward_rounded,
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => setState(() {}),
-                  validator: (value) {
-                    if (value != null &&
-                        value.isNotEmpty &&
-                        _unitBuyPriceControllers[unit]!.text.isNotEmpty) {
-                      final buyPrice = double.tryParse(
-                        _unitBuyPriceControllers[unit]!.text,
-                      );
-                      final sellPrice = double.tryParse(value);
-                      if (buyPrice != null &&
-                          sellPrice != null &&
-                          sellPrice < buyPrice) {
-                        return 'أقل من الشراء';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          if (_unitBuyPriceControllers[unit]!.text.isNotEmpty &&
-              _unitSellPriceControllers[unit]!.text.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.success.withOpacity(0.2)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.trending_up_rounded,
-                        color: AppColors.success,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'الربح',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '0 ر.ي', // قيمة افتراضية
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // تم حذف _buildProfitIndicator لأنه لم يعد مطلوباً
-  Widget _buildProfitIndicator() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.success.withOpacity(0.1),
-            AppColors.success.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.success.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.trending_up_rounded,
-                  color: AppColors.success,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'هامش الربح المتوقع',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          Text(
-            '0 ر.ي',
-            style: AppTextStyles.titleLarge.copyWith(
-              color: AppColors.success,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildActionButtons() {
     return Row(
       children: [
         Expanded(
-          child: Container(
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border.withOpacity(0.5)),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.isLoading ? null : widget.onCancel,
-                borderRadius: BorderRadius.circular(16),
-                child: Center(
-                  child: Text(
-                    'إلغاء',
-                    style: AppTextStyles.button.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 16,
-                    ),
+          child: Material(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: widget.isLoading ? null : widget.onCancel,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                child: const Text(
+                  'إلغاء',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
                   ),
                 ),
               ),
@@ -692,70 +334,50 @@ class QatTypeFormState extends State<QatTypeForm> {
         const SizedBox(width: 12),
         Expanded(
           flex: 2,
-          child: Container(
+          child: Material(
             key: widget.saveButtonKey,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: widget.isLoading
-                  ? LinearGradient(
-                      colors: [
-                        AppColors.textHint.withOpacity(0.5),
-                        AppColors.textHint.withOpacity(0.3),
-                      ],
-                    )
-                  : const LinearGradient(
-                      colors: [AppColors.primary, AppColors.success],
-                    ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: widget.isLoading
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.isLoading ? null : widget.onSubmit,
-                borderRadius: BorderRadius.circular(16),
-                child: Center(
-                  child: widget.isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              widget.qatType == null
-                                  ? Icons.add_circle_rounded
-                                  : Icons.check_circle_rounded,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              widget.qatType == null
-                                  ? 'إضافة النوع'
-                                  : 'حفظ التعديلات',
-                              style: AppTextStyles.button.copyWith(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+            color: widget.isLoading
+                ? const Color(0xFFD1D5DB)
+                : const Color(0xFF6366F1),
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: widget.isLoading ? null : widget.onSubmit,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
                         ),
-                ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            widget.qatType == null
+                                ? Icons.add_circle_outline
+                                : Icons.check_circle_outline,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            widget.qatType == null
+                                ? 'إضافة النوع'
+                                : 'حفظ التعديلات',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -763,35 +385,4 @@ class QatTypeFormState extends State<QatTypeForm> {
       ],
     );
   }
-
-  Color _getQualityColor(String quality) {
-    switch (quality.toLowerCase()) {
-      case 'ممتاز':
-        return AppColors.success;
-      case 'جيد جداً':
-        return AppColors.info;
-      case 'جيد':
-        return AppColors.primary;
-      case 'متوسط':
-      case 'عادي':
-        return AppColors.warning;
-      default:
-        return AppColors.primary;
-    }
-  }
-
-  IconData _getUnitIcon(String unit) {
-    switch (unit) {
-      case 'ربطة':
-        return Icons.shopping_bag_rounded;
-      case 'علاقية':
-        return Icons.inventory_2_rounded;
-      case 'كيلو':
-        return Icons.scale_rounded;
-      default:
-        return Icons.category_rounded;
-    }
-  }
-
-  // تم حذف دوال حساب الربح لأنها لم تعد مطلوبة
 }

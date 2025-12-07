@@ -9,16 +9,11 @@ import '../../../domain/usecases/inventory/get_inventory_list.dart';
 import '../../../domain/usecases/inventory/get_inventory_statistics.dart';
 import '../../blocs/inventory/inventory_bloc.dart';
 import '../../widgets/common/confirm_dialog.dart';
-import 'widgets/inventory_item_card.dart';
-import 'widgets/inventory_stats_card.dart';
-import 'widgets/inventory_transaction_card.dart';
-import 'widgets/inventory_filter_widget.dart';
 import 'add_return_screen.dart';
 import 'add_damaged_item_screen.dart';
-import 'inventory_details_screen.dart';
-import 'adjust_quantity_screen.dart';
+import 'return_damage_details_screen.dart';
 
-/// الشاشة الرئيسية لإدارة المخزون - تصميم راقي هادئ
+/// الشاشة الرئيسية لإدارة المردودات والتوالف - تصميم احترافي راقي
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
 
@@ -27,42 +22,29 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   double _scrollOffset = 0;
-  late TabController _tabController;
-  InventoryFilterType _currentFilter = InventoryFilterType.all;
+  String _selectedFilter = 'الكل';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _animationController.forward();
 
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
-    });
-
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        return;
-      }
-      _onTabChanged(_tabController.index);
+      setState(() => _scrollOffset = _scrollController.offset);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<InventoryBloc>().add(const LoadInventoryStatisticsEvent());
-      context.read<InventoryBloc>().add(
-        const LoadInventoryListEvent(filterType: InventoryFilterType.all),
-      );
+      context.read<InventoryBloc>().add(const LoadReturnsEvent());
+      context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
     });
   }
 
@@ -71,7 +53,6 @@ class _InventoryScreenState extends State<InventoryScreen>
     _animationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -80,228 +61,403 @@ class _InventoryScreenState extends State<InventoryScreen>
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            _buildGradientBackground(),
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                _buildModernAppBar(),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            _buildSliverAppBar(),
+            SliverToBoxAdapter(
+              child: BlocConsumer<InventoryBloc, InventoryState>(
+                listener: (context, state) {
+                  if (state is ReturnOperationSuccess) {
+                    _showSuccessMessage(state.message);
+                  } else if (state is DamageOperationSuccess) {
+                    _showSuccessMessage(state.message);
+                  } else if (state is InventoryError) {
+                    _showErrorMessage(state.message);
+                  }
+                },
+                builder: (context, state) {
+                  return Column(
                     children: [
                       const SizedBox(height: 20),
-                      BlocConsumer<InventoryBloc, InventoryState>(
-                        listener: (context, state) {
-                          if (state is InventoryOperationSuccess) {
-                            _showSuccessMessage(state.message);
-                          } else if (state is InventoryError) {
-                            _showErrorMessage(state.message);
-                          }
-                        },
-                        builder: (context, state) {
-                          InventoryStatistics? statistics;
-
-                          if (state is InventoryListLoaded &&
-                              state.statistics != null) {
-                            statistics = state.statistics;
-                          } else if (state is InventoryStatisticsLoaded) {
-                            statistics = state.statistics;
-                          }
-
-                          return Column(
-                            children: [
-                              if (statistics != null)
-                                InventoryStatsCard(statistics: statistics),
-                              const SizedBox(height: 20),
-                              _buildSearchBar(),
-                              const SizedBox(height: 20),
-                              _buildTabBar(),
-                              const SizedBox(height: 16),
-                              _buildTabContent(state),
-                              const SizedBox(height: 100),
-                            ],
-                          );
-                        },
-                      ),
+                      _buildStatsSection(state),
+                      const SizedBox(height: 24),
+                      _buildFilterSection(),
+                      const SizedBox(height: 20),
+                      _buildContent(state),
+                      const SizedBox(height: 100),
                     ],
-                  ),
-                ),
-              ],
+                  );
+                },
+              ),
             ),
-            _buildFloatingActionButton(),
           ],
         ),
+        floatingActionButton: _buildFAB(),
       ),
     );
   }
 
-  Widget _buildGradientBackground() => Container(
-    height: 400,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.info.withOpacity(0.08),
-          AppColors.primary.withOpacity(0.05),
-          Colors.transparent,
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildModernAppBar() {
+  Widget _buildSliverAppBar() {
     final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
 
     return SliverAppBar(
-      expandedHeight: 140,
+      expandedHeight: 120,
       pinned: true,
-      backgroundColor: AppColors.surface.withOpacity(opacity),
-      elevation: opacity * 2,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.info, AppColors.primary],
-                          ),
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.info.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.inventory_2_rounded,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'المخزون',
-                              style: AppTextStyles.h2.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 24,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'إدارة المخزون والأصناف',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      elevation: 0,
+      backgroundColor: Colors.white.withOpacity(opacity),
+      surfaceTintColor: Colors.transparent,
+      leading: _buildBackButton(),
       actions: [
-        _buildIconButton(
-          Icons.filter_list_rounded,
-          onPressed: _showFilterDialog,
-        ),
-        _buildIconButton(
+        _buildAppBarAction(
           Icons.refresh_rounded,
-          onPressed: () {
+          () {
             HapticFeedback.lightImpact();
-            context.read<InventoryBloc>().add(const RefreshInventoryEvent());
+            context.read<InventoryBloc>().add(const LoadReturnsEvent());
+            context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
           },
         ),
         const SizedBox(width: 12),
       ],
+      flexibleSpace: FlexibleSpaceBar(background: _buildHeaderContent()),
     );
   }
 
-  Widget _buildIconButton(
-    IconData icon, {
-    required VoidCallback onPressed,
-    String? badge,
-  }) => Stack(
-    children: [
-      IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border.withOpacity(0.5)),
-          ),
-          child: Icon(icon, color: AppColors.textPrimary, size: 20),
-        ),
-        onPressed: onPressed,
-      ),
-      if (badge != null)
-        Positioned(
-          right: 8,
-          top: 8,
+  Widget _buildBackButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 0,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).pop();
+          },
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              color: AppColors.danger,
-              shape: BoxShape.circle,
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: Text(
-              badge,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Color(0xFF1A1A2E),
+              size: 16,
             ),
           ),
         ),
-    ],
-  );
+      ),
+    );
+  }
 
-  Widget _buildSearchBar() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Container(
+  Widget _buildAppBarAction(IconData icon, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Icon(icon, color: const Color(0xFF1A1A2E), size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderContent() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF8F9FA), Color(0xFFF8F9FA)],
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF59E0B).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.assignment_return_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'المردودات والتوالف',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'إدارة المردودات والبضاعة التالفة',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(InventoryState state) {
+    final returns = (state is ReturnsLoadedState) ? state.returns : [];
+    final damages = (state is DamagedItemsLoadedState) ? state.damagedItems : [];
+    
+    final returnsTotal = returns.fold<double>(0, (sum, item) => sum + (item.totalAmount ?? 0));
+    final damagesTotal = damages.fold<double>(0, (sum, item) => sum + (item.totalCost ?? 0));
+    final totalAmount = returnsTotal + damagesTotal;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'إجمالي القيمة',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${returns.length + damages.length} عملية',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.5),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'نشط',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 1000),
+                  tween: Tween(begin: 0, end: totalAmount),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          value.toStringAsFixed(0),
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -1,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            'ريال',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'المردودات',
+                  returnsTotal,
+                  Icons.keyboard_return_rounded,
+                  const Color(0xFF10B981),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'التوالف',
+                  damagesTotal,
+                  Icons.broken_image_rounded,
+                  const Color(0xFFDC2626),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'عدد المردودات',
+                  returns.length.toDouble(),
+                  Icons.assignment_return_rounded,
+                  const Color(0xFF3B82F6),
+                  isCount: true,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'عدد التوالف',
+                  damages.length.toDouble(),
+                  Icons.report_problem_rounded,
+                  const Color(0xFF6366F1),
+                  isCount: true,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+    String label,
+    double value,
+    IconData icon,
+    Color color, {
+    bool isCount = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -310,223 +466,258 @@ class _InventoryScreenState extends State<InventoryScreen>
           ),
         ],
       ),
-      child: TextField(
-        controller: _searchController,
-        style: AppTextStyles.bodyMedium,
-        decoration: InputDecoration(
-          hintText: 'البحث في المخزون...',
-          hintStyle: AppTextStyles.inputHint.copyWith(fontSize: 14),
-          prefixIcon: const Icon(
-            Icons.search_rounded,
-            color: AppColors.textSecondary,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        onSubmitted: (query) {
-          context.read<InventoryBloc>().add(SearchInventoryEvent(query));
-        },
-      ),
-    ),
-  );
-
-  Widget _buildTabBar() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: TabBar(
-      controller: _tabController,
-      isScrollable: true,
-      indicator: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.info, AppColors.primary],
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      labelColor: Colors.white,
-      unselectedLabelColor: AppColors.textSecondary,
-      labelStyle: AppTextStyles.labelMedium.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
-      unselectedLabelStyle: AppTextStyles.labelMedium,
-      padding: const EdgeInsets.all(4),
-      tabs: const [
-        Tab(text: 'الكل'),
-        Tab(text: 'منخفض'),
-        Tab(text: 'الحركات'),
-        Tab(text: 'المردودات'),
-        Tab(text: 'التالف'),
-      ],
-    ),
-  );
-
-  Widget _buildTabContent(InventoryState state) {
-    if (state is InventoryLoading) {
-      return _buildLoadingShimmer();
-    }
-
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.6,
-      child: TabBarView(
-        controller: _tabController,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildAllInventoryTab(state),
-          _buildLowStockTab(state),
-          _buildTransactionsTab(state),
-          _buildReturnsTab(state),
-          _buildDamagedTab(state),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.trending_up_rounded,
+                size: 16,
+                color: color.withOpacity(0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 800),
+            tween: Tween(begin: 0, end: value),
+            curve: Curves.easeOut,
+            builder: (context, animatedValue, child) {
+              return Text(
+                isCount
+                    ? animatedValue.toInt().toString()
+                    : animatedValue.toStringAsFixed(0),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  height: 1.2,
+                ),
+              );
+            },
+          ),
+          if (!isCount)
+            const Text(
+              'ر.ي',
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF9CA3AF),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildAllInventoryTab(InventoryState state) {
-    if (state is InventoryListLoaded) {
-      if (state.inventory.isEmpty) {
-        return _buildEmptyState(
-          icon: Icons.inventory_2_rounded,
-          title: 'لا توجد أصناف',
-          subtitle: 'ابدأ بإضافة أصناف جديدة للمخزون',
-        );
-      }
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: state.inventory.length,
-        itemBuilder: (context, index) {
-          final item = state.inventory[index];
-          return InventoryItemCard(
-            item: item,
-            onTap: () => _navigateToDetails(item),
-            onEdit: () => _showEditDialog(item),
-            onAdjustQuantity: () => _navigateToAdjustQuantity(item),
-          );
-        },
-      );
-    }
-    if (state is InventoryError) {
-      return _buildErrorState(state.message);
-    }
-    return _buildEmptyState(
-      icon: Icons.inventory_2_rounded,
-      title: 'لا توجد بيانات',
+  Widget _buildFilterSection() {
+    final filters = ['الكل', 'المردودات', 'التوالف', 'المعلق', 'المؤكد'];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'التصنيف',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 40,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: filters.length,
+            itemBuilder: (context, index) {
+              final filter = filters[index];
+              final isSelected = _selectedFilter == filter;
+              return Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Material(
+                  color: isSelected
+                      ? const Color(0xFFF59E0B)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _selectedFilter = filter);
+                      _applyFilter(filter);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFFF59E0B)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          filter,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildLowStockTab(InventoryState state) {
-    if (state is InventoryListLoaded) {
-      final lowStockItems = state.inventory
-          .where((item) => item.isLowStock)
-          .toList();
-      if (lowStockItems.isEmpty) {
-        return _buildEmptyState(
-          icon: Icons.check_circle_rounded,
-          title: 'ممتاز!',
-          subtitle: 'لا يوجد مخزون منخفض',
-          color: AppColors.success,
-        );
-      }
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: lowStockItems.length,
-        itemBuilder: (context, index) {
-          final item = lowStockItems[index];
-          return InventoryItemCard(
-            item: item,
-            showLowStockWarning: true,
-            onTap: () => _navigateToDetails(item),
-            onEdit: () => _showEditDialog(item),
-            onAdjustQuantity: () => _navigateToAdjustQuantity(item),
-          );
-        },
-      );
+  Widget _buildContent(InventoryState state) {
+    if (state is InventoryLoading) {
+      return _buildLoadingState();
     }
-    return _buildEmptyState(
-      icon: Icons.warning_rounded,
-      title: 'لا توجد بيانات',
+
+    final returns = (state is ReturnsLoadedState) ? state.returns : [];
+    final damages = (state is DamagedItemsLoadedState) ? state.damagedItems : [];
+    
+    final filteredReturns = _filterData(returns, true);
+    final filteredDamages = _filterData(damages, false);
+    
+    final allItems = [...filteredReturns, ...filteredDamages];
+    
+    if (allItems.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (filteredReturns.isNotEmpty) ...[
+            const Text(
+              'المردودات',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...filteredReturns.map((item) => _buildReturnCard(item)).toList(),
+          ],
+          if (filteredDamages.isNotEmpty) ...[
+            if (filteredReturns.isNotEmpty) const SizedBox(height: 20),
+            const Text(
+              'البضاعة التالفة',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...filteredDamages.map((item) => _buildDamagedCard(item)).toList(),
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildTransactionsTab(InventoryState state) {
-    if (state is InventoryTransactionsLoaded) {
-      if (state.transactions.isEmpty) {
-        return _buildEmptyState(
-          icon: Icons.history_rounded,
-          title: 'لا توجد حركات',
-          subtitle: 'ستظهر حركات المخزون هنا',
-        );
-      }
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: state.transactions.length,
-        itemBuilder: (context, index) {
-          final transaction = state.transactions[index];
-          return InventoryTransactionCard(transaction: transaction);
-        },
-      );
+  List<dynamic> _filterData(List<dynamic> items, bool isReturns) {
+    if (_selectedFilter == 'الكل') return items;
+    if (_selectedFilter == 'المردودات' && isReturns) return items;
+    if (_selectedFilter == 'التوالف' && !isReturns) return items;
+    if (_selectedFilter == 'المعلق') {
+      return items.where((item) => item.status == 'معلق').toList();
     }
-    return _buildEmptyState(
-      icon: Icons.history_rounded,
-      title: 'لا توجد حركات',
-    );
+    if (_selectedFilter == 'المؤكد') {
+      return items.where((item) => item.status == 'مؤكد').toList();
+    }
+    return [];
   }
 
-  Widget _buildReturnsTab(InventoryState state) {
-    if (state is ReturnsLoadedState) {
-      if (state.returns.isEmpty) {
-        return _buildEmptyState(
-          icon: Icons.assignment_return_rounded,
-          title: 'لا توجد مردودات',
-          subtitle: 'ستظهر المردودات هنا عند إضافتها',
-        );
-      }
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: state.returns.length,
-        itemBuilder: (context, index) {
-          final returnItem = state.returns[index];
-          return _buildReturnCard(returnItem);
-        },
-      );
+  void _applyFilter(String filter) {
+    if (filter == 'الكل' || filter == 'المردودات') {
+      context.read<InventoryBloc>().add(const LoadReturnsEvent());
     }
-    return _buildEmptyState(
-      icon: Icons.assignment_return_rounded,
-      title: 'لا توجد مردودات',
-    );
+    if (filter == 'الكل' || filter == 'التوالف') {
+      context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
+    }
   }
 
-  Widget _buildDamagedTab(InventoryState state) {
-    if (state is DamagedItemsLoadedState) {
-      if (state.damagedItems.isEmpty) {
-        return _buildEmptyState(
-          icon: Icons.broken_image_rounded,
-          title: 'لا توجد بضاعة تالفة',
-          subtitle: 'ستظهر البضاعة التالفة هنا عند تسجيلها',
-        );
-      }
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: state.damagedItems.length,
-        itemBuilder: (context, index) {
-          final damagedItem = state.damagedItems[index];
-          return _buildDamagedCard(damagedItem);
-        },
-      );
-    }
-    return _buildEmptyState(
-      icon: Icons.broken_image_rounded,
-      title: 'لا توجد بضاعة تالفة',
+  Widget _buildFAB() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            child: FloatingActionButton.extended(
+              onPressed: () => _navigateToAddReturn(),
+              heroTag: 'add_return',
+              backgroundColor: const Color(0xFF10B981),
+              icon: const Icon(Icons.keyboard_return_rounded, color: Colors.white),
+              label: const Text(
+                'إضافة مردود',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: FloatingActionButton.extended(
+              onPressed: () => _navigateToDamaged(),
+              heroTag: 'add_damage',
+              backgroundColor: const Color(0xFFDC2626),
+              icon: const Icon(Icons.broken_image_rounded, color: Colors.white),
+              label: const Text(
+                'تسجيل تلف',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -548,7 +739,15 @@ class _InventoryScreenState extends State<InventoryScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReturnDamageDetailsScreen(item: returnItem),
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -662,7 +861,15 @@ class _InventoryScreenState extends State<InventoryScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReturnDamageDetailsScreen(item: damagedItem),
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -806,241 +1013,67 @@ class _InventoryScreenState extends State<InventoryScreen>
     ),
   );
 
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    Color? color,
-  }) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(40),
+  Widget _buildLoadingState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
+        children: List.generate(3, (index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            height: 100,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  (color ?? AppColors.textSecondary).withOpacity(0.1),
-                  (color ?? AppColors.textSecondary).withOpacity(0.05),
-                ],
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(60),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              shape: BoxShape.circle,
+              child: const Icon(
+                Icons.assignment_return_rounded,
+                size: 60,
+                color: Color(0xFFF59E0B),
+              ),
             ),
-            child: Icon(
-              icon,
-              size: 64,
-              color: color ?? AppColors.textSecondary,
+            const SizedBox(height: 24),
+            const Text(
+              'لا توجد عمليات',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            title,
-            style: AppTextStyles.h3.copyWith(
-              color: color ?? AppColors.textSecondary,
-            ),
-          ),
-          if (subtitle != null) ...[
             const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
+            const Text(
+              'ابدأ بإضافة مردود أو تسجيل بضاعة تالفة',
               textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+              ),
             ),
           ],
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildErrorState(String message) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            size: 64,
-            color: AppColors.danger,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'حدث خطأ',
-            style: AppTextStyles.h3.copyWith(color: AppColors.danger),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            style: AppTextStyles.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              context.read<InventoryBloc>().add(const LoadInventoryListEvent());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('إعادة المحاولة'),
-          ),
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildLoadingShimmer() => ListView.builder(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    itemCount: 5,
-    itemBuilder: (context, index) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        height: 120,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-        ),
-      );
-    },
-  );
-
-  Widget _buildFloatingActionButton() {
-    return Positioned(
-      bottom: 24,
-      left: 20,
-      child: AnimatedBuilder(
-        animation: _tabController,
-        builder: (context, child) {
-          final currentIndex = _tabController.index;
-
-          switch (currentIndex) {
-            case 0:
-            case 1:
-              return FloatingActionButton.extended(
-                onPressed: () {},
-                backgroundColor: AppColors.info,
-                icon: const Icon(Icons.add_rounded, color: Colors.white),
-                label: const Text(
-                  'إضافة صنف',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            case 3:
-              return FloatingActionButton.extended(
-                onPressed: () => _navigateToAddReturn(),
-                backgroundColor: AppColors.warning,
-                icon: const Icon(
-                  Icons.keyboard_return_rounded,
-                  color: Colors.white,
-                ),
-                label: const Text(
-                  'إضافة مردود',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            case 4:
-              return FloatingActionButton.extended(
-                onPressed: () => _navigateToDamaged(),
-                backgroundColor: AppColors.danger,
-                icon: const Icon(
-                  Icons.broken_image_rounded,
-                  color: Colors.white,
-                ),
-                label: const Text(
-                  'تسجيل تلف',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            default:
-              return const SizedBox.shrink();
-          }
-        },
-      ),
-    );
-  }
-
-  void _onTabChanged(int index) {
-    setState(() {});
-    switch (index) {
-      case 0:
-        context.read<InventoryBloc>().add(
-          const LoadInventoryListEvent(filterType: InventoryFilterType.all),
-        );
-        break;
-      case 1:
-        context.read<InventoryBloc>().add(
-          const LoadInventoryListEvent(
-            filterType: InventoryFilterType.lowStock,
-          ),
-        );
-        break;
-      case 2:
-        context.read<InventoryBloc>().add(
-          const LoadInventoryTransactionsEvent(),
-        );
-        break;
-      case 3:
-        context.read<InventoryBloc>().add(const LoadReturnsEvent());
-        break;
-      case 4:
-        context.read<InventoryBloc>().add(const LoadDamagedItemsEvent());
-        break;
-    }
-  }
-
-  void _showFilterDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: InventoryFilterWidget(
-          currentFilter: _currentFilter,
-          onFilterChanged: (filter, options) {
-            setState(() => _currentFilter = filter);
-            context.read<InventoryBloc>().add(
-              LoadInventoryListEvent(filterType: filter),
-            );
-          },
         ),
       ),
-    );
-  }
-
-  void _navigateToDetails(Inventory item) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => InventoryDetailsScreen(item: item),
-      ),
-    );
-  }
-
-  void _navigateToAdjustQuantity(Inventory item) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AdjustQuantityScreen(item: item)),
     );
   }
 
@@ -1070,15 +1103,20 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  void _showEditDialog(Inventory item) {}
-
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.success,
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -1086,10 +1124,17 @@ class _InventoryScreenState extends State<InventoryScreen>
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.danger,
+        content: Row(
+          children: [
+            const Icon(Icons.error_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: const Color(0xFFDC2626),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }

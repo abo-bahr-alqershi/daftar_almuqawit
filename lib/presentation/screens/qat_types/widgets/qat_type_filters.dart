@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// فلترة وتصفية أنواع القات - تصميم راقي هادئ
+/// فلترة أنواع القات - تصميم احترافي راقي
 class QatTypeFilters extends StatefulWidget {
   final String selectedFilter;
   final String selectedSortBy;
@@ -36,118 +34,122 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        20 + MediaQuery.of(context).padding.bottom,
+      ),
       decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Handle
           Center(
             child: Container(
-              width: 40,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: const Color(0xFFE5E7EB),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 20),
+
+          // Header
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.15),
-                      AppColors.primary.withOpacity(0.08),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  Icons.filter_list_rounded,
-                  color: AppColors.primary,
-                  size: 24,
+                  Icons.filter_list,
+                  color: Color(0xFF6366F1),
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 14),
-              Text(
+              const SizedBox(width: 12),
+              const Text(
                 'تصفية أنواع القات',
-                style: AppTextStyles.h3.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('حسب الجودة', Icons.grade_rounded),
+          // Quality filter
+          _buildSectionTitle('حسب الجودة'),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildFilterChip('الكل', Icons.all_inclusive_rounded, AppColors.textSecondary),
-              _buildFilterChip('ممتاز', Icons.star_rounded, AppColors.success),
-              _buildFilterChip('جيد جداً', Icons.star_half_rounded, AppColors.info),
-              _buildFilterChip('جيد', Icons.thumb_up_rounded, AppColors.primary),
-              _buildFilterChip('متوسط', Icons.thumbs_up_down_rounded, AppColors.warning),
-              _buildFilterChip('عادي', Icons.thumb_down_rounded, AppColors.danger),
+              _buildFilterChip('الكل', const Color(0xFF6B7280)),
+              _buildFilterChip('ممتاز', const Color(0xFF16A34A)),
+              _buildFilterChip('جيد جداً', const Color(0xFF0EA5E9)),
+              _buildFilterChip('جيد', const Color(0xFF6366F1)),
+              _buildFilterChip('متوسط', const Color(0xFFF59E0B)),
+              _buildFilterChip('عادي', const Color(0xFFEF4444)),
             ],
           ),
 
           const SizedBox(height: 24),
 
-          _buildSectionTitle('الترتيب', Icons.sort_rounded),
+          // Sort
+          _buildSectionTitle('الترتيب'),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildSortChip('الاسم', Icons.sort_by_alpha_rounded),
-              _buildSortChip('سعر الشراء', Icons.shopping_cart_rounded),
-              _buildSortChip('سعر البيع', Icons.sell_rounded),
-              _buildSortChip('الربح', Icons.trending_up_rounded),
+              _buildSortChip('الاسم', Icons.sort_by_alpha),
+              _buildSortChip('سعر الشراء', Icons.shopping_cart_outlined),
+              _buildSortChip('سعر البيع', Icons.sell_outlined),
+              _buildSortChip('الربح', Icons.trending_up),
             ],
           ),
 
           const SizedBox(height: 24),
 
+          // Action buttons
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        setState(() {
-                          _selectedFilter = 'الكل';
-                          _selectedSortBy = 'الاسم';
-                        });
-                        widget.onFilterChanged('الكل');
-                        widget.onSortChanged('الاسم');
-                      },
-                      borderRadius: BorderRadius.circular(14),
-                      child: Center(
-                        child: Text(
-                          'إعادة تعيين',
-                          style: AppTextStyles.button.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                child: Material(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _selectedFilter = 'الكل';
+                        _selectedSortBy = 'الاسم';
+                      });
+                      widget.onFilterChanged('الكل');
+                      widget.onSortChanged('الاسم');
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'إعادة تعيين',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF6B7280),
                         ),
                       ),
                     ),
@@ -157,45 +159,31 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
               const SizedBox(width: 12),
               Expanded(
                 flex: 2,
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.success],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        widget.onFilterChanged(_selectedFilter);
-                        widget.onSortChanged(_selectedSortBy);
-                        Navigator.pop(context);
-                      },
-                      borderRadius: BorderRadius.circular(14),
-                      child: Row(
+                child: Material(
+                  color: const Color(0xFF6366F1),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      widget.onFilterChanged(_selectedFilter);
+                      widget.onSortChanged(_selectedSortBy);
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 10),
+                          Icon(Icons.check, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
                           Text(
                             'تطبيق الفلاتر',
-                            style: AppTextStyles.button.copyWith(
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -206,36 +194,23 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, IconData icon) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 16, color: AppColors.primary),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          title,
-          style: AppTextStyles.titleSmall.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF374151),
+      ),
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon, Color color) {
+  Widget _buildFilterChip(String label, Color color) {
     final isSelected = _selectedFilter == label;
 
     return GestureDetector(
@@ -245,47 +220,21 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [color, color.withOpacity(0.8)],
-                )
-              : null,
-          color: isSelected ? null : AppColors.background.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? color : color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? color : AppColors.border.withOpacity(0.3),
-            width: isSelected ? 2 : 1,
+            color: isSelected ? color : color.withOpacity(0.3),
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : color,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : color,
+          ),
         ),
       ),
     );
@@ -293,6 +242,7 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
 
   Widget _buildSortChip(String label, IconData icon) {
     final isSelected = _selectedSortBy == label;
+    const color = Color(0xFF0EA5E9);
 
     return GestureDetector(
       onTap: () {
@@ -301,46 +251,25 @@ class _QatTypeFiltersState extends State<QatTypeFilters> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [AppColors.info, AppColors.primary],
-                )
-              : null,
-          color: isSelected ? null : AppColors.background.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? color : color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
-                ? AppColors.info
-                : AppColors.border.withOpacity(0.3),
-            width: isSelected ? 2 : 1,
+            color: isSelected ? color : color.withOpacity(0.3),
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.info.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : AppColors.info,
-            ),
-            const SizedBox(width: 8),
+            Icon(icon, size: 14, color: isSelected ? Colors.white : color),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : color,
               ),
             ),
           ],

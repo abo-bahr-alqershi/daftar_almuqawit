@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../domain/entities/purchase.dart';
 import '../../../../domain/entities/supplier.dart';
 import '../../../../domain/repositories/supplier_repository.dart';
 import '../../../../domain/usecases/purchases/get_purchases_by_supplier.dart';
 
-/// بطاقة عرض المشترى - تصميم راقي
+/// بطاقة عرض المشترى - تصميم راقي ونظيف
 class PurchaseItemCard extends StatefulWidget {
   final Purchase purchase;
   final VoidCallback? onTap;
@@ -31,580 +30,211 @@ class PurchaseItemCard extends StatefulWidget {
   State<PurchaseItemCard> createState() => _PurchaseItemCardState();
 }
 
-class _PurchaseItemCardState extends State<PurchaseItemCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+class _PurchaseItemCardState extends State<PurchaseItemCard> {
   bool _isPressed = false;
   Supplier? _supplierSummary;
   double? _supplierTotalPurchases;
   double? _supplierTotalDebt;
   bool _isSummaryLoading = false;
-  String? _summaryError;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1,
-      end: 0.98,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
     _loadSupplierSummary();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
-    final statusIcon = _getStatusIcon();
 
     return GestureDetector(
-      onTapDown: (_) {
-        setState(() => _isPressed = true);
-        _controller.forward();
-      },
+      onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        _controller.reverse();
         if (widget.onTap != null) {
           HapticFeedback.lightImpact();
           widget.onTap!();
         }
       },
-      onTapCancel: () {
-        setState(() => _isPressed = false);
-        _controller.reverse();
-      },
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: _isPressed
-                    ? statusColor.withOpacity(0.3)
-                    : statusColor.withOpacity(0.15),
-                width: _isPressed ? 1.5 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: statusColor.withOpacity(_isPressed ? 0.15 : 0.08),
-                  blurRadius: _isPressed ? 20 : 12,
-                  offset: Offset(0, _isPressed ? 6 : 4),
-                ),
-              ],
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(_isPressed ? 0.02 : 0.04),
+              blurRadius: _isPressed ? 4 : 8,
+              offset: Offset(0, _isPressed ? 2 : 4),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                children: [
-                  if (widget.purchase.status != 'نشط')
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 2,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.danger,
-                              AppColors.danger.withOpacity(0.5),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Hero(
-                              tag: 'purchase-icon-${widget.purchase.id}',
-                              child: Container(
-                                width: 56,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      statusColor.withOpacity(0.15),
-                                      statusColor.withOpacity(0.05),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  Icons.shopping_cart_rounded,
-                                  color: statusColor,
-                                  size: 28,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.purchase.qatTypeName ?? 'قات',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                      letterSpacing: -0.3,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (widget.purchase.supplierName != null)
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.person_outline,
-                                          size: 14,
-                                          color: AppColors.textHint,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Expanded(
-                                          child: Text(
-                                            widget.purchase.supplierName!,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textHint,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ),
-
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    statusIcon,
-                                    size: 14,
-                                    color: statusColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    widget.purchase.paymentStatus,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: statusColor,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // معلومات الكمية والسعر
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.purchases.withOpacity(0.03),
-                                AppColors.info.withOpacity(0.02),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.border.withOpacity(0.1),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoItem(
-                                  icon: Icons.inventory_2_outlined,
-                                  label: 'الكمية',
-                                  value:
-                                      '${widget.purchase.quantity} ${widget.purchase.unit}',
-                                  color: AppColors.info,
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                height: 40,
-                                color: AppColors.border.withOpacity(0.2),
-                              ),
-                              Expanded(
-                                child: _buildInfoItem(
-                                  icon: Icons.attach_money_rounded,
-                                  label: 'سعر الوحدة',
-                                  value:
-                                      '${widget.purchase.unitPrice.toStringAsFixed(0)} ر.ي',
-                                  color: AppColors.purchases,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // المجموع الكلي والدفعات
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.purchases.withOpacity(0.1),
-                                AppColors.purchases.withOpacity(0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.purchases.withOpacity(0.2),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'المجموع الكلي',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${widget.purchase.totalAmount.toStringAsFixed(0)} ر.ي',
-                                    style: AppTextStyles.h3.copyWith(
-                                      color: AppColors.purchases,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (widget.purchase.remainingAmount > 0)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.danger.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: AppColors.danger.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'متبقي',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: AppColors.danger.withOpacity(
-                                            0.8,
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        '${widget.purchase.remainingAmount.toStringAsFixed(0)}',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.danger,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-
-                        // ملخص المورد على مستوى النظام
-                        const SizedBox(height: 8),
-                        _buildSupplierSummarySection(),
-
-                        // التاريخ والوقت
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              widget.purchase.date,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.access_time,
-                              size: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              widget.purchase.time,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            if (widget.purchase.invoiceNumber != null)
-                              const Spacer(),
-                            if (widget.purchase.invoiceNumber != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.info.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.receipt_long,
-                                      size: 12,
-                                      color: AppColors.info,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      widget.purchase.invoiceNumber!,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.info,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        if (widget.showActions) const SizedBox(height: 16),
-                        if (widget.showActions)
-                          Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  AppColors.border.withOpacity(0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        if (widget.showActions) const SizedBox(height: 12),
-                        if (widget.showActions)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              if (widget.onCancel != null)
-                                _buildActionButton(
-                                  icon: Icons.block_rounded,
-                                  label: 'إلغاء',
-                                  color: AppColors.warning,
-                                  onPressed: widget.onCancel!,
-                                ),
-                              if (widget.onEdit != null)
-                                const SizedBox(width: 8),
-                              if (widget.onEdit != null)
-                                _buildActionButton(
-                                  icon: Icons.edit_rounded,
-                                  label: 'تعديل',
-                                  color: AppColors.info,
-                                  onPressed: widget.onEdit!,
-                                ),
-                              if (widget.onDelete != null)
-                                const SizedBox(width: 8),
-                              if (widget.onDelete != null)
-                                _buildActionButton(
-                                  icon: Icons.autorenew_rounded,
-                                  label: 'استرداد',
-                                  color: AppColors.danger,
-                                  onPressed: widget.onDelete!,
-                                ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  if (_isPressed)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: statusColor.withOpacity(0.05),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSupplierSummarySection() {
-    if (widget.purchase.supplierId == null) {
-      return const SizedBox.shrink();
-    }
-
-    if (_isSummaryLoading) {
-      return Row(
-        children: const [
-          SizedBox(
-            height: 16,
-            width: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          SizedBox(width: 8),
-          Text(
-            'جاري تحميل إجماليات المورد...',
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (_summaryError != null || _supplierSummary == null) {
-      return const SizedBox.shrink();
-    }
-
-    final totalPurchases = _supplierTotalPurchases ?? 0;
-    final totalDebt = _supplierTotalDebt ?? 0;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.surface.withOpacity(0.9),
-            AppColors.surface,
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border.withOpacity(0.15)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildSummaryItem(
-              icon: Icons.shopping_bag_rounded,
-              label: 'إجمالي مشترياتنا من المورد',
-              value: '${totalPurchases.toStringAsFixed(0)} ر.ي',
-              color: AppColors.purchases,
-            ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            children: [
+              // Status indicator
+              Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [statusColor, statusColor.withOpacity(0.6)],
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildHeader(statusColor),
+                    const SizedBox(height: 14),
+                    _buildQuantityPriceRow(),
+                    const SizedBox(height: 12),
+                    _buildTotalSection(statusColor),
+                    if (_supplierSummary != null) ...[
+                      const SizedBox(height: 12),
+                      _buildSupplierSummary(),
+                    ],
+                    const SizedBox(height: 12),
+                    _buildFooter(),
+                    if (widget.showActions) ...[
+                      const SizedBox(height: 12),
+                      _buildActions(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildSummaryItem(
-              icon: Icons.account_balance_wallet_rounded,
-              label: 'إجمالي الدين له',
-              value: '${totalDebt.toStringAsFixed(0)} ر.ي',
-              color: AppColors.danger,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildHeader(Color statusColor) {
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                label,
+        Hero(
+          tag: 'purchase-avatar-${widget.purchase.id}',
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              Icons.shopping_cart_outlined,
+              color: statusColor,
+              size: 22,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.purchase.qatTypeName ?? 'قات',
                 style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            color: color,
-            fontWeight: FontWeight.w700,
+              if (widget.purchase.supplierName != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        widget.purchase.supplierName!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
         ),
+        _buildStatusBadge(statusColor),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_getStatusIcon(), size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            widget.purchase.paymentStatus,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuantityPriceRow() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildInfoItem(
+              icon: Icons.inventory_2_outlined,
+              label: 'الكمية',
+              value:
+                  '${widget.purchase.quantity.toStringAsFixed(0)} ${widget.purchase.unit}',
+              color: const Color(0xFF0EA5E9),
+            ),
+          ),
+          Container(width: 1, height: 36, color: const Color(0xFFE5E7EB)),
+          Expanded(
+            child: _buildInfoItem(
+              icon: Icons.attach_money,
+              label: 'سعر الوحدة',
+              value: '${widget.purchase.unitPrice.toStringAsFixed(0)} ر.ي',
+              color: const Color(0xFF8B5CF6),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -623,10 +253,7 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
             const SizedBox(width: 4),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -635,13 +262,225 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
           value,
           style: TextStyle(
             fontSize: 14,
+            fontWeight: FontWeight.w600,
             color: color,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
           ),
           textAlign: TextAlign.center,
         ),
       ],
+    );
+  }
+
+  Widget _buildTotalSection(Color statusColor) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF8B5CF6).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.15)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'الإجمالي',
+                style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${widget.purchase.totalAmount.toStringAsFixed(0)} ر.ي',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF8B5CF6),
+                ),
+              ),
+            ],
+          ),
+          if (widget.purchase.remainingAmount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'متبقي',
+                    style: TextStyle(fontSize: 10, color: Color(0xFFDC2626)),
+                  ),
+                  Text(
+                    '${widget.purchase.remainingAmount.toStringAsFixed(0)} ر.ي',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSupplierSummary() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildSummaryItem(
+              icon: Icons.shopping_bag_outlined,
+              label: 'إجمالي مشترياتنا',
+              value: '${(_supplierTotalPurchases ?? 0).toStringAsFixed(0)} ر.ي',
+              color: const Color(0xFF8B5CF6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildSummaryItem(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'الدين للمورد',
+              value: '${(_supplierTotalDebt ?? 0).toStringAsFixed(0)} ر.ي',
+              color: const Color(0xFFDC2626),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    return Row(
+      children: [
+        const Icon(Icons.calendar_today, size: 12, color: Color(0xFF9CA3AF)),
+        const SizedBox(width: 4),
+        Text(
+          widget.purchase.date,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+        ),
+        const SizedBox(width: 12),
+        const Icon(Icons.access_time, size: 12, color: Color(0xFF9CA3AF)),
+        const SizedBox(width: 4),
+        Text(
+          widget.purchase.time,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+        ),
+        const Spacer(),
+        if (widget.purchase.invoiceNumber != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0EA5E9).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.receipt_long,
+                  size: 10,
+                  color: Color(0xFF0EA5E9),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.purchase.invoiceNumber!,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0EA5E9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActions() {
+    return Container(
+      padding: const EdgeInsets.only(top: 12),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (widget.onCancel != null)
+            _buildActionButton(
+              icon: Icons.block,
+              label: 'إلغاء',
+              color: const Color(0xFFF59E0B),
+              onPressed: widget.onCancel!,
+            ),
+          if (widget.onEdit != null) ...[
+            const SizedBox(width: 8),
+            _buildActionButton(
+              icon: Icons.edit_outlined,
+              label: 'تعديل',
+              color: const Color(0xFF0EA5E9),
+              onPressed: widget.onEdit!,
+            ),
+          ],
+          if (widget.onDelete != null) ...[
+            const SizedBox(width: 8),
+            _buildActionButton(
+              icon: Icons.autorenew,
+              label: 'استرداد',
+              color: const Color(0xFFDC2626),
+              onPressed: widget.onDelete!,
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -660,20 +499,20 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: 14, color: color),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
+                fontWeight: FontWeight.w500,
                 color: color,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -685,36 +524,33 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
   Color _getStatusColor() {
     switch (widget.purchase.paymentStatus) {
       case 'مدفوع':
-        return AppColors.success;
+        return const Color(0xFF16A34A);
       case 'غير مدفوع':
-        return AppColors.danger;
+        return const Color(0xFFDC2626);
       case 'مدفوع جزئياً':
-        return AppColors.warning;
+        return const Color(0xFFF59E0B);
       default:
-        return AppColors.info;
+        return const Color(0xFF6B7280);
     }
   }
 
   IconData _getStatusIcon() {
     switch (widget.purchase.paymentStatus) {
       case 'مدفوع':
-        return Icons.check_circle_rounded;
+        return Icons.check_circle;
       case 'غير مدفوع':
-        return Icons.cancel_rounded;
+        return Icons.cancel;
       case 'مدفوع جزئياً':
-        return Icons.schedule_rounded;
+        return Icons.schedule;
       default:
-        return Icons.help_rounded;
+        return Icons.help_outline;
     }
   }
 
   Future<void> _loadSupplierSummary() async {
     if (widget.purchase.supplierId == null) return;
 
-    setState(() {
-      _isSummaryLoading = true;
-      _summaryError = null;
-    });
+    setState(() => _isSummaryLoading = true);
 
     try {
       final supplierRepo = getIt<SupplierRepository>();
@@ -737,10 +573,7 @@ class _PurchaseItemCardState extends State<PurchaseItemCard>
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _isSummaryLoading = false;
-        _summaryError = 'تعذر تحميل إجماليات المورد';
-      });
+      setState(() => _isSummaryLoading = false);
     }
   }
 }

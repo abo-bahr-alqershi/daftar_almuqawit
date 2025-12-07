@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// أزرار الدفع - تصميم راقي هادئ
+/// أزرار الدفع - تصميم راقي واحترافي
 class PaymentButtons extends StatefulWidget {
   final double totalAmount;
   final VoidCallback onPayCash;
@@ -33,30 +31,30 @@ class _PaymentButtonsState extends State<PaymentButtons> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildTotalAmountCard(),
-        const SizedBox(height: 16),
-        _buildPaymentButton(
+        const SizedBox(height: 20),
+        _buildPaymentOption(
           title: 'دفع نقدي',
           subtitle: 'دفع كامل المبلغ نقداً',
           icon: Icons.payments_rounded,
-          color: AppColors.success,
+          color: const Color(0xFF10B981),
           onTap: widget.onPayCash,
           method: 'cash',
         ),
         const SizedBox(height: 12),
-        _buildPaymentButton(
+        _buildPaymentOption(
           title: 'دفع آجل',
           subtitle: 'تسجيل دين على العميل',
           icon: Icons.schedule_rounded,
-          color: AppColors.warning,
+          color: const Color(0xFFF59E0B),
           onTap: widget.onPayLater,
           method: 'later',
         ),
         const SizedBox(height: 12),
-        _buildPaymentButton(
+        _buildPaymentOption(
           title: 'دفع جزئي',
           subtitle: 'دفع جزء من المبلغ',
           icon: Icons.pie_chart_rounded,
-          color: AppColors.info,
+          color: const Color(0xFF3B82F6),
           onTap: widget.onPayPartial,
           method: 'partial',
         ),
@@ -66,17 +64,19 @@ class _PaymentButtonsState extends State<PaymentButtons> {
 
   Widget _buildTotalAmountCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF6366F1).withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -86,18 +86,18 @@ class _PaymentButtonsState extends State<PaymentButtons> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.receipt_long_rounded,
                   color: Colors.white,
-                  size: 20,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 'المجموع الكلي',
                 style: TextStyle(
@@ -108,21 +108,22 @@ class _PaymentButtonsState extends State<PaymentButtons> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
-            '${widget.totalAmount.toStringAsFixed(2)}',
+            widget.totalAmount.toStringAsFixed(2),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
+              fontSize: 40,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
-            'ريال سعودي',
+            'ريال يمني',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 13,
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -131,7 +132,7 @@ class _PaymentButtonsState extends State<PaymentButtons> {
     );
   }
 
-  Widget _buildPaymentButton({
+  Widget _buildPaymentOption({
     required String title,
     required String subtitle,
     required IconData icon,
@@ -151,29 +152,25 @@ class _PaymentButtonsState extends State<PaymentButtons> {
             },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    color.withOpacity(0.15),
-                    color.withOpacity(0.08),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : AppColors.surface,
+          color: isSelected ? color.withOpacity(0.08) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? color.withOpacity(0.4) : AppColors.border.withOpacity(0.2),
-            width: isSelected ? 2 : 1,
+            color: isSelected
+                ? color.withOpacity(0.3)
+                : const Color(0xFFE5E7EB),
+            width: isSelected ? 1.5 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isSelected ? 0.05 : 0.02),
-              blurRadius: isSelected ? 12 : 8,
-              offset: Offset(0, isSelected ? 4 : 2),
-            ),
-          ],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
@@ -181,24 +178,17 @@ class _PaymentButtonsState extends State<PaymentButtons> {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                gradient: isSelected
-                    ? LinearGradient(
-                        colors: [color, color.withOpacity(0.8)],
-                      )
-                    : null,
-                color: isSelected ? null : color.withOpacity(0.1),
+                color: isSelected ? color : color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: widget.isProcessing && isSelected
                   ? Center(
                       child: SizedBox(
-                        width: 24,
-                        height: 24,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            isSelected ? Colors.white : color,
-                          ),
+                          color: Colors.white,
                         ),
                       ),
                     )
@@ -208,7 +198,7 @@ class _PaymentButtonsState extends State<PaymentButtons> {
                       size: 24,
                     ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,25 +207,39 @@ class _PaymentButtonsState extends State<PaymentButtons> {
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? color : AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? color : const Color(0xFF1A1A2E),
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: Color(0xFF6B7280),
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: isSelected ? color : AppColors.textHint,
-              size: 16,
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: isSelected ? color : const Color(0xFFF3F4F6),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? color : const Color(0xFFD1D5DB),
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    )
+                  : null,
             ),
           ],
         ),

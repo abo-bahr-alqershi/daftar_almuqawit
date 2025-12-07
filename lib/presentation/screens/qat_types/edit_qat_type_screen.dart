@@ -2,8 +2,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/qat_type.dart';
 import '../../blocs/qat_types/qat_types_bloc.dart';
 import '../../blocs/qat_types/qat_types_event.dart';
@@ -11,14 +9,11 @@ import '../../blocs/qat_types/qat_types_state.dart';
 import './widgets/qat_type_form.dart';
 import '../../../core/services/qat_types_tutorial_service.dart';
 
-/// شاشة تعديل نوع قات - تصميم راقي هادئ
+/// شاشة تعديل نوع قات - تصميم راقي ونظيف
 class EditQatTypeScreen extends StatefulWidget {
   final QatType qatType;
 
-  const EditQatTypeScreen({
-    super.key,
-    required this.qatType,
-  });
+  const EditQatTypeScreen({super.key, required this.qatType});
 
   @override
   State<EditQatTypeScreen> createState() => _EditQatTypeScreenState();
@@ -29,6 +24,7 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
   final _formKey = GlobalKey<QatTypeFormState>();
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
@@ -43,7 +39,7 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -51,28 +47,28 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _animationController.forward();
 
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
+      setState(() => _scrollOffset = _scrollController.offset);
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      
-      if (args != null && args['showTutorial'] == true && args['operation'] == 'edit') {
-        setState(() {
-          _showTutorial = true;
-        });
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+      if (args != null &&
+          args['showTutorial'] == true &&
+          args['operation'] == 'edit') {
+        setState(() => _showTutorial = true);
         _startTutorial();
       }
     });
@@ -88,9 +84,8 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
 
   void _startTutorial() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // انتظار لضمان رسم كامل العناصر قبل التمرير
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (mounted && _showTutorial) {
         await QatTypesTutorialService.showEditTutorial(
           context: context,
@@ -98,11 +93,7 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
           qualityFieldKey: _qualityFieldKey,
           saveButtonKey: _saveButtonKey,
           scrollController: _scrollController,
-          onNext: () {
-            setState(() {
-              _showTutorial = false;
-            });
-          },
+          onNext: () => setState(() => _showTutorial = false),
         );
       }
     });
@@ -135,174 +126,118 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
     return Directionality(
-          textDirection: ui.TextDirection.rtl,
-          child: Scaffold(
-            backgroundColor: AppColors.background,
-            body: Stack(
-              children: [
-                _buildGradientBackground(),
+      textDirection: ui.TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: BlocListener<QatTypesBloc, QatTypesState>(
+          listener: (context, state) {
+            if (state is QatTypeOperationSuccess) {
+              HapticFeedback.heavyImpact();
+              _showSnackBar(state.message, isError: false);
+              Navigator.of(context).pop(true);
+            } else if (state is QatTypesError) {
+              HapticFeedback.heavyImpact();
+              _showSnackBar(state.message, isError: true);
+            }
+          },
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              _buildAppBar(),
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: BlocBuilder<QatTypesBloc, QatTypesState>(
+                      builder: (context, state) {
+                        final isLoading = state is QatTypesLoading;
 
-                CustomScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  slivers: [
-                    _buildModernAppBar(topPadding),
-
-                    SliverToBoxAdapter(
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position: _slideAnimation,
-                          child: BlocConsumer<QatTypesBloc, QatTypesState>(
-                            listener: (context, state) {
-                              if (state is QatTypeOperationSuccess) {
-                                HapticFeedback.heavyImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle, color: Colors.white),
-                                        const SizedBox(width: 12),
-                                        Text(state.message),
-                                      ],
-                                    ),
-                                    backgroundColor: AppColors.success,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                                Navigator.of(context).pop(true);
-                              } else if (state is QatTypesError) {
-                                HapticFeedback.heavyImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.error, color: Colors.white),
-                                        const SizedBox(width: 12),
-                                        Text(state.message),
-                                      ],
-                                    ),
-                                    backgroundColor: AppColors.danger,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            builder: (context, state) {
-                              final isLoading = state is QatTypesLoading;
-
-                              return Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: QatTypeForm(
-                                  key: _formKey,
-                                  qatType: widget.qatType,
-                                  isLoading: isLoading,
-                                  nameFieldKey: _nameFieldKey,
-                                  qualityFieldKey: _qualityFieldKey,
-                                  saveButtonKey: _saveButtonKey,
-                                  onSubmit: _submitQatType,
-                                  onCancel: () {
-                                    HapticFeedback.lightImpact();
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              );
+                        return Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: QatTypeForm(
+                            key: _formKey,
+                            qatType: widget.qatType,
+                            isLoading: isLoading,
+                            nameFieldKey: _nameFieldKey,
+                            qualityFieldKey: _qualityFieldKey,
+                            saveButtonKey: _saveButtonKey,
+                            onSubmit: _submitQatType,
+                            onCancel: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).pop();
                             },
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-        );
-  }
-
-  Widget _buildGradientBackground() => Container(
-    height: 500,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.info.withOpacity(0.08),
-          AppColors.primary.withOpacity(0.05),
-          Colors.transparent,
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildModernAppBar(double topPadding) {
-    final opacity = (_scrollOffset / 100).clamp(0.0, 1.0);
-
-    return SliverAppBar(
-      expandedHeight: 140,
-      pinned: true,
-      backgroundColor: AppColors.surface.withOpacity(opacity),
-      elevation: opacity * 2,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: opacity < 0.5
-                ? AppColors.surface.withOpacity(0.9)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
-            ),
-          ),
-          child: const Icon(
-            Icons.arrow_back_ios_new,
-            color: AppColors.textPrimary,
-            size: 20,
+              ),
+            ],
           ),
         ),
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          Navigator.pop(context);
-        },
       ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
+    );
+  }
+
+  Widget _buildAppBar() {
+    final opacity = (_scrollOffset / 60).clamp(0.0, 1.0);
+
+    return SliverAppBar(
+      expandedHeight: 100,
+      pinned: true,
+      backgroundColor: Colors.white.withOpacity(opacity),
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
+          child: Container(
             decoration: BoxDecoration(
-              color: opacity < 0.5
-                  ? AppColors.surface.withOpacity(0.9)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.border.withOpacity(opacity < 0.5 ? 0.5 : 0),
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: const Icon(
-              Icons.help_outline_rounded,
-              color: AppColors.primary,
-              size: 20,
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: Color(0xFF1A1A2E),
             ),
           ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              _showTutorial = true;
-            });
-            _startTutorial();
-          },
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() => _showTutorial = true);
+              _startTutorial();
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF16A34A).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.help_outline,
+                size: 20,
+                color: Color(0xFF16A34A),
+              ),
+            ),
+          ),
         ),
         const SizedBox(width: 8),
       ],
@@ -310,85 +245,104 @@ class _EditQatTypeScreenState extends State<EditQatTypeScreen>
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
-                AppColors.info.withOpacity(0.05),
-                AppColors.primary.withOpacity(0.03),
+                const Color(0xFF16A34A).withOpacity(0.05),
+                const Color(0xFFF8F9FA),
               ],
             ),
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+              padding: const EdgeInsets.fromLTRB(60, 8, 20, 0),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.info, AppColors.primary],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0EA5E9), Color(0xFF38BDF8)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0EA5E9).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.edit_outlined,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'تعديل نوع القات',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
                           ),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.info.withOpacity(0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                            BoxShadow(
-                              color: AppColors.info.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: const Icon(
-                          Icons.edit_rounded,
-                          color: Colors.white,
-                          size: 28,
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.qatType.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'تعديل نوع القات',
-                              style: AppTextStyles.h2.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 24,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.qatType.name,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
   }

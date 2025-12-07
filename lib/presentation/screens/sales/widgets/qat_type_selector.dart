@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-/// محدد نوع القات - تصميم راقي هادئ
+/// محدد نوع القات - تصميم راقي واحترافي
 class QatTypeSelector extends StatefulWidget {
   final String? selectedQatTypeId;
   final ValueChanged<String?> onChanged;
@@ -30,224 +28,300 @@ class _QatTypeSelectorState extends State<QatTypeSelector> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header
         Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.success.withOpacity(0.2),
-                    AppColors.success.withOpacity(0.1),
-                  ],
-                ),
+                color: const Color(0xFF10B981).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.grass_rounded,
-                color: AppColors.success,
-                size: 20,
+                color: Color(0xFF10B981),
+                size: 18,
               ),
             ),
             const SizedBox(width: 10),
-            Text(
+            const Text(
               'نوع القات',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A2E),
               ),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF6366F1).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '${widget.qatTypes.length} نوع',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
+                style: const TextStyle(
+                  color: Color(0xFF6366F1),
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ],
         ),
+
+        // Error Message
         if (widget.errorText != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.danger.withOpacity(0.1),
+              color: const Color(0xFFDC2626).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+              border: Border.all(
+                color: const Color(0xFFDC2626).withOpacity(0.2),
+              ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_rounded, color: AppColors.danger, size: 18),
-                const SizedBox(width: 8),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     widget.errorText!,
-                    style: TextStyle(color: AppColors.danger, fontSize: 13),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFFDC2626),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
         ],
-        const SizedBox(height: 14),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.1,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemCount: widget.qatTypes.length,
-          itemBuilder: (context, index) {
-            final qatType = widget.qatTypes[index];
-            final isSelected = widget.selectedQatTypeId == qatType.id;
 
-            return GestureDetector(
-              onTap: widget.enabled
-                  ? () {
-                      HapticFeedback.selectionClick();
-                      widget.onChanged(qatType.id);
-                    }
-                  : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [
-                            AppColors.success.withOpacity(0.15),
-                            AppColors.success.withOpacity(0.08),
-                          ],
-                        )
-                      : null,
-                  color: isSelected ? null : AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.success.withOpacity(0.4)
-                        : AppColors.border.withOpacity(0.2),
-                    width: isSelected ? 2 : 1,
+        const SizedBox(height: 16),
+
+        // Grid of Qat Types
+        if (widget.qatTypes.isEmpty)
+          _buildEmptyState()
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1.15,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: widget.qatTypes.length,
+            itemBuilder: (context, index) {
+              final qatType = widget.qatTypes[index];
+              final isSelected = widget.selectedQatTypeId == qatType.id;
+              return _buildQatTypeCard(qatType, isSelected);
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildQatTypeCard(QatTypeOption qatType, bool isSelected) {
+    return GestureDetector(
+      onTap: widget.enabled
+          ? () {
+              HapticFeedback.selectionClick();
+              widget.onChanged(qatType.id);
+            }
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF10B981).withOpacity(0.08)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF10B981).withOpacity(0.3)
+                : const Color(0xFFE5E7EB),
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isSelected ? 0.05 : 0.02),
-                      blurRadius: isSelected ? 12 : 8,
-                      offset: Offset(0, isSelected ? 4 : 2),
-                    ),
-                  ],
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF10B981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.grass_rounded,
+                    color: isSelected ? Colors.white : const Color(0xFF10B981),
+                    size: 26,
+                  ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? const LinearGradient(
-                                colors: [AppColors.success, AppColors.info],
-                              )
-                            : null,
-                        color: isSelected ? null : AppColors.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        Icons.grass_rounded,
-                        color: isSelected ? Colors.white : AppColors.success,
-                        size: 26,
-                      ),
+                const SizedBox(height: 12),
+
+                // Name
+                Text(
+                  qatType.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF1A1A2E),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                // Description
+                if (qatType.description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    qatType.description!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      qatType.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+
+                // Price
+                if (qatType.price != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withOpacity(0.9)
+                          : const Color(0xFF6366F1).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${qatType.price!.toStringAsFixed(0)} ر.ي',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isSelected ? AppColors.success : AppColors.textPrimary,
+                        color: isSelected
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF6366F1),
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (qatType.description != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        qatType.description!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+
+            // Selection Indicator
+            if (isSelected)
+              Positioned(
+                top: 0,
+                left: 0,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
-                    if (qatType.price != null) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.white.withOpacity(0.2)
-                              : AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${qatType.price!.toStringAsFixed(0)} ر.س',
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (isSelected)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.check_rounded,
-                            size: 14,
-                            color: AppColors.success,
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 14,
+                  ),
                 ),
               ),
-            );
-          },
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.grass_rounded,
+              size: 32,
+              color: Color(0xFF10B981),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'لا توجد أنواع متاحة',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'أضف أنواع القات من الإعدادات',
+            style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+          ),
+        ],
+      ),
     );
   }
 }

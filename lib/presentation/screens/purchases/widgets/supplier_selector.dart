@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/supplier.dart';
 
-/// محدد المورد - تصميم راقي متطور
+/// محدد المورد - تصميم راقي ونظيف
 class SupplierSelector extends StatefulWidget {
   final String? selectedSupplierId;
   final ValueChanged<String?> onChanged;
@@ -28,27 +25,19 @@ class SupplierSelector extends StatefulWidget {
   State<SupplierSelector> createState() => _SupplierSelectorState();
 }
 
-class _SupplierSelectorState extends State<SupplierSelector>
-    with SingleTickerProviderStateMixin {
+class _SupplierSelectorState extends State<SupplierSelector> {
   final TextEditingController _searchController = TextEditingController();
-  late AnimationController _animationController;
   List<Supplier> _filteredSuppliers = [];
-  bool _isFocused = false;
 
   @override
   void initState() {
     super.initState();
     _filteredSuppliers = widget.suppliers;
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -74,169 +63,176 @@ class _SupplierSelectorState extends State<SupplierSelector>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.purchases.withOpacity(0.2),
-                          AppColors.purchases.withOpacity(0.1),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.person_search_rounded,
-                      color: AppColors.purchases,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'اختر المورد',
-                      style: AppTextStyles.h3.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
+
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.close, size: 20),
+                      child: const Icon(
+                        Icons.person_search,
+                        color: Color(0xFF8B5CF6),
+                        size: 20,
+                      ),
                     ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'اختر المورد',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 18,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Search field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'ابحث عن مورد...',
+                      hintStyle: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                      prefixIcon: Icon(Icons.search, color: Color(0xFF9CA3AF)),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    onChanged: (query) {
+                      setModalState(() => _filterSuppliers(query));
                     },
                   ),
-                ],
-              ),
-            ),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _isFocused
-                        ? AppColors.primary.withOpacity(0.3)
-                        : AppColors.border.withOpacity(0.2),
-                  ),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  style: AppTextStyles.bodyMedium,
-                  decoration: InputDecoration(
-                    hintText: 'ابحث عن مورد...',
-                    hintStyle: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textHint,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: AppColors.primary,
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () {
-                              _searchController.clear();
-                              _filterSuppliers('');
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                  onChanged: _filterSuppliers,
-                  onTap: () => setState(() => _isFocused = true),
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 16),
-            Expanded(
-              child: _filteredSuppliers.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person_off_rounded,
-                              size: 48,
-                              color: AppColors.textHint,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'لا يوجد موردين',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+
+              const SizedBox(height: 16),
+
+              Expanded(
+                child: _filteredSuppliers.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: _filteredSuppliers.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final supplier = _filteredSuppliers[index];
+                          final isSelected =
+                              widget.selectedSupplierId ==
+                              supplier.id?.toString();
+                          return _buildSupplierTile(supplier, isSelected);
+                        },
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _filteredSuppliers.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final supplier = _filteredSuppliers[index];
-                        final isSelected =
-                            widget.selectedSupplierId == supplier.id?.toString();
-                        return _buildSupplierTile(supplier, isSelected);
-                      },
-                    ),
-            ),
-            
-            if (widget.onAddNewSupplier != null) ...[
-              Container(
-                margin: const EdgeInsets.all(20),
-                child: _buildAddNewButton(),
               ),
+
+              if (widget.onAddNewSupplier != null) ...[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    12,
+                    20,
+                    12 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: _buildAddNewButton(),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.person_off_outlined,
+              size: 32,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'لا يوجد موردين',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -250,47 +246,34 @@ class _SupplierSelectorState extends State<SupplierSelector>
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    AppColors.purchases.withOpacity(0.1),
-                    AppColors.purchases.withOpacity(0.05),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected
+              ? const Color(0xFF8B5CF6).withOpacity(0.08)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.purchases.withOpacity(0.3)
-                : AppColors.border.withOpacity(0.1),
-            width: isSelected ? 2 : 1,
+                ? const Color(0xFF8B5CF6).withOpacity(0.3)
+                : const Color(0xFFE5E7EB),
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [AppColors.purchases, AppColors.info],
-                      )
-                    : LinearGradient(
-                        colors: [
-                          AppColors.purchases.withOpacity(0.1),
-                          AppColors.info.withOpacity(0.1),
-                        ],
-                      ),
-                borderRadius: BorderRadius.circular(14),
+                color: isSelected
+                    ? const Color(0xFF8B5CF6)
+                    : const Color(0xFF8B5CF6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.person_rounded,
-                color: isSelected ? Colors.white : AppColors.purchases,
-                size: 24,
+                Icons.person,
+                color: isSelected ? Colors.white : const Color(0xFF8B5CF6),
+                size: 22,
               ),
             ),
             const SizedBox(width: 12),
@@ -301,28 +284,28 @@ class _SupplierSelectorState extends State<SupplierSelector>
                   Text(
                     supplier.name,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isSelected
-                          ? AppColors.purchases
-                          : AppColors.textPrimary,
+                          ? const Color(0xFF8B5CF6)
+                          : const Color(0xFF1A1A2E),
                     ),
                   ),
                   if (supplier.phone != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
-                          Icons.phone_rounded,
-                          size: 14,
-                          color: AppColors.textSecondary,
+                        const Icon(
+                          Icons.phone,
+                          size: 12,
+                          color: Color(0xFF9CA3AF),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           supplier.phone!,
                           style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            color: Color(0xFF9CA3AF),
                           ),
                         ),
                       ],
@@ -333,15 +316,16 @@ class _SupplierSelectorState extends State<SupplierSelector>
             ),
             if (isSelected)
               Container(
-                padding: const EdgeInsets.all(6),
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: const Color(0xFF16A34A).withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.check_rounded,
-                  color: AppColors.success,
-                  size: 18,
+                  Icons.check,
+                  size: 14,
+                  color: Color(0xFF16A34A),
                 ),
               ),
           ],
@@ -358,31 +342,22 @@ class _SupplierSelectorState extends State<SupplierSelector>
         widget.onAddNewSupplier?.call();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.primaryDark],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: const Color(0xFF8B5CF6),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_rounded, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.add, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
               'إضافة مورد جديد',
               style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -397,104 +372,55 @@ class _SupplierSelectorState extends State<SupplierSelector>
         .where((s) => s.id?.toString() == widget.selectedSupplierId)
         .firstOrNull;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    return GestureDetector(
+      onTap: widget.enabled ? _showSupplierBottomSheet : null,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: widget.errorText != null
+                ? const Color(0xFFDC2626)
+                : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Row(
           children: [
-            const Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary),
-            const SizedBox(width: 6),
-            Text(
-              'المورد',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: selectedSupplier != null
+                    ? const Color(0xFF8B5CF6).withOpacity(0.1)
+                    : const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.person,
+                size: 18,
+                color: selectedSupplier != null
+                    ? const Color(0xFF8B5CF6)
+                    : const Color(0xFF9CA3AF),
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                selectedSupplier?.name ?? 'اختر المورد',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: selectedSupplier != null
+                      ? const Color(0xFF1A1A2E)
+                      : const Color(0xFF9CA3AF),
+                ),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
           ],
         ),
-        const SizedBox(height: 10),
-        GestureDetector(
-          onTap: widget.enabled ? _showSupplierBottomSheet : null,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: widget.enabled
-                  ? AppColors.surface
-                  : AppColors.background.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: widget.errorText != null
-                    ? AppColors.danger
-                    : AppColors.border.withOpacity(0.2),
-                width: widget.errorText != null ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: selectedSupplier != null
-                        ? AppColors.purchases.withOpacity(0.1)
-                        : AppColors.background,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 20,
-                    color: selectedSupplier != null
-                        ? AppColors.purchases
-                        : AppColors.textHint,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    selectedSupplier?.name ?? 'اختر المورد',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: selectedSupplier != null
-                          ? AppColors.textPrimary
-                          : AppColors.textHint,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_drop_down_rounded,
-                  color: AppColors.textSecondary,
-                  size: 24,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (widget.errorText != null) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.error_rounded, size: 14, color: AppColors.danger),
-              const SizedBox(width: 4),
-              Text(
-                widget.errorText!,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.danger,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
+      ),
     );
   }
 }

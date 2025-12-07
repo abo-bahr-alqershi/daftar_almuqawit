@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../domain/entities/daily_statistics.dart';
 import '../../../navigation/route_names.dart';
 
-/// ويدجت الإحصائيات السريعة - تصميم Tesla/iOS متطور
+/// ويدجت الإحصائيات السريعة - تصميم راقي ونظيف
 class QuickStatsWidget extends StatefulWidget {
   const QuickStatsWidget({
     super.key,
@@ -15,6 +13,7 @@ class QuickStatsWidget extends StatefulWidget {
     this.isLoading = false,
     this.yesterdayStats,
   });
+
   final DailyStatistics? stats;
   final DailyStatistics? yesterdayStats;
   final bool isLoading;
@@ -25,57 +24,48 @@ class QuickStatsWidget extends StatefulWidget {
 
 class _QuickStatsWidgetState extends State<QuickStatsWidget>
     with TickerProviderStateMixin {
-  late AnimationController _shimmerController;
-  late AnimationController _numberController;
-  late Animation<double> _shimmerAnimation;
-  late List<Animation<double>> _numberAnimations;
-
-  int _selectedStatIndex = 0;
-  final PageController _pageController = PageController(viewportFraction: 0.9);
+  late AnimationController _entryController;
+  late AnimationController _valueController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-
-    _shimmerController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat();
-
-    _numberController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _shimmerAnimation = Tween<double>(begin: -2, end: 2).animate(
-      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
-    );
-
-    _initNumberAnimations();
-    _numberController.forward();
+    _initAnimations();
   }
 
-  void _initNumberAnimations() {
-    _numberAnimations = List.generate(
-      4,
-      (index) => Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(
-          parent: _numberController,
-          curve: Interval(
-            index * 0.1,
-            0.5 + index * 0.1,
-            curve: Curves.easeOutCubic,
-          ),
-        ),
-      ),
+  void _initAnimations() {
+    _entryController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
     );
+
+    _valueController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
+        );
+
+    _entryController.forward();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) _valueController.forward();
+    });
   }
 
   @override
   void dispose() {
-    _shimmerController.dispose();
-    _numberController.dispose();
-    _pageController.dispose();
+    _entryController.dispose();
+    _valueController.dispose();
     super.dispose();
   }
 
@@ -89,259 +79,241 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
       return const SizedBox.shrink();
     }
 
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              _buildMainCard(),
+              const SizedBox(height: 16),
+              _buildStatsGrid(),
+              const SizedBox(height: 16),
+              _buildPerformanceCard(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainCard() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.pushNamed(context, RouteNames.dashboard);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ملخص اليوم',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(widget.stats?.date),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildStatusBadge(),
+              ],
+            ),
+
+            const SizedBox(height: 28),
+
+            // Main Value
+            AnimatedBuilder(
+              animation: _valueController,
+              builder: (context, child) {
+                final value =
+                    (widget.stats?.netProfit ?? 0) * _valueController.value;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _formatNumber(value),
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -1,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        'ريال',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.white.withOpacity(0.9),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // Change Indicator
+            _buildChangeIndicator(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Main Stats Card
-          _buildMainStatsCard(),
-
-          const SizedBox(height: 16),
-
-          // Stats Grid
-          _buildStatsGrid(),
-
-          const SizedBox(height: 16),
-
-          // Performance Indicator
-          _buildPerformanceIndicator(),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: const Color(0xFF22C55E),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22C55E).withOpacity(0.5),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            'نشط',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMainStatsCard() => GestureDetector(
-    onTap: () {
-      // الانتقال إلى شاشة الداش بورد عند النقر على البطاقة الرئيسية
-      HapticFeedback.lightImpact();
-      Navigator.pushNamed(context, RouteNames.dashboard);
-    },
-    child: Container(
-    height: 200,
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [AppColors.primary, AppColors.primaryDark],
-      ),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.primary.withOpacity(0.4),
-          blurRadius: 24,
-          offset: const Offset(0, 12),
-          spreadRadius: -4,
-        ),
-      ],
-    ),
-    child: Stack(
-      children: [
-        // Background Pattern
-        Positioned.fill(child: CustomPaint(painter: _StatsBackgroundPainter())),
+  Widget _buildChangeIndicator() {
+    final isPositive = (widget.stats?.netProfit ?? 0) >= 0;
+    final color = isPositive
+        ? const Color(0xFF22C55E)
+        : const Color(0xFFEF4444);
 
-        // Glass Effect
-        Positioned.fill(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(color: Colors.white.withOpacity(0.05)),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPositive
+                ? Icons.trending_up_rounded
+                : Icons.trending_down_rounded,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _getProfitChangeText(),
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-
-        // Content
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ملخص اليوم',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatDate(widget.stats?.date),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Status Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.success,
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'نشط',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const Spacer(),
-
-              // Main Value with Animation
-              AnimatedBuilder(
-                animation: _numberAnimations[0],
-                builder: (context, child) {
-                  final value =
-                      (widget.stats?.netProfit ?? 0) *
-                      _numberAnimations[0].value;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        _formatNumber(value),
-                        style: const TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -1,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          'ريال',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: 8),
-
-              // Profit Indicator
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: _getProfitChangeColor().withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _getProfitChangeIcon(),
-                      size: 16,
-                      color: _getProfitChangeColor(),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _getProfitChangeText(),
-                      style: TextStyle(
-                        color: _getProfitChangeColor(),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'عن أمس',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          const SizedBox(width: 6),
+          Text(
+            'عن أمس',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 11,
+            ),
           ),
-        ),
-      ],
-    ),
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
   Widget _buildStatsGrid() {
     final statsList = [
-      _StatData(
+      _StatItem(
         title: 'المبيعات',
         value: widget.stats?.totalSales ?? 0,
         icon: Icons.trending_up_rounded,
-        color: AppColors.sales,
+        color: const Color(0xFF6366F1),
         trend: _calculateTrend('sales'),
       ),
-      _StatData(
+      _StatItem(
         title: 'المشتريات',
         value: widget.stats?.totalPurchases ?? 0,
-        icon: Icons.shopping_cart_rounded,
-        color: AppColors.purchases,
+        icon: Icons.shopping_cart_outlined,
+        color: const Color(0xFF0EA5E9),
         trend: _calculateTrend('purchases'),
       ),
-      _StatData(
+      _StatItem(
         title: 'المصروفات',
         value: widget.stats?.totalExpenses ?? 0,
-        icon: Icons.payment_rounded,
-        color: AppColors.expense,
+        icon: Icons.receipt_long_outlined,
+        color: const Color(0xFFF59E0B),
         trend: _calculateTrend('expenses'),
       ),
-      _StatData(
+      _StatItem(
         title: 'الديون',
         value:
             (widget.stats?.newDebts ?? 0) + (widget.stats?.collectedDebts ?? 0),
-        icon: Icons.account_balance_wallet_rounded,
-        color: AppColors.debt,
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFFDC2626),
         trend: _calculateTrend('debts'),
       ),
     ];
@@ -353,119 +325,179 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.7,
+        childAspectRatio: 1.4,
       ),
       itemCount: statsList.length,
       itemBuilder: (context, index) {
-        final stat = statsList[index];
-        return AnimatedBuilder(
-          animation: _numberAnimations[index % _numberAnimations.length],
-          builder: (context, child) => _ModernStatCard(
-            data: stat,
-            animation: _numberAnimations[index % _numberAnimations.length],
-            onTap: () => setState(() => _selectedStatIndex = index),
-            isSelected: _selectedStatIndex == index,
+        return _buildStatCard(statsList[index], index);
+      },
+    );
+  }
+
+  Widget _buildStatCard(_StatItem item, int index) {
+    return AnimatedBuilder(
+      animation: _valueController,
+      builder: (context, child) {
+        final delay = index * 0.15;
+        final progress = ((_valueController.value - delay) / (1 - delay)).clamp(
+          0.0,
+          1.0,
+        );
+
+        return Transform.scale(
+          scale: 0.9 + (0.1 * progress),
+          child: Opacity(
+            opacity: progress,
+            child: _StatCard(item: item, valueProgress: progress),
           ),
         );
       },
     );
   }
 
-  Widget _buildPerformanceIndicator() => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
+  Widget _buildPerformanceCard() {
+    final percentage = _calculatePerformancePercentage();
+    final color = _getPerformanceColor(percentage);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.border.withOpacity(0.1)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03),
-          blurRadius: 20,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        // Performance Chart
-        SizedBox(
-          width: 60,
-          height: 60,
-          child: CustomPaint(
-            painter: _PerformanceChartPainter(
-              percentage: _calculatePerformancePercentage(),
-              color: _getPerformanceColor(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        // Performance Details
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'أداء اليوم',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _getPerformanceLabel(),
-                style: TextStyle(
-                  color: _getPerformanceColor(),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+      child: Row(
+        children: [
+          // Performance Ring
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: 1,
+                  strokeWidth: 6,
+                  backgroundColor: color.withOpacity(0.15),
+                  valueColor: AlwaysStoppedAnimation(Colors.transparent),
                 ),
-              ),
-            ],
-          ),
-        ),
-
-        // Action Button
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withOpacity(0.1),
-                AppColors.accent.withOpacity(0.05),
+                AnimatedBuilder(
+                  animation: _valueController,
+                  builder: (context, child) {
+                    return CircularProgressIndicator(
+                      value: percentage * _valueController.value,
+                      strokeWidth: 6,
+                      backgroundColor: Colors.transparent,
+                      valueColor: AlwaysStoppedAnimation(color),
+                      strokeCap: StrokeCap.round,
+                    );
+                  },
+                ),
+                Text(
+                  '${(percentage * 100).toInt()}%',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.insights_rounded,
-            color: AppColors.primary,
-            size: 20,
-          ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(width: 16),
 
-  Widget _buildLoadingState() => AnimatedBuilder(
-    animation: _shimmerAnimation,
-    builder: (context, child) => Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      height: 200,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment(-2 + _shimmerAnimation.value, 0),
-          end: Alignment(-1 + _shimmerAnimation.value, 0),
-          colors: [
-            AppColors.surface,
-            AppColors.surface.withOpacity(0.8),
-            AppColors.surface,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(28),
+          // Performance Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'أداء اليوم',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getPerformanceLabel(percentage),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Action Icon
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.insights_rounded,
+              color: Color(0xFF6366F1),
+              size: 20,
+            ),
+          ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 
+  Widget _buildLoadingState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          _buildShimmer(height: 180, borderRadius: 20),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildShimmer(height: 100, borderRadius: 16)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildShimmer(height: 100, borderRadius: 16)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildShimmer(height: 100, borderRadius: 16)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildShimmer(height: 100, borderRadius: 16)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmer({required double height, required double borderRadius}) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.3, end: 0.6),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOut,
+      builder: (context, value, child) {
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE5E7EB).withOpacity(value),
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+        );
+      },
+    );
+  }
+
+  // Helper Methods
   String _formatNumber(double value) {
     if (value >= 1000000) {
       return '${(value / 1000000).toStringAsFixed(1)}M';
@@ -476,7 +508,6 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
   }
 
   String _formatDate(String? date) {
-    if (date == null) return '';
     final now = DateTime.now();
     final days = [
       'الأحد',
@@ -487,52 +518,69 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
       'الجمعة',
       'السبت',
     ];
-    return '${days[now.weekday - 1]}, ${now.day}/${now.month}/${now.year}';
+    return '${days[now.weekday % 7]}, ${now.day}/${now.month}/${now.year}';
+  }
+
+  String _getProfitChangeText() {
+    if (widget.stats == null) return '+0%';
+
+    if (widget.yesterdayStats == null) {
+      final totalSales = widget.stats!.totalSales;
+      final netProfit = widget.stats!.netProfit;
+      if (totalSales == 0) return '+0%';
+      final profitMargin = (netProfit / totalSales * 100);
+      final sign = profitMargin >= 0 ? '+' : '';
+      return '$sign${profitMargin.toStringAsFixed(1)}%';
+    }
+
+    final todayProfit = widget.stats!.netProfit;
+    final yesterdayProfit = widget.yesterdayStats!.netProfit;
+
+    if (yesterdayProfit == 0) {
+      return todayProfit > 0
+          ? '+100%'
+          : todayProfit < 0
+          ? '-100%'
+          : '+0%';
+    }
+
+    final changePercent =
+        ((todayProfit - yesterdayProfit) / yesterdayProfit.abs() * 100);
+    final sign = changePercent >= 0 ? '+' : '';
+    return '$sign${changePercent.toStringAsFixed(1)}%';
   }
 
   double _calculatePerformancePercentage() {
     if (widget.stats == null) return 0.0;
-    
+
     final netProfit = widget.stats!.netProfit;
     final totalSales = widget.stats!.totalSales;
     final totalExpenses = widget.stats!.totalExpenses;
-    
-    // إذا لم يكن هناك مبيعات، الأداء 0
+
     if (totalSales == 0) return 0.0;
-    
-    // حساب هامش الربح الصافي (Net Profit Margin)
+
     final profitMargin = (netProfit / totalSales).abs();
-    
-    // حساب نسبة التحكم في المصروفات (Expense Ratio)
     final expenseRatio = totalExpenses / totalSales;
-    
-    // حساب الأداء الكلي (يفضل أن يكون هامش الربح عالي والمصروفات منخفضة)
-    // نسبة الأداء = (هامش الربح × 0.7) + ((1 - نسبة المصروفات) × 0.3)
+
     double performance = (profitMargin * 0.7);
-    
     if (expenseRatio < 1) {
       performance += ((1 - expenseRatio) * 0.3);
     }
-    
-    // إذا كان هناك خسارة، نقلل من الأداء
+
     if (netProfit < 0) {
       performance = performance * 0.5;
     }
-    
+
     return performance.clamp(0.0, 1.0);
   }
 
-  Color _getPerformanceColor() {
-    final percentage = _calculatePerformancePercentage();
-    
-    if (percentage >= 0.6) return AppColors.success;
-    if (percentage >= 0.3) return AppColors.warning;
-    return AppColors.danger;
+  Color _getPerformanceColor(double percentage) {
+    if (percentage >= 0.6) return const Color(0xFF16A34A);
+    if (percentage >= 0.3) return const Color(0xFFF59E0B);
+    return const Color(0xFFDC2626);
   }
 
-  String _getPerformanceLabel() {
-    final percentage = _calculatePerformancePercentage();
-    
+  String _getPerformanceLabel(double percentage) {
     if (percentage >= 0.8) return 'ممتاز';
     if (percentage >= 0.6) return 'جيد جداً';
     if (percentage >= 0.4) return 'جيد';
@@ -540,63 +588,11 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
     return 'ضعيف';
   }
 
-  Color _getProfitChangeColor() {
-    final netProfit = widget.stats?.netProfit ?? 0;
-    return netProfit >= 0 ? AppColors.success : AppColors.danger;
-  }
-
-  IconData _getProfitChangeIcon() {
-    final netProfit = widget.stats?.netProfit ?? 0;
-    return netProfit >= 0 
-        ? Icons.trending_up_rounded 
-        : Icons.trending_down_rounded;
-  }
-
-  String _getProfitChangeText() {
-    if (widget.stats == null) return '+0%';
-    
-    // إذا لم يكن هناك بيانات الأمس، نعرض هامش الربح الحالي
-    if (widget.yesterdayStats == null) {
-      final totalSales = widget.stats!.totalSales;
-      final netProfit = widget.stats!.netProfit;
-      
-      if (totalSales == 0) return '+0%';
-      
-      final profitMargin = (netProfit / totalSales * 100);
-      final sign = profitMargin >= 0 ? '+' : '';
-      
-      return '$sign${profitMargin.toStringAsFixed(1)}%';
-    }
-    
-    // حساب التغيير في الربح بين اليوم والأمس
-    final todayProfit = widget.stats!.netProfit;
-    final yesterdayProfit = widget.yesterdayStats!.netProfit;
-    
-    if (yesterdayProfit == 0) {
-      // إذا كان ربح الأمس = 0
-      if (todayProfit > 0) {
-        return '+100%';
-      } else if (todayProfit < 0) {
-        return '-100%';
-      } else {
-        return '+0%';
-      }
-    }
-    
-    final changePercent = ((todayProfit - yesterdayProfit) / yesterdayProfit.abs() * 100);
-    final sign = changePercent >= 0 ? '+' : '';
-    
-    return '$sign${changePercent.toStringAsFixed(1)}%';
-  }
-
   double? _calculateTrend(String type) {
-    // إذا لم يكن هناك بيانات اليوم، لا نستطيع حساب الترند
     if (widget.stats == null) return null;
-    
-    // إذا لم يكن هناك بيانات الأمس، نعرض الترند بناءً على القيمة الحالية فقط
+
     if (widget.yesterdayStats == null) {
       double todayValue = 0;
-      
       switch (type) {
         case 'sales':
           todayValue = widget.stats!.totalSales;
@@ -611,310 +607,164 @@ class _QuickStatsWidgetState extends State<QuickStatsWidget>
           todayValue = widget.stats!.newDebts + widget.stats!.collectedDebts;
           break;
       }
-      
-      // إذا كانت القيمة الحالية أكبر من 0، نعرض اتجاه صاعد
       return todayValue > 0 ? 100.0 : 0.0;
     }
-    
-    double today = 0;
-    double yesterday = 0;
-    
+
+    double today = 0, yesterday = 0;
     switch (type) {
       case 'sales':
         today = widget.stats!.totalSales;
         yesterday = widget.yesterdayStats!.totalSales;
         break;
-        
       case 'purchases':
         today = widget.stats!.totalPurchases;
         yesterday = widget.yesterdayStats!.totalPurchases;
         break;
-        
       case 'expenses':
         today = widget.stats!.totalExpenses;
         yesterday = widget.yesterdayStats!.totalExpenses;
         break;
-        
       case 'debts':
         today = widget.stats!.newDebts + widget.stats!.collectedDebts;
-        yesterday = widget.yesterdayStats!.newDebts + widget.yesterdayStats!.collectedDebts;
+        yesterday =
+            widget.yesterdayStats!.newDebts +
+            widget.yesterdayStats!.collectedDebts;
         break;
-        
-      default:
-        return null;
     }
-    
-    if (yesterday == 0) {
-      return today > 0 ? 100.0 : 0.0;
-    }
-    
+
+    if (yesterday == 0) return today > 0 ? 100.0 : 0.0;
     return ((today - yesterday) / yesterday * 100);
   }
 }
 
-// بطاقة الإحصائية المحسنة
-class _ModernStatCard extends StatelessWidget {
-  const _ModernStatCard({
-    required this.data,
-    required this.animation,
-    required this.onTap,
-    required this.isSelected,
-  });
-  final _StatData data;
-  final Animation<double> animation;
-  final VoidCallback onTap;
-  final bool isSelected;
+// بطاقة الإحصائية
+class _StatCard extends StatelessWidget {
+  final _StatItem item;
+  final double valueProgress;
+
+  const _StatCard({required this.item, required this.valueProgress});
 
   @override
   Widget build(BuildContext context) {
-    final animatedValue = data.value * animation.value;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected
-                ? data.color.withOpacity(0.3)
-                : AppColors.border.withOpacity(0.1),
-            width: isSelected ? 2 : 1,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: data.color.withOpacity(0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              )
-            else
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: data.color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(data.icon, color: data.color, size: 18),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: item.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-
-                // Trend Indicator
-                if (data.trend != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: data.trend! > 0
-                          ? AppColors.success.withOpacity(0.1)
-                          : AppColors.danger.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          data.trend! > 0
-                              ? Icons.arrow_upward_rounded
-                              : Icons.arrow_downward_rounded,
-                          size: 10,
-                          color: data.trend! > 0
-                              ? AppColors.success
-                              : AppColors.danger,
-                        ),
-                        Text(
-                          '${data.trend!.abs()}%',
-                          style: TextStyle(
-                            color: data.trend! > 0
-                                ? AppColors.success
-                                : AppColors.danger,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-
-            const Spacer(),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  data.title,
+                child: Icon(item.icon, color: item.color, size: 16),
+              ),
+              if (item.trend != null) _buildTrendBadge(item.trend!),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            item.title,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  (item.value * valueProgress).toStringAsFixed(0),
                   style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    height: 1.1,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A2E),
+                    height: 1,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        animatedValue.toStringAsFixed(0),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          height: 1,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 0.5),
-                      child: Text(
-                        'ر.ي',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 9,
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 3),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 1),
+                child: Text(
+                  'ر.ي',
+                  style: TextStyle(fontSize: 8, color: Color(0xFF9CA3AF)),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrendBadge(double trend) {
+    final isPositive = trend >= 0;
+    final color = isPositive
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFDC2626);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPositive
+                ? Icons.arrow_upward_rounded
+                : Icons.arrow_downward_rounded,
+            size: 10,
+            color: color,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '${trend.abs().toStringAsFixed(0)}%',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// بيانات الإحصائية
-class _StatData {
-  _StatData({
+class _StatItem {
+  final String title;
+  final double value;
+  final IconData icon;
+  final Color color;
+  final double? trend;
+
+  _StatItem({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
     this.trend,
   });
-  final String title;
-  final double value;
-  final IconData icon;
-  final Color color;
-  final double? trend;
-}
-
-// رسام خلفية الإحصائيات
-class _StatsBackgroundPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    // Draw circles pattern
-    paint.color = Colors.white.withOpacity(0.05);
-    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 60, paint);
-
-    paint.color = Colors.white.withOpacity(0.03);
-    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.7), 80, paint);
-
-    // Draw lines pattern
-    final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..strokeWidth = 0.5
-      ..style = PaintingStyle.stroke;
-
-    for (var i = 0; i < 5; i++) {
-      final y = size.height * (i + 1) / 6;
-      canvas.drawLine(Offset(0, y), Offset(size.width * 0.3, y), linePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// رسام مخطط الأداء
-class _PerformanceChartPainter extends CustomPainter {
-  _PerformanceChartPainter({required this.percentage, required this.color});
-  final double percentage;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2 - 4;
-
-    // Background circle
-    final backgroundPaint = Paint()
-      ..color = color.withOpacity(0.1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, backgroundPaint);
-
-    // Progress arc
-    final progressPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-
-    final sweepAngle = 2 * math.pi * percentage;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
-
-    // Center text
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: '${(percentage * 100).toInt()}%',
-        style: TextStyle(
-          color: color,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      center - Offset(textPainter.width / 2, textPainter.height / 2),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

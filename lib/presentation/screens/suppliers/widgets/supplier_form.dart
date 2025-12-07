@@ -6,7 +6,6 @@ import '../../../../data/models/supplier_model.dart';
 import '../../../widgets/common/app_button.dart';
 import '../../../widgets/common/app_text_field.dart';
 
-/// نموذج بيانات المورد
 class SupplierForm extends StatefulWidget {
   final SupplierModel? supplier;
   final void Function(SupplierModel supplier) onSubmit;
@@ -23,8 +22,7 @@ class SupplierForm extends StatefulWidget {
   State<SupplierForm> createState() => _SupplierFormState();
 }
 
-class _SupplierFormState extends State<SupplierForm>
-    with TickerProviderStateMixin {
+class _SupplierFormState extends State<SupplierForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
@@ -35,57 +33,24 @@ class _SupplierFormState extends State<SupplierForm>
   String _trustLevel = 'جديد';
   bool _isSubmitting = false;
 
-  final List<String> _trustLevels = [
-    'جديد',
-    'موثوق',
-    'متوسط',
-    'غير موثوق',
-  ];
-
-  late AnimationController _mainController;
-  late AnimationController _sliderController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _slideAnimation;
-  late Animation<double> _scaleAnimation;
+  final List<String> _trustLevels = ['جديد', 'موثوق', 'متوسط', 'غير موثوق'];
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.supplier?.name ?? '');
-    _phoneController =
-        TextEditingController(text: widget.supplier?.phone ?? '');
+    _phoneController = TextEditingController(
+      text: widget.supplier?.phone ?? '',
+    );
     _areaController = TextEditingController(text: widget.supplier?.area ?? '');
-    _notesController =
-        TextEditingController(text: widget.supplier?.notes ?? '');
+    _notesController = TextEditingController(
+      text: widget.supplier?.notes ?? '',
+    );
 
     if (widget.supplier != null) {
       _qualityRating = widget.supplier!.qualityRating;
       _trustLevel = widget.supplier!.trustLevel;
     }
-
-    _mainController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _sliderController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _mainController, curve: Curves.easeIn),
-    );
-
-    _slideAnimation = Tween<double>(begin: 50, end: 0).animate(
-      CurvedAnimation(parent: _mainController, curve: Curves.easeOutCubic),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1).animate(
-      CurvedAnimation(parent: _mainController, curve: Curves.elasticOut),
-    );
-
-    _mainController.forward();
   }
 
   @override
@@ -94,8 +59,6 @@ class _SupplierFormState extends State<SupplierForm>
     _phoneController.dispose();
     _areaController.dispose();
     _notesController.dispose();
-    _mainController.dispose();
-    _sliderController.dispose();
     super.dispose();
   }
 
@@ -127,7 +90,6 @@ class _SupplierFormState extends State<SupplierForm>
       );
 
       widget.onSubmit(supplier);
-
       setState(() => _isSubmitting = false);
     } else {
       HapticFeedback.lightImpact();
@@ -136,101 +98,65 @@ class _SupplierFormState extends State<SupplierForm>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _mainController,
-      builder: (context, child) => FadeTransition(
-        opacity: _fadeAnimation,
-        child: Transform.translate(
-          offset: Offset(0, _slideAnimation.value),
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: child,
-          ),
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withOpacity(0.03),
-              AppColors.accent.withOpacity(0.02),
-              Colors.transparent,
-            ],
-          ),
-        ),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeaderSection(),
-                const SizedBox(height: 32),
-                _buildBasicInfoSection(),
-                const SizedBox(height: 24),
-                _buildQualityRatingSection(),
-                const SizedBox(height: 24),
-                _buildTrustLevelSection(),
-                const SizedBox(height: 24),
-                _buildNotesSection(),
-                const SizedBox(height: 40),
-                _buildActionButtons(),
-              ],
-            ),
-          ),
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 24),
+            _buildBasicInfoSection(),
+            const SizedBox(height: 20),
+            _buildRatingSection(),
+            const SizedBox(height: 20),
+            _buildTrustLevelSection(),
+            const SizedBox(height: 20),
+            _buildNotesSection(),
+            const SizedBox(height: 32),
+            _buildActionButtons(),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryDark,
-          ],
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-            spreadRadius: -4,
+            color: const Color(0xFF6366F1).withOpacity(0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
-              Icons.business_rounded,
+              Icons.business_outlined,
               color: Colors.white,
-              size: 28,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,22 +166,19 @@ class _SupplierFormState extends State<SupplierForm>
                       ? 'إضافة مورد جديد'
                       : 'تعديل بيانات المورد',
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
-                    letterSpacing: -0.5,
-                    height: 1.2,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   widget.supplier == null
-                      ? 'املأ البيانات التالية لإضافة مورد'
+                      ? 'املأ البيانات التالية'
                       : 'قم بتعديل البيانات المطلوبة',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withOpacity(0.9),
-                    letterSpacing: -0.2,
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -267,47 +190,17 @@ class _SupplierFormState extends State<SupplierForm>
   }
 
   Widget _buildBasicInfoSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.surface,
-            AppColors.surface.withOpacity(0.95),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 10,
-            offset: const Offset(-3, -3),
-          ),
-        ],
-      ),
+    return _buildSection(
+      title: 'المعلومات الأساسية',
+      icon: Icons.info_outline,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader(
-            'المعلومات الأساسية',
-            Icons.info_outline_rounded,
-            AppColors.primary,
-          ),
-          const SizedBox(height: 20),
-          AppTextField(
+          _buildTextField(
             controller: _nameController,
-            label: 'اسم المورد *',
+            label: 'اسم المورد',
             hint: 'أدخل اسم المورد',
-            prefixIcon: Icons.business_rounded,
+            icon: Icons.person_outline,
+            isRequired: true,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'اسم المورد مطلوب';
@@ -318,322 +211,294 @@ class _SupplierFormState extends State<SupplierForm>
               return null;
             },
           ),
-          const SizedBox(height: 16),
-          AppTextField.phone(
+          const SizedBox(height: 14),
+          _buildTextField(
             controller: _phoneController,
-            label: 'رقم الهاتف (اختياري)',
-            hint: 'أدخل رقم الهاتف',
+            label: 'رقم الهاتف',
+            hint: 'أدخل رقم الهاتف (اختياري)',
+            icon: Icons.phone_outlined,
+            keyboardType: TextInputType.phone,
           ),
-          const SizedBox(height: 16),
-          AppTextField(
+          const SizedBox(height: 14),
+          _buildTextField(
             controller: _areaController,
-            label: 'المنطقة (اختياري)',
-            hint: 'أدخل المنطقة',
-            prefixIcon: Icons.location_on_rounded,
+            label: 'المنطقة',
+            hint: 'أدخل المنطقة (اختياري)',
+            icon: Icons.location_on_outlined,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQualityRatingSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.surface,
-            AppColors.surface.withOpacity(0.95),
-          ],
+  Widget _buildRatingSection() {
+    final ratingColor = _getRatingColor(_qualityRating);
+
+    return _buildSection(
+      title: 'تقييم الجودة',
+      icon: Icons.star_outline,
+      iconColor: const Color(0xFFF59E0B),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ratingColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: ratingColor.withOpacity(0.2)),
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 10,
-            offset: const Offset(-3, -3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            'تقييم الجودة',
-            Icons.star_rounded,
-            AppColors.warning,
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _getRatingColor(_qualityRating).withOpacity(0.1),
-                  _getRatingColor(_qualityRating).withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: _getRatingColor(_qualityRating).withOpacity(0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _getRatingColor(_qualityRating).withOpacity(0.15),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
+        child: Column(
+          children: [
+            // Rating display
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'التقييم الحالي',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$_qualityRating من 5',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: _getRatingColor(_qualityRating),
-                            letterSpacing: -0.8,
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'التقييم الحالي',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                     ),
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: Icon(
-                            index < _qualityRating
-                                ? Icons.star_rounded
-                                : Icons.star_outline_rounded,
-                            color: _getRatingColor(_qualityRating),
-                            size: 28,
-                          ),
-                        );
-                      }),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$_qualityRating من 5',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: ratingColor,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 8,
-                    activeTrackColor: _getRatingColor(_qualityRating),
-                    inactiveTrackColor:
-                        _getRatingColor(_qualityRating).withOpacity(0.2),
-                    thumbColor: Colors.white,
-                    overlayColor:
-                        _getRatingColor(_qualityRating).withOpacity(0.2),
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 16,
-                      elevation: 8,
-                    ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 28,
-                    ),
-                    trackShape: const RoundedRectSliderTrackShape(),
-                  ),
-                  child: Slider(
-                    value: _qualityRating.toDouble(),
-                    min: 1,
-                    max: 5,
-                    divisions: 4,
-                    onChanged: (value) {
-                      HapticFeedback.selectionClick();
-                      setState(() {
-                        _qualityRating = value.toInt();
-                      });
-                      _sliderController.forward(from: 0);
-                    },
-                  ),
+                // Stars
+                Row(
+                  children: List.generate(5, (index) {
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _qualityRating = index + 1);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Icon(
+                          index < _qualityRating
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: ratingColor,
+                          size: 28,
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            // Slider
+            SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 6,
+                activeTrackColor: ratingColor,
+                inactiveTrackColor: ratingColor.withOpacity(0.2),
+                thumbColor: Colors.white,
+                overlayColor: ratingColor.withOpacity(0.1),
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 10,
+                  elevation: 4,
+                ),
+              ),
+              child: Slider(
+                value: _qualityRating.toDouble(),
+                min: 1,
+                max: 5,
+                divisions: 4,
+                onChanged: (value) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _qualityRating = value.toInt());
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTrustLevelSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.surface,
-            AppColors.surface.withOpacity(0.95),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 10,
-            offset: const Offset(-3, -3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            'مستوى الثقة',
-            Icons.verified_user_rounded,
-            AppColors.accent,
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: _trustLevels.map((level) {
-              final isSelected = _trustLevel == level;
-              final color = _getTrustLevelColor(level);
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _trustLevel = level);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(
-                            colors: [color, color.withOpacity(0.8)],
-                          )
-                        : null,
-                    color: isSelected ? null : color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? color : color.withOpacity(0.3),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: color.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getTrustLevelIcon(level),
-                        size: 20,
-                        color: isSelected ? Colors.white : color,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        level,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w600,
-                          color: isSelected ? Colors.white : color,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ],
-                  ),
+    return _buildSection(
+      title: 'مستوى الثقة',
+      icon: Icons.verified_user_outlined,
+      iconColor: const Color(0xFF0EA5E9),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: _trustLevels.map((level) {
+          final isSelected = _trustLevel == level;
+          final color = _getTrustLevelColor(level);
+
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _trustLevel = level);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? color : color.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? color : color.withOpacity(0.3),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _getTrustLevelIcon(level),
+                    size: 16,
+                    color: isSelected ? Colors.white : color,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    level,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white : color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
   Widget _buildNotesSection() {
+    return _buildSection(
+      title: 'ملاحظات إضافية',
+      icon: Icons.notes_outlined,
+      iconColor: const Color(0xFF3B82F6),
+      child: _buildTextField(
+        controller: _notesController,
+        label: 'ملاحظات',
+        hint: 'أدخل ملاحظات إضافية (اختياري)',
+        icon: Icons.edit_note_outlined,
+        maxLines: 3,
+      ),
+    );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    Color iconColor = const Color(0xFF6366F1),
+    required Widget child,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.surface,
-            AppColors.surface.withOpacity(0.95),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 10,
-            offset: const Offset(-3, -3),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader(
-            'ملاحظات إضافية',
-            Icons.note_alt_rounded,
-            AppColors.info,
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          AppTextField.multiline(
-            controller: _notesController,
-            label: 'ملاحظات (اختياري)',
-            hint: 'أدخل ملاحظات إضافية',
-            maxLines: 4,
-          ),
+          const SizedBox(height: 18),
+          child,
         ],
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    bool isRequired = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isRequired ? '$label *' : label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Icon(icon, size: 20, color: const Color(0xFF6B7280)),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF6366F1),
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFDC2626)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -642,119 +507,122 @@ class _SupplierFormState extends State<SupplierForm>
       children: [
         if (widget.onCancel != null) ...[
           Expanded(
-            child: Container(
-              height: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: AppButton.secondary(
-                text: 'إلغاء',
-                onPressed: _isSubmitting ? null : widget.onCancel,
-                fullWidth: true,
-              ),
+            child: _buildSecondaryButton(
+              label: 'إلغاء',
+              onTap: _isSubmitting ? null : widget.onCancel,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
         ],
         Expanded(
-          flex: 2,
-          child: Container(
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: AppButton.primary(
-              text: widget.supplier == null ? 'إضافة المورد' : 'حفظ التعديلات',
-              onPressed: _isSubmitting ? null : _handleSubmit,
-              isLoading: _isSubmitting,
-              icon: widget.supplier == null
-                  ? Icons.add_rounded
-                  : Icons.save_rounded,
-              fullWidth: true,
-            ),
+          flex: widget.onCancel != null ? 2 : 1,
+          child: _buildPrimaryButton(
+            label: widget.supplier == null ? 'إضافة المورد' : 'حفظ التعديلات',
+            icon: widget.supplier == null ? Icons.add : Icons.save_outlined,
+            isLoading: _isSubmitting,
+            onTap: _isSubmitting ? null : _handleSubmit,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withOpacity(0.2),
-                color.withOpacity(0.1),
-              ],
+  Widget _buildPrimaryButton({
+    required String label,
+    required IconData icon,
+    required bool isLoading,
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: onTap == null ? const Color(0xFFD1D5DB) : const Color(0xFF6366F1),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton({required String label, VoidCallback? onTap}) {
+    return Material(
+      color: const Color(0xFFF3F4F6),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151),
             ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: color,
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.3,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Color _getRatingColor(int rating) {
-    if (rating >= 4) return AppColors.success;
-    if (rating >= 3) return AppColors.warning;
-    return AppColors.danger;
+    if (rating >= 4) return const Color(0xFF16A34A);
+    if (rating >= 3) return const Color(0xFFF59E0B);
+    return const Color(0xFFDC2626);
   }
 
   Color _getTrustLevelColor(String trustLevel) {
     switch (trustLevel) {
       case 'موثوق':
-        return AppColors.success;
+        return const Color(0xFF16A34A);
       case 'متوسط':
-        return AppColors.warning;
+        return const Color(0xFFF59E0B);
       case 'غير موثوق':
-        return AppColors.danger;
+        return const Color(0xFFDC2626);
       default:
-        return AppColors.info;
+        return const Color(0xFF0EA5E9);
     }
   }
 
   IconData _getTrustLevelIcon(String trustLevel) {
     switch (trustLevel) {
       case 'موثوق':
-        return Icons.check_circle_rounded;
+        return Icons.check_circle_outline;
       case 'متوسط':
-        return Icons.remove_circle_rounded;
+        return Icons.remove_circle_outline;
       case 'غير موثوق':
-        return Icons.cancel_rounded;
+        return Icons.cancel_outlined;
       default:
-        return Icons.new_releases_rounded;
+        return Icons.new_releases_outlined;
     }
   }
 }
